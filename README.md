@@ -1,6 +1,8 @@
 # Ministry Study
 
-A calm personal library for books, reading, and the ideas worth returning to.
+A working home for sermons, Bible studies, hymnody, library, and other resources.
+
+The first release starts with a calm personal library for books, reading, and the ideas worth returning to.
 
 **v0.1 is the responsive application shell and Library only.** Research a Text, Scripture and pattern tools, hymns/music, sermons, teaching resources, and other broader modules are explicitly deferred. There are no nonfunctional navigation placeholders for them.
 
@@ -60,3 +62,7 @@ GitHub Actions runs the same checks on pushes and pull requests. Browser tests c
 - `docs/data-model.md`: model decisions and next-step boundaries.
 
 `npm run build` creates `dist/`. No hosting or public deployment is configured in this version. A future backend can replace the persistence boundary without combining ownership, reading, circulation, and location into a single status.
+
+## Project notes
+
+Add new work here as you go. Broader modules remain future work until explicitly scoped.
