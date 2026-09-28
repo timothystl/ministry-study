@@ -120,3 +120,30 @@ test('responsive dashboard, real assets and keyboard dismissal', async ({ page }
   await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog')).toHaveCount(0)
 })
+
+test('wishlist CSV previews, preserves existing records and avoids duplicate imports', async ({
+  page,
+}) => {
+  await page.goto('/')
+  await nav(page, 'Wishlist')
+  await page.getByRole('button', { name: 'Import wishlist', exact: true }).click()
+  await page.getByRole('button', { name: 'CSV file', exact: true }).click()
+  const csv =
+    'Title,Author,ISBN,Series,Notes\nSurprised by Hope,N. T. Wright,9780061551826,,Do not replace notes\nA wishlist import,Example Author,,Wishlist Series,"A note, with commas"\nA wishlist import,Example Author,,Wishlist Series,\n'
+  await page
+    .getByLabel('Choose wishlist CSV', { exact: true })
+    .setInputFiles({ name: 'wishlist.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) })
+  await page.getByRole('button', { name: 'Preview import', exact: true }).click()
+  await expect(page.getByRole('dialog')).toContainText('1 new books; 1 existing books')
+  await expect(page.getByRole('dialog')).toContainText('Already listed')
+  await page.getByRole('button', { name: 'Import 2 books', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'A wishlist import', exact: true })).toBeVisible()
+  await page.getByRole('heading', { name: 'Surprised by Hope', exact: true }).click()
+  await expect(page.locator('.book-detail')).toContainText('Owned')
+  await expect(page.locator('.book-detail')).toContainText('Bookcase 2')
+  await page.reload()
+  await nav(page, 'Wishlist')
+  await page.getByRole('heading', { name: 'A wishlist import', exact: true }).click()
+  await expect(page.locator('.book-detail')).toContainText('Not owned')
+  await expect(page.locator('.book-detail')).toContainText('A note, with commas')
+})

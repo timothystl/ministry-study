@@ -23,6 +23,7 @@ Open http://127.0.0.1:4173. The app uses React, TypeScript, Vite, plain CSS, Luc
 - Unified metadata and notes search across all library records, with format and ownership filters.
 - Browse by topic, author, first-class series, or current physical shelf.
 - My Collection, Reading (including read-but-not-owned records), Wishlist.
+- Wishlist import from CSV (Title; optional Author, ISBN, Series, Notes) or pasted title/author lists. Preview before saving; matching records retain their details and new books start as not owned. Ambiguous matches are skipped for review.
 - Add/edit book and detailed views, including series volume, notes, reading dates, rating, and borrowing source.
 - Loans for owned physical books, optional due dates, overdue labels, returns, and retained history. Active loans protect ownership/format from inconsistent edits.
 - Separate current shelf and optional future recommended placement. A recommendation never moves a book.

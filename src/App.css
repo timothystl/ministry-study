@@ -2076,3 +2076,18 @@ main {
 .secondary-search {
   display: none;
 }
+
+.wishlist-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.import-review ul {
+  max-height: 260px;
+  overflow: auto;
+  padding-left: 22px;
+}
+.import-review li {
+  margin-bottom: 8px;
+  overflow-wrap: anywhere;
+}

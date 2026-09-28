@@ -31,6 +31,7 @@ import { downloadJson, loadLibrary, STORAGE_KEY } from './lib/storage'
 import { BookCards, BookDetail } from './components/BookViews'
 import { BookEditor } from './components/BookEditor'
 import { LibraryData } from './components/LibraryData'
+import { WishlistImport } from './components/WishlistImport'
 import { LoanForm } from './components/LoanForm'
 import { Dashboard, type QuickScope } from './components/Dashboard'
 import { ReadingTable, LoansTable } from './components/RecordsTable'
@@ -67,6 +68,7 @@ export default function App() {
     [editing, setEditing] = useState<Book | null>(null),
     [lending, setLending] = useState<Book | null>(null),
     [dataOpen, setDataOpen] = useState(false),
+    [wishlistImportOpen, setWishlistImportOpen] = useState(false),
     [picker, setPicker] = useState<'loan' | 'read' | null>(null),
     [pickerQuery, setPickerQuery] = useState('')
   const [limit, setLimit] = useState(36),
@@ -527,7 +529,19 @@ export default function App() {
                     <h1>
                       {searching ? 'Search Results' : page === 'Search' ? 'Your Library' : page}
                     </h1>
-                    {page === 'Loans' && !searching ? (
+                    {page === 'Wishlist' && !searching ? (
+                      <div className="wishlist-actions">
+                        <button onClick={() => setWishlistImportOpen(true)}>Import wishlist</button>
+                        <button
+                          className="primary"
+                          onClick={() =>
+                            setEditing({ ...blankBook(), ownership: 'Not owned', wishlist: true })
+                          }
+                        >
+                          <Plus size={15} /> Add Book
+                        </button>
+                      </div>
+                    ) : page === 'Loans' && !searching ? (
                       <button className="primary" onClick={() => openPicker('loan')}>
                         <Plus size={15} />
                         Loan a Book
@@ -749,6 +763,19 @@ export default function App() {
               return true
             }
             return false
+          }}
+        />
+      )}
+      {wishlistImportOpen && (
+        <WishlistImport
+          library={library}
+          onClose={() => setWishlistImportOpen(false)}
+          onSave={(next) => {
+            if (!commit(next)) return false
+            setWishlistImportOpen(false)
+            navigate('Wishlist')
+            setNotice('Wishlist imported')
+            return true
           }}
         />
       )}
