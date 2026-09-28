@@ -147,3 +147,54 @@ test('wishlist CSV previews, preserves existing records and avoids duplicate imp
   await expect(page.locator('.book-detail')).toContainText('Not owned')
   await expect(page.locator('.book-detail')).toContainText('A note, with commas')
 })
+
+test('Amazon saved-page import recognizes books, skips non-books and preserves source', async ({
+  page,
+}) => {
+  await page.goto('/')
+  await nav(page, 'Wishlist')
+  await page.getByRole('button', { name: 'Import wishlist', exact: true }).click()
+  await page.getByRole('button', { name: 'Amazon', exact: true }).click()
+  const html = `<html><h2 id="profile-list-name">Example list</h2><ul id="g-items">
+<li><div id="itemInfo_PRINT"><a id="itemName_PRINT" href="/dp/0060693339/">Example Print Book</a><span id="item-byline-PRINT">by Example Author (Paperback)</span><span id="twisterText">Format : Paperback</span></div></li>
+<li><div id="itemInfo_DIGITAL"><a id="itemName_DIGITAL" href="/dp/B012345678/">Example Kindle Book</a><span id="item-byline-DIGITAL">by Example Author (Kindle Edition)</span><span id="twisterText">Format : Kindle</span></div></li>
+<li><div id="itemInfo_OTHER"><a id="itemName_OTHER" href="https://evil.test/dp/B000000000/">A notebook</a></div></li>
+<li><div id="itemInfo_AUDIO"><a id="itemName_AUDIO" href="/dp/B000000001/">Audio item</a><span id="item-byline-AUDIO">by Example Author (Audible Audiobook)</span></div></li>
+</ul><script>document.body.dataset.importExecuted='true'</script></html>`
+  await page
+    .getByLabel('Choose saved Amazon page', { exact: true })
+    .setInputFiles({ name: 'amazon.html', mimeType: 'text/html', buffer: Buffer.from(html) })
+  await expect(page.getByRole('region', { name: 'Amazon import preview' })).toContainText(
+    '4 entries found · 2 selected · 2 new books',
+  )
+  await expect(page.getByRole('checkbox', { name: /A notebook/ })).not.toBeChecked()
+  await expect(page.getByRole('checkbox', { name: /Audio item/ })).toBeDisabled()
+  expect(await page.locator('body').getAttribute('data-import-executed')).toBeNull()
+  await expect(page.getByRole('button', { name: 'Import 2 books from Amazon' })).toBeDisabled()
+  await page
+    .getByRole('checkbox', { name: 'I have checked the selected books and the item count.' })
+    .check()
+  await page.getByRole('button', { name: 'Import 2 books from Amazon' }).click()
+  await page.getByRole('heading', { name: 'Example Kindle Book', exact: true }).click()
+  await expect(page.locator('.book-detail')).toContainText('Kindle')
+  await expect(page.locator('.book-detail')).toContainText('Not owned')
+  await page.getByText('Catalog source', { exact: true }).click()
+  await expect(page.locator('.book-detail')).toContainText('Amazon wishlist')
+  await expect(page.locator('.book-detail')).toContainText('B012345678')
+  await page.reload()
+  await nav(page, 'Wishlist')
+  await expect(
+    page.getByRole('heading', { name: 'Example Kindle Book', exact: true }),
+  ).toBeVisible()
+  await page.getByRole('button', { name: 'Import wishlist', exact: true }).click()
+  await page.getByRole('button', { name: 'Amazon', exact: true }).click()
+  await page
+    .getByLabel('Choose saved Amazon page', { exact: true })
+    .setInputFiles({ name: 'amazon.html', mimeType: 'text/html', buffer: Buffer.from(html) })
+  await expect(page.getByRole('region', { name: 'Amazon import preview' })).toContainText(
+    '0 new books · 0 existing books',
+  )
+  await expect(page.getByRole('region', { name: 'Amazon import preview' })).toContainText(
+    '2 selected entries are already on your wishlist',
+  )
+})

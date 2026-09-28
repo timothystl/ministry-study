@@ -7,7 +7,7 @@ export const readingStatuses = [
   'Abandoned',
   'Reference',
 ] as const
-export const formats = ['Physical', 'Logos', 'EPUB', 'PDF'] as const
+export const formats = ['Physical', 'Logos', 'EPUB', 'PDF', 'Kindle'] as const
 export interface Series {
   id: string
   name: string

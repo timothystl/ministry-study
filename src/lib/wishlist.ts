@@ -6,6 +6,11 @@ export interface WishlistRow {
   isbn?: string
   series?: string
   notes?: string
+  format?: Book['format']
+  source?: string
+  sourceId?: string
+  sourceMetadata?: Record<string, string>
+  coverUrl?: string
 }
 export interface WishlistPreview {
   library: Library
@@ -18,7 +23,18 @@ export interface WishlistPreview {
 }
 const normalize = (value: string) =>
   value.trim().normalize('NFKC').toLocaleLowerCase().replace(/\s+/g, ' ')
-const isbnKey = (value: string) => value.replace(/[^\dX]/gi, '').toUpperCase()
+const isbnKey = (value: string) => {
+  const cleaned = value.replace(/[^\dX]/gi, '').toUpperCase()
+  if (!/^\d{9}[\dX]$/.test(cleaned)) return cleaned
+  const check = [...cleaned].reduce(
+    (sum, char, i) => sum + (char === 'X' ? 10 : Number(char)) * (10 - i),
+    0,
+  )
+  if (check % 11 !== 0) return cleaned
+  const prefix = '978' + cleaned.slice(0, 9)
+  const sum = [...prefix].reduce((total, char, i) => total + Number(char) * (i % 2 ? 3 : 1), 0)
+  return prefix + ((10 - (sum % 10)) % 10)
+}
 
 // Matching never changes ownership, reading records, circulation, or shelf locations.
 export function previewWishlist(
@@ -36,9 +52,16 @@ export function previewWishlist(
       isbn = isbnKey(row.isbn || '')
     if (!title) throw new Error('Every book needs a title.')
     const matches = next.books.filter((b) =>
-      isbn && b.isbn
-        ? isbnKey(b.isbn) === isbn
-        : normalize(b.title) === normalize(title) && normalize(b.author) === normalize(author),
+      row.source === 'Amazon wishlist' &&
+      row.sourceId &&
+      b.source === row.source &&
+      b.sourceId === row.sourceId
+        ? true
+        : row.format && b.format !== row.format
+          ? false
+          : isbn && b.isbn
+            ? isbnKey(b.isbn) === isbn
+            : normalize(b.title) === normalize(title) && normalize(b.author) === normalize(author),
     )
     if (matches.length > 1) {
       entries.push({ title, action: 'Needs review' })
@@ -65,11 +88,14 @@ export function previewWishlist(
       title,
       author,
       isbn,
-      format,
+      format: row.format || format,
+      coverUrl: row.coverUrl || undefined,
+      sourceId: row.sourceId || '',
+      sourceMetadata: row.sourceMetadata,
       wishlist: true,
       ownership: 'Not owned',
       notes: row.notes?.trim() || '',
-      source: 'Wishlist import',
+      source: row.source || 'Wishlist import',
     }
     next = saveBook(next, book, row.series || '')
     added++

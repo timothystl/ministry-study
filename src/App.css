@@ -2091,3 +2091,31 @@ main {
   margin-bottom: 8px;
   overflow-wrap: anywhere;
 }
+
+.amazon-import > * {
+  margin-bottom: 14px;
+}
+.amazon-items {
+  list-style: none;
+  padding: 0 !important;
+  max-height: 320px !important;
+}
+.amazon-items label,
+.amazon-confirm {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.amazon-items input,
+.amazon-confirm input {
+  width: auto;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+.amazon-items li {
+  border-bottom: 1px solid #dfe6ec;
+  padding: 10px 0;
+}
+.amazon-warning {
+  color: #82511a;
+}

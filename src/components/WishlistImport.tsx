@@ -8,6 +8,7 @@ import {
   type WishlistPreview,
 } from '../lib/wishlist'
 import { Modal } from './Modal'
+import { AmazonWishlistImport } from './AmazonWishlistImport'
 
 export function WishlistImport({
   library,
@@ -18,7 +19,7 @@ export function WishlistImport({
   onSave: (next: Library) => boolean
   onClose: () => void
 }) {
-  const [mode, setMode] = useState<'paste' | 'csv'>('csv')
+  const [mode, setMode] = useState<'paste' | 'csv' | 'amazon'>('csv')
   const [text, setText] = useState('')
   const [filename, setFilename] = useState('')
   const [format, setFormat] = useState<Book['format']>('Physical')
@@ -72,130 +73,151 @@ export function WishlistImport({
         >
           CSV file
         </button>
-      </div>
-      {mode === 'paste' ? (
-        <label>
-          Books to import
-          <span className="muted">One book per line: Title | Author. The author is optional.</span>
-          <textarea
-            rows={7}
-            value={text}
-            placeholder={'Surprised by Hope | N. T. Wright\nA book title'}
-            onChange={(e) => {
-              setText(e.target.value)
-              resetPreview()
-            }}
-          />
-        </label>
-      ) : (
-        <section className="detail-section">
-          <p>
-            Export your spreadsheet as CSV. Include a <strong>Title</strong> column; optional
-            columns are Author, ISBN, Series, and Notes. Keep ISBN cells formatted as text.
-          </p>
-          <button
-            onClick={() => {
-              const url = URL.createObjectURL(
-                new Blob(['Title,Author,ISBN,Series,Notes\n'], { type: 'text/csv;charset=utf-8' }),
-              )
-              const anchor = document.createElement('a')
-              anchor.href = url
-              anchor.download = 'wishlist-template.csv'
-              anchor.click()
-              setTimeout(() => URL.revokeObjectURL(url), 1000)
-            }}
-          >
-            Download CSV template
-          </button>
-          <label className="file-label">
-            <Upload size={16} /> Choose wishlist CSV
-            <input
-              aria-label="Choose wishlist CSV"
-              type="file"
-              accept=".csv,text/csv"
-              onChange={(e) => {
-                void read(e.target.files?.[0])
-                e.target.value = ''
-              }}
-            />
-          </label>
-          {filename && <p>{filename}</p>}
-        </section>
-      )}
-      <label>
-        Format for new books
-        <select
-          value={format}
-          onChange={(e) => {
-            setFormat(e.target.value as Book['format'])
+        <button
+          className={mode === 'amazon' ? 'selected' : ''}
+          onClick={() => {
+            setMode('amazon')
+            setText('')
+            setFilename('')
             resetPreview()
           }}
         >
-          {formats.map((f) => (
-            <option key={f}>{f}</option>
-          ))}
-        </select>
-      </label>
-      <p className="muted">
-        Matches use ISBN when available, otherwise title and author. Ambiguous matches are left for
-        review. Nothing is saved until you confirm.
-      </p>
-      <button
-        disabled={!text.trim()}
-        onClick={() => {
-          resetPreview()
-          try {
-            setPreview(
-              previewWishlist(
-                mode === 'csv' ? parseWishlistCsv(text) : parseWishlistText(text),
-                library,
-                format,
-              ),
-            )
-          } catch (e) {
-            setError(e instanceof Error ? e.message : 'Could not preview this list.')
-          }
-        }}
-      >
-        Preview import
-      </button>
-      {error && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
-      {preview && (
-        <section className="import-review" aria-label="Wishlist import preview">
-          <h3>Review your wishlist</h3>
-          <p>
-            {preview.added} new books; {preview.updated} existing books to add to your wishlist.
-          </p>
-          <ul>
-            {preview.entries.map((entry, i) => (
-              <li key={i}>
-                <strong>{entry.title}</strong> — {entry.action}
-              </li>
-            ))}
-          </ul>
-          {preview.entries.some((entry) => entry.action === 'Needs review') && (
-            <p>
-              “Needs review” entries match multiple records and will be skipped. Add them
-              individually after checking your library.
-            </p>
+          Amazon
+        </button>
+      </div>
+      {mode === 'amazon' ? (
+        <AmazonWishlistImport library={library} onSave={onSave} />
+      ) : (
+        <>
+          {mode === 'paste' ? (
+            <label>
+              Books to import
+              <span className="muted">
+                One book per line: Title | Author. The author is optional.
+              </span>
+              <textarea
+                rows={7}
+                value={text}
+                placeholder={'Surprised by Hope | N. T. Wright\nA book title'}
+                onChange={(e) => {
+                  setText(e.target.value)
+                  resetPreview()
+                }}
+              />
+            </label>
+          ) : (
+            <section className="detail-section">
+              <p>
+                Export your spreadsheet as CSV. Include a <strong>Title</strong> column; optional
+                columns are Author, ISBN, Series, and Notes. Keep ISBN cells formatted as text.
+              </p>
+              <button
+                onClick={() => {
+                  const url = URL.createObjectURL(
+                    new Blob(['Title,Author,ISBN,Series,Notes\n'], {
+                      type: 'text/csv;charset=utf-8',
+                    }),
+                  )
+                  const anchor = document.createElement('a')
+                  anchor.href = url
+                  anchor.download = 'wishlist-template.csv'
+                  anchor.click()
+                  setTimeout(() => URL.revokeObjectURL(url), 1000)
+                }}
+              >
+                Download CSV template
+              </button>
+              <label className="file-label">
+                <Upload size={16} /> Choose wishlist CSV
+                <input
+                  aria-label="Choose wishlist CSV"
+                  type="file"
+                  accept=".csv,text/csv"
+                  onChange={(e) => {
+                    void read(e.target.files?.[0])
+                    e.target.value = ''
+                  }}
+                />
+              </label>
+              {filename && <p>{filename}</p>}
+            </section>
           )}
+          <label>
+            Format for new books
+            <select
+              value={format}
+              onChange={(e) => {
+                setFormat(e.target.value as Book['format'])
+                resetPreview()
+              }}
+            >
+              {formats.map((f) => (
+                <option key={f}>{f}</option>
+              ))}
+            </select>
+          </label>
+          <p className="muted">
+            Matches use ISBN when available, otherwise title and author. Ambiguous matches are left
+            for review. Nothing is saved until you confirm.
+          </p>
           <button
-            className="primary"
-            disabled={!preview.added && !preview.updated}
+            disabled={!text.trim()}
             onClick={() => {
-              if (!onSave(preview.library))
-                setError(
-                  'Could not save the wishlist. Browser storage may be full or unavailable. Your preview is still here.',
+              resetPreview()
+              try {
+                setPreview(
+                  previewWishlist(
+                    mode === 'csv' ? parseWishlistCsv(text) : parseWishlistText(text),
+                    library,
+                    format,
+                  ),
                 )
+              } catch (e) {
+                setError(e instanceof Error ? e.message : 'Could not preview this list.')
+              }
             }}
           >
-            Import {preview.added + preview.updated} books
+            Preview import
           </button>
-        </section>
+          {error && (
+            <p className="error" role="alert">
+              {error}
+            </p>
+          )}
+          {preview && (
+            <section className="import-review" aria-label="Wishlist import preview">
+              <h3>Review your wishlist</h3>
+              <p>
+                {preview.added} new books; {preview.updated} existing books to add to your wishlist.
+              </p>
+              <ul>
+                {preview.entries.map((entry, i) => (
+                  <li key={i}>
+                    <strong>{entry.title}</strong> — {entry.action}
+                  </li>
+                ))}
+              </ul>
+              {preview.entries.some((entry) => entry.action === 'Needs review') && (
+                <p>
+                  “Needs review” entries match multiple records and will be skipped. Add them
+                  individually after checking your library.
+                </p>
+              )}
+              <button
+                className="primary"
+                disabled={!preview.added && !preview.updated}
+                onClick={() => {
+                  if (!onSave(preview.library))
+                    setError(
+                      'Could not save the wishlist. Browser storage may be full or unavailable. Your preview is still here.',
+                    )
+                }}
+              >
+                Import {preview.added + preview.updated} books
+              </button>
+            </section>
+          )}
+        </>
       )}
     </Modal>
   )

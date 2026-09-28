@@ -2,7 +2,7 @@
 
 Repository: https://github.com/timothystl/ministry-study
 Branch: main
-Latest application commit: 44568a3 (wishlist CSV import).
+Latest application changes: CSV/pasted-list and Amazon saved-page/copied-text wishlist import.
 
 ## Start in a fresh Codex task
 
@@ -10,7 +10,7 @@ You do not need to locate the old conversation. Open Codex on the home computer,
 
 ## CONTINUE prompt
 
-Continue work on https://github.com/timothystl/ministry-study, branch main. Clone it if needed and read README.md, docs/data-model.md, docs/assets.md, and design-qa.md before making changes. Read HANDOFF.md in the repository and inspect docs/chosen-design.png. Preserve the chosen navy-sidebar, mountain-banner Library design. Set up the app locally and, if the user has transferred their personal backup, help restore it through Library Data → Restore a backup → Choose backup → confirm. If the backup is unavailable, start with the illustrative samples and continue development. Do not commit the backup or other private catalog data. Wishlist CSV/pasted-list import is complete; Amazon wishlist import is pending the user's share link or saved page. Do not expand scope or redesign the app. First get the existing app running and report what is ready.
+Continue work on https://github.com/timothystl/ministry-study, branch main. Clone it if needed and read README.md, docs/data-model.md, docs/assets.md, and design-qa.md before making changes. Read HANDOFF.md in the repository and inspect docs/chosen-design.png. Preserve the chosen navy-sidebar, mountain-banner Library design. Set up the app locally and, if the user has transferred their personal backup, help restore it through Library Data → Restore a backup → Choose backup → confirm. If the backup is unavailable, start with the illustrative samples and continue development. Do not commit the backup or other private catalog data. Wishlist CSV/pasted-list and Amazon saved-page/copied-text import are implemented. Direct URL retrieval and automatic Amazon sync are not implemented. Do not expand scope or redesign the app. First get the existing app running and report what is ready.
 
 ## Setup commands for Codex
 
@@ -43,7 +43,7 @@ Research a Text, Scripture/pattern tools, hymns/music, sermons, teaching resourc
 
 The exact selected design is docs/chosen-design.png. The user rejected an earlier visual direction; preserve this reference. The implemented app uses verified real cover editions and a generated mountain panorama, so imagery differs slightly from the concept.
 
-Wishlist CSV import accepts Title and optional Author, ISBN, Series, Notes; it includes a template, preview, duplicate handling, and existing-record preservation. Pasted lists accept Title | Author. New imports start Not owned. Amazon integration is NOT built yet; do not claim it is complete. Ask for the wishlist share link or a saved copy when resuming that feature.
+Wishlist CSV import accepts Title and optional Author, ISBN, Series, Notes; it includes a template, preview, duplicate handling, and existing-record preservation. Pasted lists accept Title | Author. New imports start Not owned. Amazon import now accepts saved HTML pages or copied English list-view text. The share link opens Amazon; it does not fetch automatically. HTML retains ASINs, bylines, edition and approved cover URLs; text captures recognized title/byline pairs only. Kindle is separate from physical books. Users review counts and selection; unrecognized items start unchecked and unsupported formats cannot be selected. Load Amazon through End of list before saving/copying. No personal wishlist contents or share URL are tracked in Git. Do not claim automatic URL import or synchronization.
 
 React + TypeScript + Vite, plain CSS, Lucide, Zod, localStorage. GitHub checks passed for the latest app commit: model/import tests, build/lint/TypeScript, desktop/mobile workflows. Personal catalog files remain ignored under private/. Physical-library spreadsheet import is deferred until cleaned and reviewed.
 
