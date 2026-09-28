@@ -1,5 +1,7 @@
 # Ministry Study
 
+**Continuing on another computer? Start with [HANDOFF.md](HANDOFF.md).**
+
 A working home for sermons, Bible studies, hymnody, library, and other resources.
 
 The first release starts with a calm personal library for books, reading, and the ideas worth returning to.
