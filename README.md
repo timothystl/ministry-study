@@ -1,6 +1,6 @@
 # Ministry Study
 
-A working home for sermons, Bible studies, chapel and children's messages, and bulletin announcements.
+A working home for sermons, Bible studies, hymnody, library, and other resources
 
 ## Notes
 
