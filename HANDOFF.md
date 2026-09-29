@@ -110,3 +110,6 @@ File numbers with a letter (F012, W003, O001) are now read like the archive's nu
 ## Latest update: children's messages
 New page over the notes records (two audiences). Next: hymns. Ideas: props/objects as a field,
 grade level, a "reuse next year" flag.
+
+## Latest update: people and permissions
+A second (and further) person can now use the study with a private library of their own; Andrew stays administrator and switches parts on or off per person on People (README → People and permissions). **Before deploying, set `STUDY_ADMIN_EMAIL` in Cloudflare (Settings → Variables) to Andrew's sign-in address, or the API refuses everyone.** To let someone in: add them on People and add their email to the Access policy. The first request after deploy migrates existing rows to the pastor's library. Ideas for later: an option to copy a resource between libraries, and per-person backups.

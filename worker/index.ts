@@ -1,5 +1,14 @@
 import { verifyAccess, type AccessEnv } from './access'
-import { applyChanges, readAll, validateChange } from './store'
+import { applyChanges, forbiddenKinds, readAll, validateChange } from './store'
+import {
+  listPeople,
+  normalizeEmail,
+  resolveWho,
+  savePerson,
+  validatePerson,
+  validEmail,
+} from './people'
+import { SECTIONS } from './sections'
 import {
   deleteText,
   exportAll,
@@ -13,6 +22,8 @@ import {
 } from './sermonText'
 
 interface Env extends AccessEnv {
+  // The pastor's sign-in address. Everyone else is added on the People page.
+  STUDY_ADMIN_EMAIL?: string
   DB: D1Database
   ASSETS: Fetcher
 }
@@ -22,15 +33,75 @@ const reply = (body: unknown, status = 200) =>
     headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
   })
 
-export async function handleApi(request: Request, env: Env): Promise<Response> {
+export async function handleApi(
+  request: Request,
+  env: Env,
+  verify: typeof verifyAccess = verifyAccess,
+): Promise<Response> {
   const { pathname } = new URL(request.url)
-  const access = await verifyAccess(request, env)
+  const access = await verify(request, env)
   if (access.status === 'unconfigured')
     return reply({ error: 'Sign-in protection is not set up for the shared library.' }, 503)
   if (access.status !== 'ok') return reply({ error: 'Please sign in.' }, 401)
+  if (!env.STUDY_ADMIN_EMAIL && env.STUDY_DEV_NO_AUTH !== '1')
+    return reply({ error: 'The administrator address (STUDY_ADMIN_EMAIL) is not set.' }, 503)
   if (!env.DB) return reply({ error: 'The shared database is not connected.' }, 503)
   try {
-    if (pathname === '/api/library' && request.method === 'GET') return reply(await readAll(env.DB))
+    const resolved = await resolveWho(
+      env.DB,
+      access.email,
+      env.STUDY_ADMIN_EMAIL ?? '',
+      env.STUDY_DEV_NO_AUTH === '1' && access.email === 'dev@localhost',
+    )
+    if (!resolved.ok)
+      return reply(
+        {
+          error:
+            resolved.reason === 'paused'
+              ? 'Your access to the study is paused. Please contact Andrew.'
+              : 'You are signed in, but have not been added to the study yet. Please contact Andrew.',
+          reason: resolved.reason,
+          email: normalizeEmail(access.email),
+        },
+        403,
+      )
+    const { who } = resolved
+    const may = (section: string) => who.role === 'admin' || who.sections.some((s) => s === section)
+    const denied = () => reply({ error: 'That part of the study is not turned on for you.' }, 403)
+    if (pathname === '/api/me' && request.method === 'GET')
+      return reply({
+        email: who.email,
+        name: who.name,
+        role: who.role,
+        sections: who.sections,
+        sectionList: SECTIONS,
+      })
+    if (pathname === '/api/people' || pathname.startsWith('/api/people/')) {
+      if (who.role !== 'admin') return reply({ error: 'Only the administrator can do that.' }, 403)
+      if (pathname === '/api/people' && request.method === 'GET')
+        return reply({ people: await listPeople(env.DB) })
+      const route = /^\/api\/people\/([^/]+)$/.exec(pathname)
+      if (route && request.method === 'PUT') {
+        const email = normalizeEmail(decodeURIComponent(route[1]))
+        if (!validEmail(email))
+          return reply({ error: 'That does not look like an email address.' }, 400)
+        if (email === normalizeEmail(env.STUDY_ADMIN_EMAIL))
+          return reply({ error: 'That is your own address; you always have everything.' }, 400)
+        if (!request.headers.get('Content-Type')?.includes('application/json'))
+          return reply({ error: 'Send JSON.' }, 415)
+        let input
+        try {
+          input = validatePerson(await request.json())
+        } catch (error) {
+          return reply({ error: (error as Error).message }, 400)
+        }
+        await savePerson(env.DB, email, input)
+        return reply({ people: await listPeople(env.DB) })
+      }
+      return reply({ error: 'Not found.' }, 404)
+    }
+    if (pathname === '/api/library' && request.method === 'GET')
+      return reply(await readAll(env.DB, who.owner, who.kinds))
     if (pathname === '/api/changes' && request.method === 'POST') {
       if (!request.headers.get('Content-Type')?.includes('application/json'))
         return reply({ error: 'Send JSON.' }, 415)
@@ -43,29 +114,36 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
       } catch (error) {
         return reply({ error: (error as Error).message }, 400)
       }
-      const result = await applyChanges(env.DB, body.baseRevision as number, change)
+      if (forbiddenKinds(change, who.kinds).length) return denied()
+      const result = await applyChanges(env.DB, who.owner, body.baseRevision as number, change)
       return result.ok ? reply(result) : reply({ error: 'changed-elsewhere', ...result }, 409)
     }
+    const isSermonRoute =
+      pathname === '/api/sermon-text' ||
+      pathname === '/api/sermon-search' ||
+      pathname === '/api/sermon-export' ||
+      pathname.startsWith('/api/sermon-text/')
+    if (isSermonRoute && !may('sermons')) return denied()
     if (pathname === '/api/sermon-text' && request.method === 'GET')
-      return reply(await listStatus(env.DB))
+      return reply(await listStatus(env.DB, who.owner))
     if (pathname === '/api/sermon-search' && request.method === 'GET') {
       const q = new URL(request.url).searchParams.get('q') || ''
-      return reply(q.length > 200 ? [] : await searchText(env.DB, q))
+      return reply(q.length > 200 ? [] : await searchText(env.DB, who.owner, q))
     }
     if (pathname === '/api/sermon-export' && request.method === 'GET') {
       const after = new URL(request.url).searchParams.get('after') || ''
-      return reply(await exportAll(env.DB, after))
+      return reply(await exportAll(env.DB, who.owner, after))
     }
     const textRoute = /^\/api\/sermon-text\/([^/]+)$/.exec(pathname)
     if (textRoute) {
       const id = decodeURIComponent(textRoute[1])
       if (!validSermonId(id)) return reply({ error: 'Invalid sermon.' }, 400)
       if (request.method === 'GET') {
-        const found = await getText(env.DB, id)
+        const found = await getText(env.DB, who.owner, id)
         return found ? reply(found) : reply({ error: 'No text saved.' }, 404)
       }
       if (request.method === 'DELETE') {
-        await deleteText(env.DB, id)
+        await deleteText(env.DB, who.owner, id)
         return reply({ ok: true })
       }
       if (request.method === 'PUT' || request.method === 'PATCH') {
@@ -75,7 +153,7 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
         if (request.method === 'PATCH') {
           if (typeof body.indexed !== 'boolean')
             return reply({ error: 'Say whether to index.' }, 400)
-          return (await setIndexed(env.DB, id, body.indexed))
+          return (await setIndexed(env.DB, who.owner, id, body.indexed))
             ? reply({ ok: true })
             : reply({ error: 'No text saved.' }, 404)
         }
@@ -85,7 +163,7 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
         } catch (error) {
           return reply({ error: (error as Error).message }, 400)
         }
-        await putText(env.DB, id, input)
+        await putText(env.DB, who.owner, id, input)
         return reply({ ok: true, chars: input.text.length })
       }
     }

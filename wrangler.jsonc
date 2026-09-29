@@ -18,7 +18,8 @@
       "database_id": "90b2cca9-a368-4185-8263-55f32d8dce1a",
     },
   ],
-  // Set in the Cloudflare dashboard (Settings → Variables): STUDY_ACCESS_TEAM_DOMAIN, STUDY_ACCESS_AUD
+  // Set in the Cloudflare dashboard (Settings → Variables): STUDY_ACCESS_TEAM_DOMAIN, STUDY_ACCESS_AUD,
+  // and STUDY_ADMIN_EMAIL (the pastor's sign-in address; everyone else is added on the People page).
   // Workers Logs: a short record of requests and errors, for diagnosing problems. It is kept here so a
   // publish from this file cannot switch it back off. Never write catalog, sermon or note content to logs.
   "observability": {

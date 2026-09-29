@@ -93,10 +93,21 @@ The app can save to a free Cloudflare D1 database, following the same pattern as
 
 1. Make sure the `name` in `wrangler.jsonc` matches the existing Cloudflare project for study.timothystl.org.
 2. In Zero Trust → Access → Applications, protect `study.timothystl.org` (self-hosted; policy limited to the people who should see the library). The site is otherwise public and the repository is public.
-3. In the project's Settings → Variables, set `STUDY_ACCESS_TEAM_DOMAIN` (the `…cloudflareaccess.com` team domain) and `STUDY_ACCESS_AUD` (the Access application's audience tag).
+3. In the project's Settings → Variables, set `STUDY_ACCESS_TEAM_DOMAIN` (the `…cloudflareaccess.com` team domain), `STUDY_ACCESS_AUD` (the Access application's audience tag) and `STUDY_ADMIN_EMAIL` (the pastor's sign-in address; without it the API refuses everyone, so set it before deploying).
 4. Deploy. The D1 database `timothy-study-db` was created in the dashboard and is referenced by ID in `wrangler.jsonc`; the worker creates its tables on first use.
 
 The first device to open the app after that is offered **Save this library to the shared library**; later devices adopt it. D1 keeps 30 days of point-in-time recovery; **Export backup** remains the private off-Cloudflare copy. Local runs use `npx wrangler dev` with `STUDY_DEV_NO_AUTH=1` in an ignored `.dev.vars`. Free-tier limits (5 GB, 100,000 writes a day) are far above this use.
+
+### People and permissions
+
+The pastor (`STUDY_ADMIN_EMAIL`) is the administrator and always has every part of the study. **People** (in the menu, administrator only) adds other people, each with a **library of their own**: the same catalog kinds, kept as separate rows in the shared database (`records` and the manuscript tables carry an `owner`; the pastor's is `admin`). The administrator does not see their library and they do not see the administrator's.
+
+- **Parts to turn on or off:** Library (books, series, loans, wishlist, scanning), Sermons (catalog, manuscripts, review), Prayers, Devotions & Notes, Children's Messages. The choice is saved as soon as a box is ticked. Each part owns certain record kinds (`worker/sections.ts`), and the server checks that on every read and write, so hiding a menu item is never the only lock. Turning a part off hides what the person saved there and blocks saving more; it does not delete it, and turning it back on brings it back.
+- **Pause access** stops someone signing in to the study while keeping their library; **Restore access** undoes it. There is no delete-a-person button, so nothing can be lost by a misclick.
+- A new person starts with an empty library (no illustrative samples). Their browser keeps its own local copy under separate keys, so two people sharing one browser never see each other's.
+- **Two steps to let someone in:** add them on the People page, and add their email to the Access policy for study.timothystl.org in Cloudflare. Someone signed in but not added (or paused) sees a short message asking them to contact Andrew.
+- Upgrade: the first request after this change moves every existing row and manuscript to the pastor's library and rebuilds the manuscript search index from the saved text; nothing has to be done by hand, and the pastor's revision counter carries over unchanged.
+- Running locally with no shared server, everything is on and nothing is shared, as before.
 
 ## Sermons
 

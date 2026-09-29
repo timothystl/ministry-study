@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import {
   BookOpen,
   Bookmark,
@@ -22,6 +22,7 @@ import {
   HandHeart,
   Baby,
   NotebookPen,
+  UserCog,
 } from 'lucide-react'
 import {
   blankBook,
@@ -36,7 +37,9 @@ import {
   type Book,
   type Library,
 } from './lib/model'
-import { downloadJson, loadLibrary, STORAGE_KEY } from './lib/storage'
+import { downloadJson, loadLibrary, storageKey } from './lib/storage'
+import { can, type Me, type SectionKey } from './lib/me'
+import { kindsFor } from '../worker/sections'
 import { useSync } from './lib/useSync'
 import { SyncBanner } from './components/SyncBanner'
 import { BookCards, BookDetail } from './components/BookViews'
@@ -48,6 +51,7 @@ import { SermonCatalog } from './components/SermonCatalog'
 import { ScanBook } from './components/ScanBook'
 import { Prayers } from './components/Prayers'
 import { Notes } from './components/Notes'
+import { People } from './components/People'
 import { Dashboard, type QuickScope } from './components/Dashboard'
 import { ReadingTable, LoansTable } from './components/RecordsTable'
 import { Modal } from './components/Modal'
@@ -64,24 +68,31 @@ type Page =
   | 'Prayers'
   | 'Notes'
   | 'Children'
+  | 'People'
 type Browse = 'Topic' | 'Author' | 'Series' | 'Physical shelf'
+// Each page belongs to one part of the study; the pastor switches parts on or off for other people.
 const navigation = [
-  { name: 'Home', label: 'Search', icon: Search },
-  { name: 'Browse', label: 'Browse', icon: List },
-  { name: 'My Collection', label: 'My Collection', icon: BookOpen },
-  { name: 'Reading', label: 'Reading', icon: Bookmark },
-  { name: 'Loans', label: 'Loans', icon: Users },
-  { name: 'Wishlist', label: 'Wishlist', icon: Heart },
-  { name: 'Sermons', label: 'Sermons', icon: Mic },
-  { name: 'Prayers', label: 'Prayers', icon: HandHeart },
-  { name: 'Notes', label: 'Devotions & Notes', icon: NotebookPen },
-  { name: 'Children', label: 'Children’s Messages', icon: Baby },
-] as const
-export default function App() {
+  { name: 'Home', label: 'Search', icon: Search, part: 'library' },
+  { name: 'Browse', label: 'Browse', icon: List, part: 'library' },
+  { name: 'My Collection', label: 'My Collection', icon: BookOpen, part: 'library' },
+  { name: 'Reading', label: 'Reading', icon: Bookmark, part: 'library' },
+  { name: 'Loans', label: 'Loans', icon: Users, part: 'library' },
+  { name: 'Wishlist', label: 'Wishlist', icon: Heart, part: 'library' },
+  { name: 'Sermons', label: 'Sermons', icon: Mic, part: 'sermons' },
+  { name: 'Prayers', label: 'Prayers', icon: HandHeart, part: 'prayers' },
+  { name: 'Notes', label: 'Devotions & Notes', icon: NotebookPen, part: 'notes' },
+  { name: 'Children', label: 'Children’s Messages', icon: Baby, part: 'children' },
+] as const satisfies readonly { name: Page; label: string; icon: unknown; part: SectionKey }[]
+export default function App({ me }: { me: Me }) {
+  const allowed = (part: SectionKey) => can(me, part)
+  const pages = navigation.filter((n) => allowed(n.part))
+  const hasLibrary = allowed('library')
+  // Which kinds of record are saved to the shared database for this person (null: all of them).
+  const kinds = useMemo(() => (me.role === 'admin' ? null : kindsFor(me.sections)), [me])
   const [initial] = useState(loadLibrary),
     [library, setLibrary] = useState(initial.library),
     [error, setError] = useState(initial.error)
-  const [page, setPage] = useState<Page>('Home'),
+  const [page, setPage] = useState<Page>(pages[0]?.name ?? 'Home'),
     [query, setQuery] = useState(''),
     [menu, setMenu] = useState(false),
     [scope, setScope] = useState<QuickScope>('All')
@@ -117,14 +128,14 @@ export default function App() {
   const sharedAndSafe = () => sync.status === 'synced' || sync.status === 'saving'
   function commit(next: Library) {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+      localStorage.setItem(storageKey(), JSON.stringify(next))
       setLibrary(next)
       setError('')
       setNotice('Saved on this device')
       return true
     } catch {
       if (sharedAndSafe()) {
-        localStorage.removeItem(STORAGE_KEY)
+        localStorage.removeItem(storageKey())
         setLibrary(next)
         setError('')
         setNotice(
@@ -140,16 +151,16 @@ export default function App() {
   }
   const adoptShared = useCallback((next: Library) => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+      localStorage.setItem(storageKey(), JSON.stringify(next))
     } catch {
       // Too large for the browser's copy; the shared library still has everything.
-      localStorage.removeItem(STORAGE_KEY)
+      localStorage.removeItem(storageKey())
     }
     setLibrary(next)
     setError('')
     return true
   }, [])
-  const sync = useSync(library, adoptShared)
+  const sync = useSync(library, adoptShared, kinds)
   function navigate(next: Page) {
     setPage(next)
     setDetailId('')
@@ -419,7 +430,7 @@ export default function App() {
           </button>
         </div>
         <nav aria-label="Main navigation">
-          {navigation.map(({ name, label, icon: Icon }) => (
+          {pages.map(({ name, label, icon: Icon }) => (
             <button
               key={name}
               aria-current={
@@ -433,24 +444,38 @@ export default function App() {
               {name === 'Loans' && outCount > 0 && <b>{outCount}</b>}
             </button>
           ))}
-          <button
-            onClick={() => {
-              setScanOpen(true)
-              setMenu(false)
-            }}
-          >
-            <ScanBarcode size={19} />
-            <span>Scan a Book</span>
-          </button>
-          <button
-            onClick={() => {
-              setEditing(blankBook())
-              setMenu(false)
-            }}
-          >
-            <Plus size={19} />
-            <span>Add Book</span>
-          </button>
+          {me.role === 'admin' && !me.local && (
+            <button
+              aria-current={page === 'People' ? 'page' : undefined}
+              className={page === 'People' ? 'active' : ''}
+              onClick={() => navigate('People')}
+            >
+              <UserCog size={19} />
+              <span>People</span>
+            </button>
+          )}
+          {hasLibrary && (
+            <>
+              <button
+                onClick={() => {
+                  setScanOpen(true)
+                  setMenu(false)
+                }}
+              >
+                <ScanBarcode size={19} />
+                <span>Scan a Book</span>
+              </button>
+              <button
+                onClick={() => {
+                  setEditing(blankBook())
+                  setMenu(false)
+                }}
+              >
+                <Plus size={19} />
+                <span>Add Book</span>
+              </button>
+            </>
+          )}
           <button
             onClick={() => {
               setDataOpen(true)
@@ -464,9 +489,13 @@ export default function App() {
         <div className="sidebar-bottom">
           <UserCircle size={34} />
           <div>
-            <strong>Andrew</strong>
+            <strong>{me.name}</strong>
             <span>
-              {library.books.length.toLocaleString()} books{library.sample ? ' · Sample' : ''}
+              {hasLibrary
+                ? `${library.books.length.toLocaleString()} books${library.sample ? ' · Sample' : ''}`
+                : me.role === 'admin'
+                  ? 'Administrator'
+                  : 'Signed in'}
             </span>
           </div>
         </div>
@@ -503,7 +532,7 @@ export default function App() {
               <button
                 onClick={() =>
                   downloadJson(
-                    localStorage.getItem(STORAGE_KEY) || library,
+                    localStorage.getItem(storageKey()) || library,
                     'ministry-study-recovery.backup.json',
                   )
                 }
@@ -513,7 +542,16 @@ export default function App() {
               </button>
             </div>
           )}
-          {page === 'Sermons' ? (
+          {page === 'People' && me.role === 'admin' ? (
+            <People />
+          ) : !pages.length ? (
+            <section className="sermons">
+              <h1>Nothing turned on yet</h1>
+              <p className="muted">
+                Andrew hasn’t turned on any part of the study for you yet. Please check with him.
+              </p>
+            </section>
+          ) : page === 'Sermons' ? (
             <SermonCatalog library={library} onSave={commit} />
           ) : page === 'Prayers' ? (
             <Prayers library={library} onSave={commit} />
@@ -816,12 +854,15 @@ export default function App() {
         </main>
       </div>
       <nav className="mobile-bottom" aria-label="Mobile navigation">
-        {[
-          { label: 'Home', icon: Home, target: 'Home' },
-          { label: 'Search', icon: Search, target: 'Search' },
-          { label: 'Browse', icon: List, target: 'Browse' },
-          { label: 'Reading', icon: BookOpen, target: 'Reading' },
-        ].map(({ label, icon: Icon, target }) => (
+        {(hasLibrary
+          ? [
+              { label: 'Home', icon: Home, target: 'Home' },
+              { label: 'Search', icon: Search, target: 'Search' },
+              { label: 'Browse', icon: List, target: 'Browse' },
+              { label: 'Reading', icon: BookOpen, target: 'Reading' },
+            ]
+          : []
+        ).map(({ label, icon: Icon, target }) => (
           <button
             key={label}
             className={page === target && !detail ? 'active' : ''}

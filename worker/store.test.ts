@@ -9,14 +9,17 @@ describe('shared library storage', () => {
   it('starts empty and stores only what is sent', async () => {
     const db = fakeD1()
     expect(await readAll(db)).toEqual({ revision: 0, records: [] })
-    const result = await applyChanges(db, 0, { upserts: [rec('1'), rec('2')], deletes: [] })
+    const result = await applyChanges(db, 'admin', 0, {
+      upserts: [rec('1'), rec('2')],
+      deletes: [],
+    })
     expect(result).toEqual({ ok: true, revision: 1 })
     expect((await readAll(db)).records).toHaveLength(2)
   })
   it('updates and deletes records', async () => {
     const db = fakeD1()
-    await applyChanges(db, 0, { upserts: [rec('1'), rec('2')], deletes: [] })
-    await applyChanges(db, 1, {
+    await applyChanges(db, 'admin', 0, { upserts: [rec('1'), rec('2')], deletes: [] })
+    await applyChanges(db, 'admin', 1, {
       upserts: [rec('1', 'Changed')],
       deletes: [{ kind: 'book', id: '2' }],
     })
@@ -27,8 +30,8 @@ describe('shared library storage', () => {
   })
   it('refuses a save made from an out-of-date copy and changes nothing', async () => {
     const db = fakeD1()
-    await applyChanges(db, 0, { upserts: [rec('1')], deletes: [] })
-    const stale = await applyChanges(db, 0, {
+    await applyChanges(db, 'admin', 0, { upserts: [rec('1')], deletes: [] })
+    const stale = await applyChanges(db, 'admin', 0, {
       upserts: [rec('1', 'Old device'), rec('9')],
       deletes: [],
     })
@@ -83,5 +86,52 @@ describe('shared library API', () => {
     const env = { DB: fakeD1(), STUDY_DEV_NO_AUTH: '1' }
     const response = await call(env, '/api/changes', { method: 'POST', body: 'x=1' })
     expect(response.status).toBe(415)
+  })
+})
+
+describe('separate libraries for each person', () => {
+  it('keeps each person’s records and revision apart', async () => {
+    const db = fakeD1()
+    await applyChanges(db, 'admin', 0, { upserts: [rec('1', 'Pastor')], deletes: [] })
+    expect(
+      await applyChanges(db, 'guest@x.org', 0, { upserts: [rec('1', 'Guest')], deletes: [] }),
+    ).toEqual({ ok: true, revision: 1 })
+    const mine = await readAll(db, 'admin')
+    const theirs = await readAll(db, 'guest@x.org')
+    expect(mine.records.map((r) => r.data)).toEqual([JSON.stringify({ id: '1', title: 'Pastor' })])
+    expect(theirs.records.map((r) => r.data)).toEqual([JSON.stringify({ id: '1', title: 'Guest' })])
+    // Deleting the same id in one library never touches the other.
+    await applyChanges(db, 'guest@x.org', 1, { upserts: [], deletes: [{ kind: 'book', id: '1' }] })
+    expect((await readAll(db, 'admin')).records).toHaveLength(1)
+    expect((await readAll(db, 'guest@x.org')).records).toHaveLength(0)
+  })
+  it('returns only the kinds a person may use', async () => {
+    const db = fakeD1()
+    await applyChanges(db, 'g', 0, {
+      upserts: [rec('1'), { kind: 'sermon', id: 's', data: '{}' }],
+      deletes: [],
+    })
+    expect((await readAll(db, 'g', ['sermon'])).records.map((r) => r.kind)).toEqual(['sermon'])
+    expect((await readAll(db, 'g', null)).records).toHaveLength(2)
+  })
+  it('moves records saved before people were added to the pastor', async () => {
+    const db = fakeD1()
+    await db.batch([
+      db.prepare(
+        `CREATE TABLE records (kind TEXT NOT NULL, id TEXT NOT NULL, data TEXT NOT NULL,
+          updated_at TEXT NOT NULL, PRIMARY KEY (kind, id))`,
+      ),
+      db.prepare(`CREATE TABLE meta (key TEXT PRIMARY KEY, value INTEGER NOT NULL)`),
+      db.prepare(`INSERT INTO meta (key, value) VALUES ('revision', 7)`),
+      db.prepare(`INSERT INTO records VALUES ('book', 'old', '{"id":"old"}', 'then')`),
+    ])
+    const found = await readAll(db, 'admin')
+    expect(found.revision).toBe(7)
+    expect(found.records).toEqual([{ kind: 'book', id: 'old', data: '{"id":"old"}' }])
+    expect((await readAll(db, 'guest@x.org')).records).toEqual([])
+    // And the pastor can keep saving from the revision they already had.
+    expect((await applyChanges(db, 'admin', 7, { upserts: [rec('new')], deletes: [] })).ok).toBe(
+      true,
+    )
   })
 })
