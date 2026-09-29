@@ -74,3 +74,7 @@ Find ISBN and cover is now one lookup; Scan a Book reads barcodes (camera, or ty
 ## Latest update: sermon manuscripts
 
 Full manuscript text can be saved, searched and downloaded (README → Sermon manuscripts). Next: an export of the catalog and a review import that shows old and new values side by side, so an outside review (such as a Cowork pass over the manuscripts) can propose better titles, passages, themes and structures for approval; then occasional sermons, devotions, prayers and notes, and a visual library.
+
+## Latest update: catalog export and review import
+
+Sermons → Review builds a package (catalog.csv, manuscripts, structures, instructions) for an outside reader and approves what it returns field by field. Next: occasional sermons (funerals, weddings, ordinations), devotions, prayers and notes (the earlier prayer catalog still needs to be brought in), and a visual library.

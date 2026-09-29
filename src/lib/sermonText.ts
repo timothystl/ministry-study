@@ -176,35 +176,40 @@ const safeName = (name: string) =>
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, 120) || 'sermon'
+// Every saved manuscript, fetched a page at a time.
+export async function fetchAllManuscripts(onProgress: (done: number) => void) {
+  const all: { id: string; text: string; fileName: string }[] = []
+  let after = ''
+  for (;;) {
+    const page = await call<{ id: string; text: string; fileName: string }[]>(
+      `/api/sermon-export?${new URLSearchParams({ after })}`,
+    )
+    if (!page?.length) return all
+    all.push(...page)
+    after = page[page.length - 1].id
+    onProgress(all.length)
+  }
+}
 export async function buildBackup(
   sermons: Sermon[],
   onProgress: (done: number) => void,
 ): Promise<Uint8Array> {
   const byId = new Map(sermons.map((s) => [s.id, s]))
   const files: Record<string, Uint8Array> = {}
-  let after = ''
-  let done = 0
-  for (;;) {
-    const page = await call<{ id: string; text: string; fileName: string }[]>(
-      `/api/sermon-export?${new URLSearchParams({ after })}`,
+  const all = await fetchAllManuscripts(onProgress)
+  if (!all.length) throw new Error('There are no saved manuscripts to download.')
+  for (const item of all) {
+    const sermon = byId.get(item.id)
+    const stem = safeName(
+      (item.fileName || sermon?.title || item.id).replace(/\.[a-z0-9]{2,4}$/i, ''),
     )
-    if (!page?.length) break
-    for (const item of page) {
-      const sermon = byId.get(item.id)
-      const stem = safeName(
-        (item.fileName || sermon?.title || item.id).replace(/\.[a-z0-9]{2,4}$/i, ''),
-      )
-      let name = `${stem}.txt`
-      for (let n = 2; files[name]; n++) name = `${stem} (${n}).txt`
-      files[name] = strToU8(item.text)
-    }
-    after = page[page.length - 1].id
-    done += page.length
-    onProgress(done)
+    let name = `${stem}.txt`
+    for (let n = 2; files[name]; n++) name = `${stem} (${n}).txt`
+    files[name] = strToU8(item.text)
   }
-  if (!done) throw new Error('There are no saved manuscripts to download.')
   return zipSync(files)
 }
+export const safeFileName = safeName
 export function downloadBlob(
   data: Uint8Array<ArrayBuffer> | Uint8Array,
   name: string,

@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { ArrowLeft, ExternalLink, FileText, Plus, Search, Upload, X } from 'lucide-react'
+import {
+  ArrowLeft,
+  ClipboardCheck,
+  ExternalLink,
+  FileText,
+  Plus,
+  Search,
+  Upload,
+  X,
+} from 'lucide-react'
 import type { Library } from '../lib/model'
 import {
   blankSermon,
@@ -23,6 +32,7 @@ import {
 } from '../lib/sermonImport'
 import { searchSermonText } from '../lib/sermonText'
 import { ManuscriptSection, SermonTextManager } from './SermonText'
+import { SermonReview } from './SermonReview'
 import { Modal } from './Modal'
 
 const dateLabel = (date: string) =>
@@ -540,6 +550,18 @@ function SermonDetail({
           </>
         )}
       </dl>
+      {(sermon.formerTitles.length > 0 || sermon.reviewNote) && (
+        <section className="detail-section">
+          <h3>From a review</h3>
+          {sermon.formerTitles.length > 0 && (
+            <p>
+              Former {sermon.formerTitles.length === 1 ? 'title' : 'titles'}:{' '}
+              {sermon.formerTitles.join('; ')}
+            </p>
+          )}
+          {sermon.reviewNote && <p className="muted">{sermon.reviewNote}</p>}
+        </section>
+      )}
       {sermon.summary && (
         <section className="detail-section">
           <h3>Summary</h3>
@@ -643,6 +665,7 @@ export function SermonCatalog({
   const [editing, setEditing] = useState<Sermon | null>(null)
   const [importing, setImporting] = useState(false)
   const [manuscripts, setManuscripts] = useState(false)
+  const [reviewing, setReviewing] = useState(false)
   // Bumped when manuscripts may have changed, so the manuscript search is run again.
   const [epoch, setEpoch] = useState(0)
   const [textResult, setTextResult] = useState<{
@@ -761,6 +784,9 @@ export function SermonCatalog({
               </button>
               <button onClick={() => setManuscripts(true)}>
                 <FileText size={16} /> Manuscripts
+              </button>
+              <button onClick={() => setReviewing(true)}>
+                <ClipboardCheck size={16} /> Review
               </button>
             </div>
           </header>
@@ -888,6 +914,9 @@ export function SermonCatalog({
             return false
           }}
         />
+      )}
+      {reviewing && (
+        <SermonReview library={library} onSave={onSave} onClose={() => setReviewing(false)} />
       )}
       {manuscripts && (
         <SermonTextManager

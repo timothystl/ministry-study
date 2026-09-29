@@ -2446,3 +2446,54 @@ mark {
   color: #3b4f63;
   overflow-wrap: anywhere;
 }
+
+.import-review ul.review-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 55vh;
+  overflow: auto;
+}
+.review-item {
+  background: #fff;
+  border: 1px solid #dfe5eb;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.review-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+.review-head button {
+  margin-left: auto;
+  font-size: 12px;
+  padding: 4px 8px;
+}
+.review-change {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 8px;
+  overflow-wrap: anywhere;
+}
+.review-change input {
+  margin-top: 3px;
+}
+.review-from,
+.review-to {
+  display: block;
+  margin-top: 2px;
+}
+.review-from {
+  color: #8a3b3b;
+  text-decoration: line-through;
+}
+.review-to {
+  color: #1f6f4a;
+}
