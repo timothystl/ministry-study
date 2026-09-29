@@ -93,6 +93,8 @@ export function sampleLibrary(): Library {
     series: [],
     loans: [],
     sermons: [],
+    prayers: [],
+    prayerSets: [],
     sample: true,
     recentIds: books.map((b) => b.id),
   }

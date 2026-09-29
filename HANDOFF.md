@@ -78,3 +78,7 @@ Full manuscript text can be saved, searched and downloaded (README → Sermon ma
 ## Latest update: catalog export and review import
 
 Sermons → Review builds a package (catalog.csv, manuscripts, structures, instructions) for an outside reader and approves what it returns field by field. Next: occasional sermons (funerals, weddings, ordinations), devotions, prayers and notes (the earlier prayer catalog still needs to be brought in), and a visual library.
+
+## Latest update: prayers
+
+Prayers is built (README → Prayers): library, import of the Prayers of the Church builder file, a builder with names and a live preview, and saved services. Next: occasional sermons (funerals, weddings, ordinations) and devotions/sermon notes in the same family, then a visual library.

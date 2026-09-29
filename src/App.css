@@ -2497,3 +2497,48 @@ mark {
 .review-to {
   color: #1f6f4a;
 }
+
+.prayer-card {
+  background: #fff;
+  border: 1px solid #dfe5eb;
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.prayer-text {
+  margin: 0;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+.prayer-build {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.prayer-preview {
+  max-height: 60vh;
+}
+@media (max-width: 900px) {
+  .prayer-build {
+    grid-template-columns: 1fr;
+  }
+}
+
+.review-change input[type='checkbox'] {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+}
+.prayer-build > section:last-child {
+  position: sticky;
+  top: 12px;
+}
+@media (max-width: 900px) {
+  .prayer-build > section:last-child {
+    position: static;
+  }
+}

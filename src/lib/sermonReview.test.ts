@@ -11,6 +11,8 @@ const library = (sermons: Sermon[]): Library => ({
   series: [],
   loans: [],
   sermons,
+  prayers: [],
+  prayerSets: [],
   sample: false,
 })
 const a = sermon({

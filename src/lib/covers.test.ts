@@ -52,6 +52,8 @@ describe('physical verification', () => {
     series: [],
     loans: [],
     sermons: [],
+    prayers: [],
+    prayerSets: [],
   })
   it('moves forward in shelf order, wraps, and skips confirmed copies', () => {
     const books = ['1', '2', '3'].map((position) => ({

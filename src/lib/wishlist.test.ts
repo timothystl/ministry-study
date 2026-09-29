@@ -7,6 +7,8 @@ const empty = (): Library => ({
   series: [],
   loans: [],
   sermons: [],
+  prayers: [],
+  prayerSets: [],
   sample: false,
 })
 

@@ -25,7 +25,7 @@ Borrowed reading sources can be recorded without ownership; outgoing loans are t
 
 ## Explicitly deferred
 
-Research a Text, Scripture reading/languages/patterns, hymn/music, teaching resources, devotions/prayers, visual library, external-resource discovery, EPUB/PDF reading, full-text indexing, provider APIs, automatic cover enrichment, spreadsheet/photo import and reconciliation, and automatic organization recommendations.
+Research a Text, Scripture reading/languages/patterns, hymn/music, teaching resources, visual library, external-resource discovery, EPUB/PDF reading, full-text indexing, provider APIs, automatic cover enrichment, spreadsheet/photo import and reconciliation, and automatic organization recommendations.
 
 ## Source review
 
@@ -62,3 +62,7 @@ Full text is not part of the library payload. D1 holds `sermon_text (sermon_id, 
 ## Sermon review
 
 `reviewNote` (confidence and evidence from an approved review) and `formerTitles` (titles replaced by a review) are set only when a change is approved. `scriptureSource` and `structureSource` become `Review (approved)` when those fields change through a review. A review row matches a sermon by `Sermon ID`, or by file number when that number is unique; unmatched rows are reported. Blank cells and values equal to the current one are ignored.
+
+## Prayers
+
+`Library.prayers` (kind `prayer`) holds `Prayer` records: `type` is Bidding, Sermon starter, Prayer or Devotion; biddings carry `category`, `categoryKey` (`sick`, `grieving` and `birthdays` take names when building) and `categoryNote`. Text never includes the closing response, which `buildPrayers` adds once. `Library.prayerSets` (kind `prayerset`) holds built services: the inputs, and the built text with names only when `namesKept`. Restoring an older backup keeps existing prayers.

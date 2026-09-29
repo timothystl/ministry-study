@@ -9,6 +9,8 @@ const empty = (): Library => ({
   loans: [],
   series: [],
   sermons: [],
+  prayers: [],
+  prayerSets: [],
   sample: false,
 })
 describe('Amazon wishlist imports', () => {

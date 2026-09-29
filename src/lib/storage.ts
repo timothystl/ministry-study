@@ -8,6 +8,7 @@ import {
   verificationStatuses,
   type Library,
 } from './model'
+import { prayerTypes } from './prayers'
 import { sampleLibrary } from './seed'
 const location = z.object({
   room: z.string(),
@@ -103,6 +104,34 @@ const sermon = z.object({
   source: z.string(),
   updatedAt: z.string(),
 })
+const prayer = z.object({
+  id: z.string().min(1),
+  title: z.string(),
+  text: z.string().min(1),
+  type: z.enum(prayerTypes),
+  category: z.string(),
+  categoryKey: z.string(),
+  categoryNote: z.string(),
+  tags: z.array(z.string()),
+  notes: z.string(),
+  source: z.string(),
+  sourceId: z.string(),
+  updatedAt: z.string(),
+})
+const prayerSet = z.object({
+  id: z.string().min(1),
+  date: z.string(),
+  sunday: z.string(),
+  scripture: z.string(),
+  sermonId: z.string(),
+  selections: z.array(z.object({ categoryKey: z.string(), prayerId: z.string() })),
+  names: z.object({ sick: z.string(), grieving: z.string(), birthdays: z.string() }),
+  namesKept: z.boolean(),
+  other: z.string(),
+  petition: z.string(),
+  text: z.string(),
+  updatedAt: z.string(),
+})
 const schema = z.object({
   version: z.literal(1),
   recentIds: z.array(z.string()).optional(),
@@ -120,12 +149,21 @@ const schema = z.object({
     }),
   ),
   sermons: z.array(sermon).default([]),
+  prayers: z.array(prayer).default([]),
+  prayerSets: z.array(prayerSet).default([]),
   sample: z.boolean(),
 })
 export const STORAGE_KEY = 'ministry-study.library.v1'
 export function parseBackup(input: unknown): Library {
   const data = schema.parse(input)
-  for (const items of [data.books, data.series, data.loans, data.sermons])
+  for (const items of [
+    data.books,
+    data.series,
+    data.loans,
+    data.sermons,
+    data.prayers,
+    data.prayerSets,
+  ])
     if (new Set(items.map((x) => x.id)).size !== items.length)
       throw new Error('Duplicate record IDs in backup.')
   const active = new Set<string>()
@@ -153,7 +191,16 @@ export function loadLibrary(): { library: Library; error: string } {
     return { library: raw ? parseBackup(JSON.parse(raw)) : sampleLibrary(), error: '' }
   } catch {
     return {
-      library: { version: 1, books: [], series: [], loans: [], sermons: [], sample: false },
+      library: {
+        version: 1,
+        books: [],
+        series: [],
+        loans: [],
+        sermons: [],
+        prayers: [],
+        prayerSets: [],
+        sample: false,
+      },
       error:
         'Saved data could not be opened. It has not been overwritten. Export the stored data to recover it, or restore a valid backup.',
     }
