@@ -95,6 +95,8 @@ export function sampleLibrary(): Library {
     sermons: [],
     prayers: [],
     prayerSets: [],
+    hymns: [],
+    liturgies: [],
     notes: [],
     sample: true,
     recentIds: books.map((b) => b.id),

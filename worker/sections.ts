@@ -7,6 +7,11 @@ export const SECTIONS = [
   { key: 'prayers', label: 'Prayers', detail: 'Prayer library, builder, saved services' },
   { key: 'notes', label: 'Devotions & Notes', detail: 'Devotions and sermon notes' },
   { key: 'children', label: 'Children’s Messages', detail: 'Pre-K and chapel messages' },
+  {
+    key: 'hymns',
+    label: 'Hymns & Liturgies',
+    detail: 'Hymn catalog, liturgies, attached sheet music',
+  },
 ] as const
 export type SectionKey = (typeof SECTIONS)[number]['key']
 export const SECTION_KEYS: string[] = SECTIONS.map((s) => s.key)
@@ -17,6 +22,7 @@ const KINDS: Record<SectionKey, string[]> = {
   prayers: ['prayer', 'prayerset'],
   notes: ['note'],
   children: ['note'],
+  hymns: ['hymn', 'liturgy'],
 }
 export function cleanSections(input: unknown): SectionKey[] {
   if (!Array.isArray(input)) return []

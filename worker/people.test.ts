@@ -8,6 +8,7 @@ describe('parts of the app', () => {
   it('maps parts to the record kinds they own', () => {
     expect(kindsFor(['library'])).toEqual(['book', 'series', 'loan'])
     expect(kindsFor(['notes', 'children'])).toEqual(['note'])
+    expect(kindsFor(['hymns'])).toEqual(['hymn', 'liturgy'])
     expect(kindsFor([])).toEqual([])
     expect(cleanSections(['sermons', 'nonsense', 'library'])).toEqual(['library', 'sermons'])
   })
@@ -136,6 +137,7 @@ describe('people and permissions over the API', () => {
     expect((await save(guest, [book], 1)).status).toBe(403)
     expect((await guest('/api/sermon-text')).status).toBe(403)
     expect((await guest('/api/sermon-search?q=grace')).status).toBe(403)
+    expect((await guest('/api/attachments/abcdefgh')).status).toBe(403)
     // The pastor's library has none of it, and the pastor's own save does not reach the guest.
     expect(await (await pastor('/api/library')).json()).toEqual({ revision: 0, records: [] })
     expect((await save(pastor, [book])).status).toBe(200)

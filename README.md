@@ -102,7 +102,7 @@ The first device to open the app after that is offered **Save this library to th
 
 The pastor (`STUDY_ADMIN_EMAIL`) is the administrator and always has every part of the study. **People** (in the menu, administrator only) adds other people, each with a **library of their own**: the same catalog kinds, kept as separate rows in the shared database (`records` and the manuscript tables carry an `owner`; the pastor's is `admin`). The administrator does not see their library and they do not see the administrator's.
 
-- **Parts to turn on or off:** Library (books, series, loans, wishlist, scanning), Sermons (catalog, manuscripts, review), Prayers, Devotions & Notes, Children's Messages. The choice is saved as soon as a box is ticked. Each part owns certain record kinds (`worker/sections.ts`), and the server checks that on every read and write, so hiding a menu item is never the only lock. Turning a part off hides what the person saved there and blocks saving more; it does not delete it, and turning it back on brings it back.
+- **Parts to turn on or off:** Library (books, series, loans, wishlist, scanning), Sermons (catalog, manuscripts, review), Prayers, Devotions & Notes, Children's Messages, Hymns & Liturgies (the hymn catalog, liturgies and attached files). The choice is saved as soon as a box is ticked. Each part owns certain record kinds (`worker/sections.ts`), and the server checks that on every read and write, so hiding a menu item is never the only lock. Turning a part off hides what the person saved there and blocks saving more; it does not delete it, and turning it back on brings it back.
 - **Pause access** stops someone signing in to the study while keeping their library; **Restore access** undoes it. There is no delete-a-person button, so nothing can be lost by a misclick.
 - A new person starts with an empty library (no illustrative samples). Their browser keeps its own local copy under separate keys, so two people sharing one browser never see each other's.
 - **Two steps to let someone in:** add them on the People page, and add their email to the Access policy for study.timothystl.org in Cloudflare. Someone signed in but not added (or paused) sees a short message asking them to contact Andrew.
@@ -174,3 +174,29 @@ Its own page for pre-K children's messages and grade school chapel talks (two au
 the same records as Devotions & Notes, so they sync, back up, search by words or passage, and turn
 up on a sermon's page when they share its passage. "Import files" reads a folder of Word or text
 files and takes the date and passage from each file name. The side menu now scrolls on small screens.
+
+## Hymns and Liturgies
+
+**Hymns** keeps, for each hymn: title, first line, tune, composer, lyricist, arranger, meter, Bible
+references, year, key, hymnal numbers, seasons and parts of the service it is used for, themes,
+copyright, and any words you type in (keep only public-domain words or ones you may keep). It also
+records where the music is: Finale files, sheet music, slides, recordings (a web address, or a
+path in your files) and links to where it is found online. Every hymn has a link that searches
+Hymnary.org (Hymnary blocks automated lookups, so it opens in its own tab).
+- **RUF Hymnbook** adds the ~175 hymns of igracemusic.com/hymnbook with their credits and links to
+  the lead sheet, overhead lyrics, chord chart and demo. Only titles, credits and links are kept.
+- **Import list** reads a spreadsheet saved as CSV (Title, First line, Tune, Composer, Lyricist,
+  Meter, Scripture, Year, Key, Hymnal, Usage, Themes, Finale, Sheet music, Slides, Link).
+- **Attach files** matches a folder of files (Finale, PDF, PowerPoint, audio) to hymns by name and
+  records where each one is. Files that match nothing become new hymns. Nothing is uploaded.
+
+**Liturgies** keep a service together: the hymns, readings, prayers and liturgy texts in order,
+plus the slides (PowerPoint) or order of service. A hymn's page lists the liturgies that use it.
+Both sync to the shared library and are included in backups.
+
+### Photos and PDFs on a hymn
+Open a hymn and choose "Attach photos or PDFs" (or "Take a photo" on a phone) to keep sheet music,
+a scanned hymnal page or a lead sheet with it. Photos over 1 MB are shrunk in the browser; a PDF can
+be up to 6 MB. Files are stored in the shared library's database, so they need the shared library
+(they are not in the JSON backup download; Cloudflare's own database backups cover them). Only
+photos and PDFs are accepted, and the file's contents are checked, not just its name.

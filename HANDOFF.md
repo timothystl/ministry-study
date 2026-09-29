@@ -111,5 +111,18 @@ File numbers with a letter (F012, W003, O001) are now read like the archive's nu
 New page over the notes records (two audiences). Next: hymns. Ideas: props/objects as a field,
 grade level, a "reuse next year" flag.
 
+## Latest update: hymns and liturgies
+Hymns catalog (RUF Hymnbook index, CSV import, attach files from a folder) and Liturgies.
+Not done: Hymnary.org lookups (it blocks automated requests, so each hymn links to a Hymnary
+search); reading a hymn's details from Finale files; PowerPoint contents. Ideas: hymn use history
+by Sunday, suggested hymns for a sermon passage, LSB numbers import.
+
+## Latest update: photos and PDFs on hymns
+Attachments stored in D1 (Access-protected). If large uploads fail on the Workers free plan (10 ms
+CPU per request), lower MAX_ATTACHMENT or move files to R2. Not in the JSON backup download.
+Cardiphonia's blog is reachable (archive); its Retuned Hymnal database (retunedhymnal.org) and
+cardiphonia.org were not reachable from the build environment, so hymns from there are added by
+link or by attaching downloaded lead sheets.
+
 ## Latest update: people and permissions
 A second (and further) person can now use the study with a private library of their own; Andrew stays administrator and switches parts on or off per person on People (README → People and permissions). **Before deploying, set `STUDY_ADMIN_EMAIL` in Cloudflare (Settings → Variables) to Andrew's sign-in address, or the API refuses everyone.** To let someone in: add them on People and add their email to the Access policy. The first request after deploy migrates existing rows to the pastor's library. Ideas for later: an option to copy a resource between libraries, and per-person backups.

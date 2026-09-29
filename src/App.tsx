@@ -21,6 +21,8 @@ import {
   ScanBarcode,
   HandHeart,
   Baby,
+  Music,
+  ScrollText,
   NotebookPen,
   UserCog,
 } from 'lucide-react'
@@ -52,6 +54,8 @@ import { ScanBook } from './components/ScanBook'
 import { Prayers } from './components/Prayers'
 import { Notes } from './components/Notes'
 import { People } from './components/People'
+import { Hymns } from './components/Hymns'
+import { Liturgies } from './components/Liturgies'
 import { Dashboard, type QuickScope } from './components/Dashboard'
 import { ReadingTable, LoansTable } from './components/RecordsTable'
 import { Modal } from './components/Modal'
@@ -69,6 +73,8 @@ type Page =
   | 'Notes'
   | 'Children'
   | 'People'
+  | 'Hymns'
+  | 'Liturgies'
 type Browse = 'Topic' | 'Author' | 'Series' | 'Physical shelf'
 // Each page belongs to one part of the study; the pastor switches parts on or off for other people.
 const navigation = [
@@ -82,6 +88,8 @@ const navigation = [
   { name: 'Prayers', label: 'Prayers', icon: HandHeart, part: 'prayers' },
   { name: 'Notes', label: 'Devotions & Notes', icon: NotebookPen, part: 'notes' },
   { name: 'Children', label: 'Children’s Messages', icon: Baby, part: 'children' },
+  { name: 'Hymns', label: 'Hymns', icon: Music, part: 'hymns' },
+  { name: 'Liturgies', label: 'Liturgies', icon: ScrollText, part: 'hymns' },
 ] as const satisfies readonly { name: Page; label: string; icon: unknown; part: SectionKey }[]
 export default function App({ me }: { me: Me }) {
   const allowed = (part: SectionKey) => can(me, part)
@@ -92,6 +100,8 @@ export default function App({ me }: { me: Me }) {
   const [initial] = useState(loadLibrary),
     [library, setLibrary] = useState(initial.library),
     [error, setError] = useState(initial.error)
+  const [liturgyId, setLiturgyId] = useState(''),
+    [hymnId, setHymnId] = useState('')
   const [page, setPage] = useState<Page>(pages[0]?.name ?? 'Home'),
     [query, setQuery] = useState(''),
     [menu, setMenu] = useState(false),
@@ -557,6 +567,28 @@ export default function App({ me }: { me: Me }) {
             <Prayers library={library} onSave={commit} />
           ) : page === 'Notes' ? (
             <Notes library={library} onSave={commit} />
+          ) : page === 'Hymns' ? (
+            <Hymns
+              library={library}
+              onSave={commit}
+              openId={hymnId}
+              setOpenId={setHymnId}
+              onOpenLiturgy={(id) => {
+                setLiturgyId(id)
+                setPage('Liturgies')
+              }}
+            />
+          ) : page === 'Liturgies' ? (
+            <Liturgies
+              library={library}
+              onSave={commit}
+              openId={liturgyId}
+              setOpenId={setLiturgyId}
+              onOpenHymn={(id) => {
+                setHymnId(id)
+                setPage('Hymns')
+              }}
+            />
           ) : page === 'Children' ? (
             <Notes library={library} onSave={commit} kidsPage />
           ) : detail ? (
