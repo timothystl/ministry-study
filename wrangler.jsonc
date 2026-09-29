@@ -19,4 +19,9 @@
     },
   ],
   // Set in the Cloudflare dashboard (Settings → Variables): STUDY_ACCESS_TEAM_DOMAIN, STUDY_ACCESS_AUD
+  // Workers Logs: a short record of requests and errors, for diagnosing problems. It is kept here so a
+  // publish from this file cannot switch it back off. Never write catalog, sermon or note content to logs.
+  "observability": {
+    "enabled": true,
+  },
 }
