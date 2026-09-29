@@ -103,3 +103,6 @@ Funerals, weddings and ordinations: For field, Kind of service filter, private-b
 Devotions & Notes page (search, kinds, import, notes on each sermon's page). Add Book and the open
 book page both have a barcode scan. Next: children's messages, then hymns; still waiting on the
 funeral/wedding/ordination list.
+
+## Latest update: funeral, wedding and ordination list
+File numbers with a letter (F012, W003, O001) are now read like the archive's numbers. A wedding's occasion now decides its kind, so "Christ Memorial" no longer makes it a funeral. The list itself contains family names and lives outside the repository.
