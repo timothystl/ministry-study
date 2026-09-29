@@ -76,3 +76,7 @@ Full text is not part of the library payload. D1 holds `sermon_text (sermon_id, 
 `notes` records (kind `note`): id, title, kind (Devotion, Sermon note, Illustration, Idea, Study
 note), body (max 30,000 characters), scripture, date, sermonId, tags, source, updatedAt. Older
 backups without `notes` restore without erasing notes already in the library.
+
+## Children's messages
+Stored as `notes` with kind "Children's message" or "Chapel message". The Devotions & Notes page
+shows the other kinds; Children's Messages shows these two.

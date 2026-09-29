@@ -20,6 +20,7 @@ import {
   Mic,
   ScanBarcode,
   HandHeart,
+  Baby,
   NotebookPen,
 } from 'lucide-react'
 import {
@@ -62,6 +63,7 @@ type Page =
   | 'Sermons'
   | 'Prayers'
   | 'Notes'
+  | 'Children'
 type Browse = 'Topic' | 'Author' | 'Series' | 'Physical shelf'
 const navigation = [
   { name: 'Home', label: 'Search', icon: Search },
@@ -73,6 +75,7 @@ const navigation = [
   { name: 'Sermons', label: 'Sermons', icon: Mic },
   { name: 'Prayers', label: 'Prayers', icon: HandHeart },
   { name: 'Notes', label: 'Devotions & Notes', icon: NotebookPen },
+  { name: 'Children', label: 'Children’s Messages', icon: Baby },
 ] as const
 export default function App() {
   const [initial] = useState(loadLibrary),
@@ -516,6 +519,8 @@ export default function App() {
             <Prayers library={library} onSave={commit} />
           ) : page === 'Notes' ? (
             <Notes library={library} onSave={commit} />
+          ) : page === 'Children' ? (
+            <Notes library={library} onSave={commit} kidsPage />
           ) : detail ? (
             <BookDetail
               key={detail.id}

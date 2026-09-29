@@ -6,6 +6,9 @@ import {
   deleteNote,
   MAX_NOTE,
   noteFromFile,
+  childrenKinds,
+  devotionKinds,
+  isChildrensKind,
   noteKinds,
   saveNote,
   searchNotes,
@@ -29,11 +32,13 @@ export function NoteEditor({
   library,
   onSave,
   onClose,
+  kinds = noteKinds,
 }: {
   note: Note
   library: Library
   onSave: (library: Library) => boolean
   onClose: () => void
+  kinds?: readonly Note['kind'][]
 }) {
   const [draft, setDraft] = useState(note)
   const [tags, setTags] = useState(note.tags.join('; '))
@@ -49,7 +54,17 @@ export function NoteEditor({
     }
   }
   return (
-    <Modal title={note.updatedAt ? 'Edit note' : 'Add a devotion or note'} onClose={onClose} wide>
+    <Modal
+      title={
+        note.updatedAt
+          ? 'Edit'
+          : isChildrensKind(note.kind)
+            ? 'Add a children’s message'
+            : 'Add a devotion or note'
+      }
+      onClose={onClose}
+      wide
+    >
       <form onSubmit={submit} className="form-grid">
         <label>
           Title
@@ -64,7 +79,7 @@ export function NoteEditor({
             value={draft.kind}
             onChange={(e) => setDraft({ ...draft, kind: e.target.value as Note['kind'] })}
           >
-            {noteKinds.map((k) => (
+            {kinds.map((k) => (
               <option key={k}>{k}</option>
             ))}
           </select>
@@ -131,12 +146,16 @@ function NoteImport({
   library,
   onSave,
   onClose,
+  kinds,
+  kidsPage,
 }: {
   library: Library
   onSave: (l: Library) => boolean
   onClose: () => void
+  kinds: readonly Note['kind'][]
+  kidsPage: boolean
 }) {
-  const [kind, setKind] = useState<Note['kind']>('Devotion')
+  const [kind, setKind] = useState<Note['kind']>(kinds[0])
   const [ready, setReady] = useState<Note[]>([])
   const [skipped, setSkipped] = useState<string[]>([])
   const [error, setError] = useState('')
@@ -165,7 +184,13 @@ function NoteImport({
     setSkipped(bad)
   }
   return (
-    <Modal title="Import devotions or notes from files" onClose={onClose} wide>
+    <Modal
+      title={
+        kidsPage ? 'Import children’s messages from files' : 'Import devotions or notes from files'
+      }
+      onClose={onClose}
+      wide
+    >
       <p>
         Choose Word, text or Markdown files; each file becomes one note. A date and a passage at the
         start of a file name (such as “2025-12-03 Isa 64 Waiting.docx”) fill in the date and
@@ -181,7 +206,7 @@ function NoteImport({
             setReady([])
           }}
         >
-          {noteKinds.map((k) => (
+          {kinds.map((k) => (
             <option key={k}>{k}</option>
           ))}
         </select>
@@ -254,7 +279,7 @@ function NoteImport({
               else setError('Could not save the notes.')
             }}
           >
-            Import {ready.length} notes
+            Import {ready.length} {kidsPage ? 'messages' : 'notes'}
           </button>
         </section>
       )}
@@ -262,13 +287,23 @@ function NoteImport({
   )
 }
 
+// The same records serve two pages: devotions and working notes, and children's messages and
+// chapel talks. Each page shows only its own kinds.
 export function Notes({
   library,
   onSave,
+  kidsPage = false,
 }: {
   library: Library
   onSave: (library: Library) => boolean
+  kidsPage?: boolean
 }) {
+  const kinds = kidsPage ? childrenKinds : devotionKinds
+  const notes = useMemo(
+    () => library.notes.filter((n) => isChildrensKind(n.kind) === kidsPage),
+    [library.notes, kidsPage],
+  )
+  const noun = kidsPage ? 'messages' : 'notes'
   const [query, setQuery] = useState('')
   const [kind, setKind] = useState('')
   const [openId, setOpenId] = useState('')
@@ -276,11 +311,14 @@ export function Notes({
   const [importing, setImporting] = useState(false)
   const [confirm, setConfirm] = useState(false)
   const [copied, setCopied] = useState(false)
-  const hits = useMemo(() => searchNotes(library.notes, query, kind), [library.notes, query, kind])
+  const hits = useMemo(() => searchNotes(notes, query, kind), [notes, query, kind])
   const open = library.notes.find((n) => n.id === openId)
   const sermon = open && library.sermons.find((s) => s.id === open.sermonId)
   return (
-    <section className="sermons" aria-label="Devotions and notes">
+    <section
+      className="sermons"
+      aria-label={kidsPage ? 'Children’s messages' : 'Devotions and notes'}
+    >
       {open ? (
         <article className="sermon-detail">
           <button
@@ -289,7 +327,7 @@ export function Notes({
               setConfirm(false)
             }}
           >
-            All notes
+            {kidsPage ? 'All messages' : 'All notes'}
           </button>
           <h1>{open.title}</h1>
           <p className="muted">{summary(open) || 'No date or passage'}</p>
@@ -326,16 +364,18 @@ export function Notes({
         <>
           <header className="sermons-head">
             <div>
-              <h1>Devotions &amp; Notes</h1>
+              <h1>{kidsPage ? 'Children’s Messages' : 'Devotions & Notes'}</h1>
               <p className="muted">
-                {library.notes.length
-                  ? `${library.notes.length.toLocaleString()} notes`
-                  : 'Council and midweek devotions, sermon-preparation notes, illustrations and ideas.'}
+                {notes.length
+                  ? `${notes.length.toLocaleString()} ${noun}`
+                  : kidsPage
+                    ? 'Pre-K children’s messages and grade school chapel talks.'
+                    : 'Council and midweek devotions, sermon-preparation notes, illustrations and ideas.'}
               </p>
             </div>
             <div className="sermon-actions">
-              <button className="primary" onClick={() => setEditing(blankNote())}>
-                <Plus size={16} /> Add note
+              <button className="primary" onClick={() => setEditing(blankNote(kinds[0]))}>
+                <Plus size={16} /> {kidsPage ? 'Add message' : 'Add note'}
               </button>
               <button onClick={() => setImporting(true)}>
                 <Upload size={16} /> Import files
@@ -345,7 +385,7 @@ export function Notes({
           <div className="search-bar">
             <Search size={20} />
             <input
-              aria-label="Search notes"
+              aria-label={kidsPage ? 'Search messages' : 'Search notes'}
               placeholder="Search by words, or a passage (Isaiah 64)..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -353,10 +393,10 @@ export function Notes({
           </div>
           <div className="sermon-filters">
             <label>
-              Kind
+              {kidsPage ? 'Audience' : 'Kind'}
               <select value={kind} onChange={(e) => setKind(e.target.value)}>
-                <option value="">All kinds</option>
-                {noteKinds.map((k) => (
+                <option value="">{kidsPage ? 'All audiences' : 'All kinds'}</option>
+                {kinds.map((k) => (
                   <option key={k}>{k}</option>
                 ))}
               </select>
@@ -367,11 +407,12 @@ export function Notes({
               {hits.length} {hits.length === 1 ? 'match' : 'matches'}.
             </p>
           )}
-          {library.notes.length === 0 ? (
+          {notes.length === 0 ? (
             <div className="empty-state">
               <p>
-                No notes yet. Add one, or import a folder of devotions or notes from your computer
-                or OneDrive.
+                {kidsPage
+                  ? 'No children’s messages yet. Add one, or import a folder of them from your computer or OneDrive.'
+                  : 'No notes yet. Add one, or import a folder of devotions or notes from your computer or OneDrive.'}
               </p>
             </div>
           ) : hits.length === 0 ? (
@@ -396,6 +437,9 @@ export function Notes({
       {editing && (
         <NoteEditor
           note={editing}
+          kinds={
+            isChildrensKind(editing.kind) ? childrenKinds : editing.sermonId ? noteKinds : kinds
+          }
           library={library}
           onClose={() => setEditing(null)}
           onSave={(next) => {
@@ -409,7 +453,13 @@ export function Notes({
         />
       )}
       {importing && (
-        <NoteImport library={library} onSave={onSave} onClose={() => setImporting(false)} />
+        <NoteImport
+          library={library}
+          onSave={onSave}
+          kinds={kinds}
+          kidsPage={kidsPage}
+          onClose={() => setImporting(false)}
+        />
       )}
     </section>
   )

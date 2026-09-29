@@ -156,3 +156,10 @@ characters belongs in Sermons → Manuscripts). Notes sync to the shared library
 Add Book has "Scan the barcode to fill this in" (title, author, publisher, year, ISBN, cover and
 summary; you review before saving). An open book has "Scan barcode", which saves the ISBN. The
 author, publisher, year and subtitle from the scan replace what was recorded; the cover and summary are added only if the book has none. The camera can be replaced by typing the ISBN.
+
+## Children's Messages
+
+Its own page for pre-K children's messages and grade school chapel talks (two audiences). They use
+the same records as Devotions & Notes, so they sync, back up, search by words or passage, and turn
+up on a sermon's page when they share its passage. "Import files" reads a folder of Word or text
+files and takes the date and passage from each file name. The side menu now scrolls on small screens.

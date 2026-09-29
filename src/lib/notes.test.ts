@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest'
 import type { Library } from './model'
 import {
   blankNote,
+  childrenKinds,
+  devotionKinds,
+  isChildrensKind,
+  noteKinds,
   deleteNote,
   noteFromFile,
   notesForSermon,
@@ -115,5 +119,15 @@ describe('finding notes', () => {
       kind: 'Devotion',
       body: 'Body text.',
     })
+  })
+})
+
+describe('children’s messages', () => {
+  it('are notes of their own kinds, kept apart from devotions', () => {
+    expect(isChildrensKind("Children's message")).toBe(true)
+    expect(isChildrensKind('Chapel message')).toBe(true)
+    expect(isChildrensKind('Devotion')).toBe(false)
+    expect(blankNote(childrenKinds[1]).kind).toBe('Chapel message')
+    expect(noteKinds).toEqual([...devotionKinds, ...childrenKinds])
   })
 })
