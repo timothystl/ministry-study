@@ -1,7 +1,17 @@
 import { useState } from 'react'
 import { ArrowLeft, BookOpen, MapPin, ArrowUpRight, Pencil, CheckCircle2, Plus } from 'lucide-react'
-import { activeLoan, locationLabel, readingStatuses, type Book, type Library } from '../lib/model'
+import {
+  activeLoan,
+  locationLabel,
+  readingStatuses,
+  verificationStatus,
+  type Book,
+  type Library,
+} from '../lib/model'
 import { Rating } from './Rating'
+import { CoverSearch } from './CoverSearch'
+import { Modal } from './Modal'
+import { VerifyBook } from './VerifyBook'
 export function Cover({ book, small = false }: { book: Book; small?: boolean }) {
   return (
     <img
@@ -39,6 +49,7 @@ export function BookCards({
               <span>{activeLoan(library, b.id) ? 'Loaned out' : b.ownership}</span>
               {b.reading.status !== 'Not recorded' && <span>{b.reading.status}</span>}
               {b.license === 'Temporary' && <span>Temporary access</span>}
+              {b.format === 'Physical' && <span>{verificationStatus(b)}</span>}
             </div>
             {b.format === 'Physical' && (
               <p className="location">
@@ -62,6 +73,7 @@ export function BookDetail({
   onReturn,
   onUpdate,
   onOpen,
+  nextToVerify,
 }: {
   book: Book
   library: Library
@@ -69,9 +81,13 @@ export function BookDetail({
   onEdit: () => void
   onLoan: () => void
   onReturn: (id: string) => void
-  onUpdate: (book: Book) => void
+  onUpdate: (book: Book) => boolean
   onOpen: (book: Book) => void
+  nextToVerify?: Book
 }) {
+  const [coverOpen, setCoverOpen] = useState(false)
+  const [verifyOpen, setVerifyOpen] = useState(false)
+  const [coverError, setCoverError] = useState('')
   const [tab, setTab] = useState('Overview')
   const loan = activeLoan(library, book.id),
     series = library.series.find((s) => s.id === book.seriesId),
@@ -98,13 +114,33 @@ export function BookDetail({
         </button>
       </div>
       <section className="detail-hero">
-        <Cover book={book} />
+        <div className="detail-cover">
+          <Cover book={book} />
+          <button
+            onClick={() => {
+              setCoverError('')
+              setCoverOpen(true)
+            }}
+          >
+            Find cover
+          </button>
+          {book.coverSource && (
+            <a href={book.coverSource.url} target="_blank" rel="noreferrer">
+              {book.coverSource.name}
+            </a>
+          )}
+        </div>
         <div className="detail-heading">
           <h1>{book.title}</h1>
           {book.subtitle && <p className="subtitle">{book.subtitle}</p>}
           <p className="detail-author">{book.author || 'Author not recorded'}</p>
           <p className="publication">
-            {[book.year, book.publisher, book.isbn && `ISBN ${book.isbn}`]
+            {[
+              book.year,
+              book.publisher,
+              book.edition ?? book.sourceMetadata?.Edition,
+              book.isbn && `ISBN ${book.isbn}`,
+            ]
               .filter(Boolean)
               .join(' · ') || 'Publication details not recorded'}
           </p>
@@ -169,6 +205,62 @@ export function BookDetail({
           </div>
         </div>
       </section>
+      {book.format === 'Physical' && (
+        <section className="verification-bar" aria-label="Physical book verification">
+          <div>
+            <strong>Physical copy: {verificationStatus(book)}</strong>
+            <p>
+              {book.verification?.checkedAt
+                ? `Checked ${book.verification.checkedAt}`
+                : 'Check the title, edition and shelf location against your book.'}
+            </p>
+            {book.verification?.notes && <p className="preserve">{book.verification.notes}</p>}
+          </div>
+          <div className="verification-actions">
+            <button onClick={() => setVerifyOpen(true)}>Verify physical book</button>
+            {nextToVerify && <button onClick={() => onOpen(nextToVerify)}>Next to check</button>}
+          </div>
+        </section>
+      )}
+      {coverOpen && (
+        <Modal title="Find a book cover" wide onClose={() => setCoverOpen(false)}>
+          <CoverSearch
+            book={book}
+            onSelect={(candidate) => {
+              if (
+                onUpdate({
+                  ...book,
+                  coverUrl: candidate.imageUrl,
+                  coverSource: {
+                    name: 'Open Library',
+                    url: candidate.sourceUrl,
+                    selectedAt: new Date().toISOString(),
+                  },
+                })
+              )
+                setCoverOpen(false)
+              else setCoverError('Could not save the cover. Your selection is still here.')
+            }}
+          />
+          {coverError && (
+            <p role="alert" className="error">
+              {coverError}
+            </p>
+          )}
+        </Modal>
+      )}
+      {verifyOpen && (
+        <VerifyBook
+          book={book}
+          library={library}
+          onSave={onUpdate}
+          onClose={() => setVerifyOpen(false)}
+          onEdit={() => {
+            setVerifyOpen(false)
+            onEdit()
+          }}
+        />
+      )}
       {loan && (
         <div className="loan-notice">
           <div>

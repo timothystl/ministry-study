@@ -20,6 +20,10 @@ import {
 } from 'lucide-react'
 import {
   blankBook,
+  verificationStatus,
+  nextBookToVerify,
+  verificationStatuses,
+  formats,
   searchBooks,
   saveBook,
   activeLoan,
@@ -59,6 +63,7 @@ export default function App() {
     [format, setFormat] = useState('All formats'),
     [ownership, setOwnership] = useState('Any ownership'),
     [showFilters, setShowFilters] = useState(false)
+  const [verification, setVerification] = useState('All verification')
   const [reading, setReading] = useState('All reading'),
     [loanHistory, setLoanHistory] = useState(false),
     [browse, setBrowse] = useState<Browse>('Topic'),
@@ -105,6 +110,7 @@ export default function App() {
     setGroupQuery('')
     setFormat('All formats')
     setOwnership('Any ownership')
+    setVerification('All verification')
     setNotice('')
     window.scrollTo({ top: 0 })
   }
@@ -126,11 +132,12 @@ export default function App() {
   }
   function updateBook(book: Book) {
     try {
-      commit(
+      return commit(
         saveBook(library, book, library.series.find((s) => s.id === book.seriesId)?.name || ''),
       )
     } catch (e) {
       setError((e as Error).message)
+      return false
     }
   }
   function returnLoan(id: string) {
@@ -182,7 +189,12 @@ export default function App() {
   let books = searchBooks(library, query).filter(
     (b) =>
       (format === 'All formats' || b.format === format) &&
-      (ownership === 'Any ownership' || b.ownership === ownership),
+      (ownership === 'Any ownership' || b.ownership === ownership) &&
+      (verification === 'All verification' ||
+        (b.format === 'Physical' &&
+          (verification === 'To check'
+            ? verificationStatus(b) !== 'Confirmed'
+            : verificationStatus(b) === verification))),
   )
   books = books.filter((b) =>
     scope === 'All'
@@ -236,7 +248,7 @@ export default function App() {
               setLimit(36)
             }}
           >
-            {['All formats', 'Physical', 'Logos', 'EPUB', 'PDF'].map((x) => (
+            {['All formats', ...formats].map((x) => (
               <option key={x}>{x}</option>
             ))}
           </select>
@@ -249,6 +261,18 @@ export default function App() {
             }}
           >
             {['Any ownership', 'Owned', 'Not owned', 'Previously owned'].map((x) => (
+              <option key={x}>{x}</option>
+            ))}
+          </select>
+          <select
+            aria-label="Filter physical verification"
+            value={verification}
+            onChange={(e) => {
+              setVerification(e.target.value)
+              setLimit(36)
+            }}
+          >
+            {['All verification', 'To check', ...verificationStatuses].map((x) => (
               <option key={x}>{x}</option>
             ))}
           </select>
@@ -302,7 +326,8 @@ export default function App() {
                 ? (setQuery(''),
                   setScope('All'),
                   setFormat('All formats'),
-                  setOwnership('Any ownership'))
+                  setOwnership('Any ownership'),
+                  setVerification('All verification'))
                 : setEditing(blankBook())
             }
           >
@@ -432,6 +457,7 @@ export default function App() {
               onLoan={() => setLending(detail)}
               onReturn={returnLoan}
               onUpdate={updateBook}
+              nextToVerify={nextBookToVerify(library, detail.id)}
               onOpen={openBook}
             />
           ) : (
@@ -496,7 +522,7 @@ export default function App() {
                         if (page === 'Home') setPage('Search')
                       }}
                     >
-                      {['All formats', 'Physical', 'Logos', 'EPUB', 'PDF'].map((x) => (
+                      {['All formats', ...formats].map((x) => (
                         <option key={x}>{x}</option>
                       ))}
                     </select>

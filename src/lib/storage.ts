@@ -1,5 +1,12 @@
 import { z } from 'zod'
-import { blankBook, formats, ownerships, readingStatuses, type Library } from './model'
+import {
+  blankBook,
+  formats,
+  ownerships,
+  readingStatuses,
+  verificationStatuses,
+  type Library,
+} from './model'
 import { sampleLibrary } from './seed'
 const location = z.object({
   room: z.string(),
@@ -14,6 +21,24 @@ const date = z
     'Invalid date',
   )
 const book = z.object({
+  coverSource: z
+    .object({
+      name: z.string(),
+      url: z
+        .string()
+        .url()
+        .refine((v) => v.startsWith('https://')),
+      selectedAt: z.string(),
+    })
+    .optional(),
+  verification: z
+    .object({ status: z.enum(verificationStatuses), checkedAt: date, notes: z.string() })
+    .refine(
+      (v) => v.status !== 'Confirmed' || Boolean(v.checkedAt),
+      'Confirmed books need a check date',
+    )
+    .optional(),
+  edition: z.string().optional(),
   subtitle: z.string().optional(),
   coverUrl: z
     .string()

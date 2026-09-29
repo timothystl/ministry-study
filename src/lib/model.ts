@@ -18,7 +18,33 @@ export interface Location {
   shelf: string
   position: string
 }
+export const verificationStatuses = ['Not checked', 'Needs correction', 'Confirmed'] as const
+export function verificationStatus(book: Book) {
+  return book.verification?.status || 'Not checked'
+}
+export function nextBookToVerify(library: Library, currentId: string) {
+  const physical = library.books
+    .filter((b) => b.format === 'Physical')
+    .sort(
+      (a, b) =>
+        [a.location.room, a.location.bookcase, a.location.shelf, a.location.position]
+          .join('|')
+          .localeCompare(
+            [b.location.room, b.location.bookcase, b.location.shelf, b.location.position].join('|'),
+            undefined,
+            { numeric: true },
+          ) || a.id.localeCompare(b.id),
+    )
+  const index = physical.findIndex((b) => b.id === currentId)
+  return [...physical.slice(index + 1), ...physical.slice(0, index)].find(
+    (b) => b.id !== currentId && verificationStatus(b) !== 'Confirmed',
+  )
+}
 export interface Book {
+  coverSource?: { name: string; url: string; selectedAt: string }
+  verification?: { status: (typeof verificationStatuses)[number]; checkedAt: string; notes: string }
+
+  edition?: string
   subtitle?: string
   coverUrl?: string
   useFor?: string[]
@@ -156,6 +182,31 @@ export function saveBook(library: Library, book: Book, seriesName: string): Libr
     title: book.title.trim(),
     seriesId: name ? existing!.id : '',
     updatedAt: new Date().toISOString(),
+  }
+  const previous = library.books.find((b) => b.id === book.id)
+  const identity = (b: Book) =>
+    JSON.stringify([
+      b.title,
+      b.subtitle || '',
+      b.edition ?? b.sourceMetadata?.Edition ?? '',
+      b.author,
+      b.isbn,
+      b.publisher,
+      b.year,
+      b.format,
+      b.seriesId,
+      b.volume,
+      b.location.room,
+      b.location.bookcase,
+      b.location.shelf,
+      b.location.position,
+    ])
+  if (
+    saved.verification?.status === 'Confirmed' &&
+    previous &&
+    identity(previous) !== identity(saved)
+  ) {
+    saved.verification = { ...saved.verification, status: 'Not checked', checkedAt: '' }
   }
   return {
     ...library,

@@ -9,6 +9,7 @@ import {
   saveBook,
 } from '../lib/model'
 import { Modal } from './Modal'
+import { CoverSearch } from './CoverSearch'
 export function BookEditor({
   book,
   library,
@@ -20,7 +21,10 @@ export function BookEditor({
   onSave: (library: Library) => boolean
   onClose: () => void
 }) {
-  const [draft, setDraft] = useState<Book>(structuredClone(book))
+  const [draft, setDraft] = useState<Book>({
+    ...structuredClone(book),
+    edition: book.edition ?? book.sourceMetadata?.Edition ?? '',
+  })
   const [series, setSeries] = useState(
     library.series.find((s) => s.id === book.seriesId)?.name || '',
   )
@@ -102,11 +106,43 @@ export function BookEditor({
               type="url"
               placeholder="https://…"
               value={draft.coverUrl?.startsWith('/assets/') ? '' : draft.coverUrl || ''}
-              onChange={(e) => setDraft({ ...draft, coverUrl: e.target.value })}
+              onChange={(e) =>
+                setDraft({ ...draft, coverUrl: e.target.value, coverSource: undefined })
+              }
             />
           </label>
+          <details className="span-two">
+            <summary>Find a cover online</summary>
+            <CoverSearch
+              book={draft}
+              onSelect={(candidate) => {
+                setDraft({
+                  ...draft,
+                  coverUrl: candidate.imageUrl,
+                  coverSource: {
+                    name: 'Open Library',
+                    url: candidate.sourceUrl,
+                    selectedAt: new Date().toISOString(),
+                  },
+                })
+              }}
+            />
+            {draft.coverSource && (
+              <p role="status">
+                Selected cover from {draft.coverSource.name}. Save book to keep it.
+              </p>
+            )}
+          </details>
           {field('publisher', 'Publisher')}
           {field('year', 'Publication year')}
+          <label>
+            Edition
+            <input
+              value={draft.edition || ''}
+              onChange={(e) => setDraft({ ...draft, edition: e.target.value })}
+              placeholder="e.g. 2nd edition"
+            />
+          </label>
           {field('isbn', 'ISBN / identifier')}
           <label>
             Format
@@ -233,6 +269,12 @@ export function BookEditor({
           <>
             <fieldset>
               <legend>Current physical location</legend>
+              {book.verification?.status === 'Confirmed' && (
+                <p className="muted">
+                  Changing the book’s identity or current location will mark it Not checked until
+                  you verify it again.
+                </p>
+              )}
               <p className="muted">Where this copy belongs. Loan records track who has it.</p>
               <div className="form-grid">{loc('location')}</div>
             </fieldset>

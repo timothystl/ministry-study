@@ -50,3 +50,9 @@ React + TypeScript + Vite, plain CSS, Lucide, Zod, localStorage. GitHub checks p
 ## Find this again
 
 Open https://github.com/timothystl/ministry-study/blob/main/HANDOFF.md on the home computer. Start a fresh Codex task with: “Continue https://github.com/timothystl/ministry-study. Read HANDOFF.md first and get the existing app running locally.” The old conversation is not required.
+
+## Latest update: covers and physical checks
+
+The live address is https://study.timothystl.org on Cloudflare, connected to GitHub. Online cover lookup and physical-copy verification are implemented; see README.md for the user flow. Search supports Open Library title/author or ISBN editions, requires choosing a cover, and never overwrites bibliography. Confirmation requires checking identity, edition and current shelf location. Edits to identity/location clear confirmation. Catalog filters and Next to check support shelf review. Original import issues remain in source metadata, separate from the user’s verification notes.
+
+A private combined backup with 1,111 candidate physical records plus 661 Logos records was supplied outside the repo. It excludes the pending Amazon import and does not represent later browser edits. Do not commit personal catalog files. The app still uses local browser storage; hosting does not provide cross-device sync.

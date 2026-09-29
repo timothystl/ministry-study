@@ -44,7 +44,7 @@ Personal catalogs belong outside the repository or in ignored `private/`. Never 
 
 Records are stored in **localStorage for this browser and origin**. There is no cloud sync, authentication, server backup, or cross-device persistence. Changing host/port creates a different storage origin; clearing site data removes local records. Export backups regularly and before restoring. Storage failures are surfaced without closing your form. Corrupt saved data is not automatically overwritten, and can be exported for recovery.
 
-The physical spreadsheet is intentionally not imported yet. Its candidate holdings, source IDs, duplicates, review issues, and uncertain locations need a separate reviewed importer. No physical ownership, locations, or recommendations are inferred from Logos metadata.
+A private combined restore file has been prepared separately with 1,111 candidate physical holdings and 661 Logos records. Physical records retain their source IDs, locations, duplicate flags and uncertainty in source metadata; they are not yet confirmed shelf holdings. The general physical-spreadsheet importer is still deferred. No physical ownership, locations, or recommendations are inferred from Logos metadata.
 
 ## Checks
 
@@ -65,8 +65,16 @@ GitHub Actions runs the same checks on pushes and pull requests. Browser tests c
 - `src/App.tsx`: responsive Library navigation, views, and persistence boundary.
 - `docs/data-model.md`: model decisions and next-step boundaries.
 
-`npm run build` creates `dist/`. No hosting or public deployment is configured in this version. A future backend can replace the persistence boundary without combining ownership, reading, circulation, and location into a single status.
+`npm run build` creates `dist/`. The app is hosted on Cloudflare at https://study.timothystl.org, connected to the GitHub repository. A future backend can replace the persistence boundary without combining ownership, reading, circulation, and location into a single status.
 
 ## Project notes
 
 Add new work here as you go. Broader modules remain future work until explicitly scoped.
+
+## Covers and physical verification
+
+Open a book and choose **Find cover**, then search Open Library by ISBN or title/author. Preview a candidate and choose **Use this cover**. Only the cover URL and attribution are saved; catalog details remain unchanged. ISBN lookup uses the edition endpoint; title results group works and may show a different edition. Missing images and service failures are handled without replacing the current cover. Edit book also supports online cover selection and a pasted HTTPS image URL. Images remain hosted by their source rather than being copied into local storage.
+
+Choose **Verify physical book** to compare title/author, edition/volume/ISBN and shelf location against the actual copy. Save **Confirmed** after checking all three boxes, or **Needs correction** with separate verification notes. **Correct book details** opens the editor, including an editable edition field. Original imported confidence and review details are retained as provenance. Changing identity or current location resets a confirmation to **Not checked**; cover, notes and reading changes do not. The catalog’s verification filter includes **To check**, and **Next to check** advances through physical shelf order.
+
+Older backups load as Not checked. New backups retain verification and cover provenance. Open Library receives only the search fields; remote cover hosts receive image requests. These features do not add cloud syncing or automatically enrich/confirm the library.

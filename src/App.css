@@ -812,7 +812,7 @@ main {
   border-radius: 7px;
   align-items: flex-start;
 }
-.detail-hero > .cover {
+.detail-cover > .cover {
   width: 185px;
   max-width: 185px;
   aspect-ratio: 145/230;
@@ -1309,7 +1309,7 @@ main {
     gap: 20px;
     padding: 15px;
   }
-  .detail-hero > .cover {
+  .detail-cover > .cover {
     width: 145px;
     max-width: 145px;
   }
@@ -1467,7 +1467,7 @@ main {
     grid-template-columns: 180px minmax(0, 1fr);
     gap: 18px;
   }
-  .detail-hero > .cover {
+  .detail-cover > .cover {
     width: 120px;
     max-width: 120px;
   }
@@ -1850,7 +1850,7 @@ main {
     border: 1px solid #e2e8ee;
     flex-wrap: wrap;
   }
-  .detail-hero > .cover {
+  .detail-cover > .cover {
     width: 92px;
     max-width: 92px;
     aspect-ratio: 2/3;
@@ -2118,4 +2118,106 @@ main {
 }
 .amazon-warning {
   color: #82511a;
+}
+
+/* Cover selection and physical-copy review share the existing calm Library surfaces. */
+.detail-cover {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  justify-items: start;
+  min-width: 0;
+}
+.detail-cover > a {
+  font-size: 12px;
+}
+.cover-search {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+.cover-search > button {
+  justify-self: start;
+}
+.cover-candidates {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 12px;
+}
+.cover-candidate {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 6px;
+  padding: 12px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.cover-candidate img {
+  width: 90px;
+  height: 135px;
+  object-fit: contain;
+  align-self: center;
+}
+.cover-candidate small,
+.cover-candidate span {
+  font-size: 12px;
+}
+.cover-choice {
+  padding: 16px;
+  border: 1px solid var(--line, #dce5e9);
+  border-radius: 8px;
+  background: #f0f7f5;
+}
+.cover-choice > button {
+  display: flex;
+  margin-top: 12px;
+}
+.verification-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px;
+  margin: 16px 0;
+  background: #f0f6f5;
+  border: 1px solid #dce7e4;
+  border-radius: 8px;
+}
+.verification-bar p {
+  margin: 6px 0 0;
+  font-size: 13px;
+}
+.verification-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.verification-record {
+  padding: 14px;
+  background: #f4f7f8;
+  border-radius: 8px;
+  margin: 14px 0;
+}
+.verification-checks {
+  display: grid;
+  gap: 14px;
+  margin: 18px 0;
+}
+.verification-checks .check {
+  align-items: flex-start;
+}
+@media (max-width: 640px) {
+  .verification-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .detail-cover > button {
+    font-size: 12px;
+    padding: 7px;
+  }
+  .cover-candidates {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

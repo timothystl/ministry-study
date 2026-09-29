@@ -198,3 +198,94 @@ test('Amazon saved-page import recognizes books, skips non-books and preserves s
     '2 selected entries are already on your wishlist',
   )
 })
+
+test('review cover candidates and verify a physical copy without replacing catalog details', async ({
+  page,
+}) => {
+  await page.route('https://openlibrary.org/search.json?*', (route) =>
+    route.fulfill({
+      json: {
+        docs: [
+          {
+            key: '/works/OL123W',
+            title: 'Candidate edition',
+            author_name: ['Catalog Author'],
+            first_publish_year: 2008,
+            cover_i: 123,
+          },
+        ],
+      },
+    }),
+  )
+  await page.route('https://covers.openlibrary.org/**', (route) =>
+    route.fulfill({
+      contentType: 'image/svg+xml',
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="150"><rect width="100" height="150" fill="#164957"/></svg>',
+    }),
+  )
+  await page.goto('/')
+  await addBook(page, 'A physical review copy')
+  await page.getByRole('button', { name: 'Find cover', exact: true }).click()
+  await page.getByRole('button', { name: 'Search Open Library', exact: true }).click()
+  await page.getByRole('button', { name: /Candidate edition Catalog Author/ }).click()
+  await expect(page.getByRole('dialog')).toContainText('different edition')
+  await page.getByRole('button', { name: 'Use this cover', exact: true }).click()
+  await expect(
+    page.getByRole('heading', { name: 'A physical review copy', exact: true }),
+  ).toBeVisible()
+  await expect(page.locator('.detail-cover img')).toHaveAttribute('src', /covers.openlibrary.org/)
+  await expect(page.locator('.verification-bar')).toContainText('Not checked')
+  await page.getByRole('button', { name: 'Verify physical book', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Confirm this copy' })).toBeDisabled()
+  await page.getByLabel('Verification notes').fill('Volume needs checking')
+  await page.getByRole('button', { name: 'Needs correction', exact: true }).click()
+  await expect(page.locator('.verification-bar')).toContainText('Needs correction')
+  await page.getByRole('button', { name: 'Verify physical book', exact: true }).click()
+  for (const label of [
+    'Title and author match the physical book',
+    'Edition, volume and ISBN match where available',
+    'Current shelf location is correct',
+  ])
+    await page.getByLabel(label).check()
+  await page.getByLabel('Verification notes').fill('Compared with the book')
+  await page.getByRole('button', { name: 'Confirm this copy' }).click()
+  await expect(page.locator('.verification-bar')).toContainText('Confirmed')
+  await page.reload()
+  await nav(page, 'My Collection')
+  await page.getByLabel('Filter physical verification').selectOption('Confirmed')
+  await expect(page.locator('.book-card')).toHaveCount(1)
+  await page.getByRole('heading', { name: 'A physical review copy', exact: true }).click()
+  await expect(page.locator('.detail-cover img')).toHaveAttribute('src', /covers.openlibrary.org/)
+  await page.locator('.detail-top').getByRole('button', { name: 'Edit', exact: true }).click()
+  await page
+    .getByRole('dialog')
+    .getByLabel('Title', { exact: true })
+    .fill('A corrected review copy')
+  await page.getByRole('button', { name: 'Save book', exact: true }).click()
+  await expect(page.locator('.verification-bar')).toContainText('Not checked')
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+})
+
+test('cover lookup handles missing and unavailable results without changing the book', async ({
+  page,
+}) => {
+  await page.route('https://openlibrary.org/search.json?*', (route) =>
+    route.fulfill({ json: { docs: [] } }),
+  )
+  await page.goto('/')
+  await addBook(page, 'No cover match')
+  await page.getByRole('button', { name: 'Find cover', exact: true }).click()
+  await page.getByRole('button', { name: 'Search Open Library', exact: true }).click()
+  await expect(page.getByRole('dialog')).toContainText('No covers found')
+  await page.route('https://openlibrary.org/search.json?*', (route) =>
+    route.fulfill({ status: 429 }),
+  )
+  await page.getByRole('button', { name: 'Search Open Library', exact: true }).click()
+  await expect(page.getByRole('dialog').getByRole('alert')).toContainText('busy')
+  await page.getByRole('button', { name: 'Close dialog' }).click()
+  await expect(page.locator('.detail-cover img')).toHaveAttribute(
+    'src',
+    '/assets/unidentified-cover.png',
+  )
+  await expect(page.locator('.verification-bar')).toContainText('Not checked')
+})

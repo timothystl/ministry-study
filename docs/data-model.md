@@ -36,3 +36,9 @@ Optional fields added without changing the version-1 import contract: `Book.subt
 ## Amazon wishlist import
 
 `Kindle` is a separate format; it is not treated as EPUB, Logos ownership, or a physical loanable copy. New Amazon records remain Not owned, with reading status Not recorded and no personal rating. Source metadata preserves the supplied ASIN, byline, edition and optional list URL. Valid print ISBN-10 identifiers normalize to ISBN-13 for duplicate matching. Existing records retain their notes, ownership, reading and location. ASIN matching is specific to the Amazon source; format-aware title matching avoids collapsing print and Kindle editions. Source data is evidence, not verified author-role attribution. The importer never infers topics or series from titles.
+
+## Cover provenance and physical verification
+
+Optional `coverSource` holds source name, HTTPS page URL, and selection timestamp. `coverUrl` remains an external image reference. Cover selection never applies title, author, identifiers, series, ownership, location or reading metadata. Open Library work searches are explicitly edition-unverified; ISBN searches display the matched edition.
+
+Optional `edition` is editable; older physical imports display the preserved `sourceMetadata.Edition` until edited. Optional `verification` holds `status` (Not checked / Needs correction / Confirmed), `checkedAt` (local date) and `notes`. Missing verification means Not checked, independent of imported catalog confidence. Confirmation requires a date and is reset on saved changes to title, subtitle, author, edition, ISBN, publisher, publication year, format, series, volume or current location. Reading, cover, recommended location and personal-note changes retain confirmation. Original catalog review flags are preserved, not rewritten by a physical check.
