@@ -123,3 +123,8 @@ CPU per request), lower MAX_ATTACHMENT or move files to R2. Not in the JSON back
 Cardiphonia's blog is reachable (archive); its Retuned Hymnal database (retunedhymnal.org) and
 cardiphonia.org were not reachable from the build environment, so hymns from there are added by
 link or by attaching downloaded lead sheets.
+
+## Latest update: music resources
+Music Resources page with the Retuned Hymn Movement workbook (artists, albums, articles, books;
+the "zac articles" sheet of bare titles was left out). Ideas: link a resource to the hymns found
+on it; an "album to hymns" import when a track list is available.

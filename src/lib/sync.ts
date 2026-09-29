@@ -41,6 +41,7 @@ export function libraryToRecords(library: Library): SyncRecord[] {
     ...make('note', library.notes),
     ...make('hymn', library.hymns),
     ...make('liturgy', library.liturgies),
+    ...make('resource', library.resources),
     ...make(
       'loan',
       library.loans.filter((l) => !isSample(l.bookId)),
@@ -74,6 +75,7 @@ export function recordsToLibrary(records: SyncRecord[]): Library {
     notes: of('note'),
     hymns: of('hymn'),
     liturgies: of('liturgy'),
+    resources: of('resource'),
     sample: false,
   })
 }

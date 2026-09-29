@@ -189,3 +189,11 @@ a scanned hymnal page or a lead sheet with it. Photos over 1 MB are shrunk in th
 be up to 6 MB. Files are stored in the shared library's database, so they need the shared library
 (they are not in the JSON backup download; Cloudflare's own database backups cover them). Only
 photos and PDFs are accepted, and the file's contents are checked, not just its name.
+
+## Music Resources
+A page for the artists, albums, articles, books, songbooks and websites where hymns and songs are
+found. Each has a kind, creator, year, place, link, tags and notes, plus copies kept in your own
+files and photos or PDFs attached to it. "Retuned Hymn Movement list" adds the 466 artists,
+albums, articles and books from your workbook, with their links (it can be added once; anything
+you enter yourself is untouched). "Add resource" is for anything new you start using, such as an
+album you downloaded or a songbook you bought. Search covers every field; filter by kind or tag.

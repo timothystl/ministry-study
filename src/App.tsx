@@ -21,6 +21,7 @@ import {
   ScanBarcode,
   HandHeart,
   Baby,
+  Disc3,
   Music,
   ScrollText,
   NotebookPen,
@@ -52,6 +53,7 @@ import { Prayers } from './components/Prayers'
 import { Notes } from './components/Notes'
 import { Hymns } from './components/Hymns'
 import { Liturgies } from './components/Liturgies'
+import { Resources } from './components/Resources'
 import { Dashboard, type QuickScope } from './components/Dashboard'
 import { ReadingTable, LoansTable } from './components/RecordsTable'
 import { Modal } from './components/Modal'
@@ -70,6 +72,7 @@ type Page =
   | 'Children'
   | 'Hymns'
   | 'Liturgies'
+  | 'Resources'
 type Browse = 'Topic' | 'Author' | 'Series' | 'Physical shelf'
 const navigation = [
   { name: 'Home', label: 'Search', icon: Search },
@@ -84,6 +87,7 @@ const navigation = [
   { name: 'Children', label: 'Children’s Messages', icon: Baby },
   { name: 'Hymns', label: 'Hymns', icon: Music },
   { name: 'Liturgies', label: 'Liturgies', icon: ScrollText },
+  { name: 'Resources', label: 'Music Resources', icon: Disc3 },
 ] as const
 export default function App() {
   const [initial] = useState(loadLibrary),
@@ -551,6 +555,8 @@ export default function App() {
                 setPage('Hymns')
               }}
             />
+          ) : page === 'Resources' ? (
+            <Resources library={library} onSave={commit} />
           ) : page === 'Children' ? (
             <Notes library={library} onSave={commit} kidsPage />
           ) : detail ? (
