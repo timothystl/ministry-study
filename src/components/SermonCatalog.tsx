@@ -1,5 +1,5 @@
-import { useMemo, useState, type FormEvent } from 'react'
-import { ArrowLeft, ExternalLink, Plus, Search, Upload, X } from 'lucide-react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { ArrowLeft, ExternalLink, FileText, Plus, Search, Upload, X } from 'lucide-react'
 import type { Library } from '../lib/model'
 import {
   blankSermon,
@@ -21,6 +21,8 @@ import {
   readStructureFile,
   type EnrichPreview,
 } from '../lib/sermonImport'
+import { searchSermonText } from '../lib/sermonText'
+import { ManuscriptSection, SermonTextManager } from './SermonText'
 import { Modal } from './Modal'
 
 const dateLabel = (date: string) =>
@@ -59,6 +61,19 @@ function Location({ label, value }: { label: string; value: string }) {
   )
 }
 
+// A search excerpt with the matched words marked. [[word]] marks come from the search, and the
+// text is shown as text, never as markup.
+function Snippet({ text }: { text: string }) {
+  return (
+    <span className="sermon-snippet">
+      {text.split('[[').flatMap((part, i) => {
+        if (i === 0) return [part]
+        const [word, ...rest] = part.split(']]')
+        return [<mark key={i}>{word}</mark>, rest.join(']]')]
+      })}
+    </span>
+  )
+}
 function SermonEditor({
   sermon,
   library,
@@ -586,6 +601,7 @@ function SermonDetail({
           <p className="muted">No location recorded yet. Edit this sermon to add one.</p>
         )}
       </section>
+      <ManuscriptSection sermon={sermon} />
       {sermon.notes && (
         <section className="detail-section">
           <h3>Personal notes</h3>
@@ -626,6 +642,15 @@ export function SermonCatalog({
   const [openId, setOpenId] = useState('')
   const [editing, setEditing] = useState<Sermon | null>(null)
   const [importing, setImporting] = useState(false)
+  const [manuscripts, setManuscripts] = useState(false)
+  // Bumped when manuscripts may have changed, so the manuscript search is run again.
+  const [epoch, setEpoch] = useState(0)
+  const [textResult, setTextResult] = useState<{
+    query: string
+    epoch: number
+    hits: Map<string, string>
+    failed: boolean
+  }>({ query: '', epoch: 0, hits: new Map(), failed: false })
   const [limit, setLimit] = useState(50)
   const sermons = library.sermons
   const seriesNames = useMemo(
@@ -644,10 +669,60 @@ export function SermonCatalog({
     () => [...new Set(sermons.map((s) => s.structure).filter(Boolean))].sort(),
     [sermons],
   )
-  const hits = useMemo(
+  const metadataHits = useMemo(
     () => searchSermons(sermons, query, { series, year, season, structure }),
     [sermons, query, series, year, season, structure],
   )
+  // Words in the saved manuscripts are searched on the shared library, shortly after typing.
+  const q = query.trim()
+  useEffect(() => {
+    if (q.length < 3) return
+    let live = true
+    const timer = setTimeout(() => {
+      searchSermonText(q)
+        .then((found) => {
+          if (live)
+            setTextResult({
+              query: q,
+              epoch,
+              hits: new Map((found || []).map((h) => [h.id, h.snippet])),
+              failed: false,
+            })
+        })
+        .catch(() => live && setTextResult({ query: q, epoch, hits: new Map(), failed: true }))
+    }, 350)
+    return () => {
+      live = false
+      clearTimeout(timer)
+    }
+  }, [q, epoch])
+  const current = q.length >= 3 && textResult.query === q && textResult.epoch === epoch
+  const textHits = useMemo(
+    () => (current ? textResult.hits : new Map<string, string>()),
+    [current, textResult],
+  )
+  const textSearch =
+    q.length < 3 ? 'idle' : !current ? 'searching' : textResult.failed ? 'unavailable' : 'done'
+  const hits = useMemo(() => {
+    if (!textHits.size) return metadataHits
+    const known = new Set(metadataHits.map((h) => h.sermon.id))
+    const merged = metadataHits.map((h) =>
+      textHits.has(h.sermon.id)
+        ? { ...h, reasons: [...h.reasons, 'In the manuscript'], snippet: textHits.get(h.sermon.id) }
+        : h,
+    )
+    const allowed = new Map(
+      searchSermons(sermons, '', { series, year, season, structure }).map((h) => [
+        h.sermon.id,
+        h.sermon,
+      ]),
+    )
+    for (const [id, snippet] of textHits) {
+      const sermon = allowed.get(id)
+      if (sermon && !known.has(id)) merged.push({ sermon, reasons: ['In the manuscript'], snippet })
+    }
+    return merged
+  }, [metadataHits, textHits, sermons, series, year, season, structure])
   const open = sermons.find((s) => s.id === openId)
   return (
     <section className="sermons" aria-label="Sermons">
@@ -656,7 +731,10 @@ export function SermonCatalog({
           key={open.id}
           sermon={open}
           library={library}
-          onBack={() => setOpenId('')}
+          onBack={() => {
+            setOpenId('')
+            setEpoch((n) => n + 1)
+          }}
           onEdit={() => setEditing(open)}
           onOpen={setOpenId}
           onDelete={() => {
@@ -680,6 +758,9 @@ export function SermonCatalog({
               </button>
               <button onClick={() => setImporting(true)}>
                 <Upload size={16} /> Import list
+              </button>
+              <button onClick={() => setManuscripts(true)}>
+                <FileText size={16} /> Manuscripts
               </button>
             </div>
           </header>
@@ -750,8 +831,12 @@ export function SermonCatalog({
           )}
           {query.trim() && (
             <p className="muted" role="status">
-              {hits.length} {hits.length === 1 ? 'match' : 'matches'}. Search covers the details
-              recorded here, not the text of your manuscripts.
+              {hits.length} {hits.length === 1 ? 'match' : 'matches'}.{' '}
+              {textSearch === 'unavailable'
+                ? 'Search covers the details recorded here; manuscript text could not be searched right now.'
+                : textSearch === 'searching'
+                  ? 'Searching manuscripts too…'
+                  : 'Search covers the details recorded here and your saved manuscripts.'}
             </p>
           )}
           {sermons.length === 0 ? (
@@ -768,7 +853,7 @@ export function SermonCatalog({
             </p>
           ) : (
             <ul className="sermon-list">
-              {hits.slice(0, limit).map(({ sermon, reasons }) => (
+              {hits.slice(0, limit).map(({ sermon, reasons, snippet }) => (
                 <li key={sermon.id}>
                   <button className="sermon-row" onClick={() => setOpenId(sermon.id)}>
                     <strong>{sermon.title}</strong>
@@ -776,6 +861,7 @@ export function SermonCatalog({
                     {reasons.length > 0 && (
                       <span className="sermon-reason">{reasons.join(' · ')}</span>
                     )}
+                    {snippet && <Snippet text={snippet} />}
                   </button>
                 </li>
               ))}
@@ -800,6 +886,16 @@ export function SermonCatalog({
               return true
             }
             return false
+          }}
+        />
+      )}
+      {manuscripts && (
+        <SermonTextManager
+          library={library}
+          onSave={onSave}
+          onClose={() => {
+            setManuscripts(false)
+            setEpoch((n) => n + 1)
           }}
         />
       )}

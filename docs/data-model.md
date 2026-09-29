@@ -25,7 +25,7 @@ Borrowed reading sources can be recorded without ownership; outgoing loans are t
 
 ## Explicitly deferred
 
-Research a Text, Scripture reading/languages/patterns, hymn/music, teaching resources, devotions/prayers, visual library, sermon full text, external-resource discovery, EPUB/PDF reading, full-text indexing, provider APIs, automatic cover enrichment, spreadsheet/photo import and reconciliation, and automatic organization recommendations.
+Research a Text, Scripture reading/languages/patterns, hymn/music, teaching resources, devotions/prayers, visual library, external-resource discovery, EPUB/PDF reading, full-text indexing, provider APIs, automatic cover enrichment, spreadsheet/photo import and reconciliation, and automatic organization recommendations.
 
 ## Source review
 
@@ -54,3 +54,7 @@ The database holds rows of `(kind, id, data JSON, updated_at)` with `kind` in `b
 ## Scanning, covers and summaries
 
 A scanned ISBN identifies the edition. `applyScan` fills only blank author/publisher/year, saves the ISBN with provenance in `sourceMetadata` (`ISBN lookup method`, `Summary source`), and adds a cover or summary only when chosen. `coverUrl` may be a bundled image, an https address, or a small `data:image/jpeg` photo (150,000 characters at most); `coverSource.url` is empty for a photo. Published summaries are third-party wording and are always stored with their source.
+
+## Sermon manuscripts
+
+Full text is not part of the library payload. D1 holds `sermon_text (sermon_id, body, chars, hash, file_name, indexed, updated_at)` and an FTS5 table `sermon_fts` (porter stemming) over the same text. `hash` is the SHA-256 of the extracted text, so re-uploading a folder saves only changed files. `indexed = 0` keeps the text but leaves it out of search. API: `GET /api/sermon-text` (status), `GET|PUT|PATCH|DELETE /api/sermon-text/:id`, `GET /api/sermon-search?q=`, `GET /api/sermon-export?after=`. Queries are rewritten to quoted words joined by AND, so punctuation cannot break the search.

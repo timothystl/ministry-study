@@ -107,3 +107,12 @@ The first device to open the app after that is offered **Save this library to th
 - Sermons are saved and shared like the rest of the library. A library too large for the browser's own copy keeps saving to the shared database and says so.
 
 Personal archive files are imported through the app and are never committed. Tests use invented entries in the same shapes.
+
+### Sermon manuscripts (full text)
+
+**Sermons → Manuscripts** saves the full text of sermons in the shared database, apart from the library so the library stays quick. Choose a folder or files (Word .docx, .txt or .md). Files are read in the browser and only their text is sent; your originals are not changed. Each file is matched to a sermon by its recorded file name (or by file number when the title agrees); a review shows new, changed, unchanged, unmatched and unreadable files before anything is saved, and unmatched files can optionally get sermon records. Re-choosing the same folder saves only what changed.
+
+- **Search** also covers the saved words: whole words with stemming (returning finds returned), "quoted phrases", and a highlighted excerpt on each result. A sermon can be kept out of search (for funerals and other private pastoral material) while its text is still saved.
+- A sermon's page shows its manuscript, with copy, replace, remove, and an Include in search switch.
+- **Download all manuscripts** makes a zip of plain text files as a backup that lives outside Cloudflare. Keep it private.
+- Needs the shared library (sign-in); without it the section says so. The text is stored in D1 tables `sermon_text` (the backup copy) and `sermon_fts` (an FTS5 index), created on first use.

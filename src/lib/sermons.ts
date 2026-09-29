@@ -107,6 +107,7 @@ export function samePassage(library: Library, sermon: Sermon) {
 export interface SermonHit {
   sermon: Sermon
   reasons: string[]
+  snippet?: string
 }
 export interface SermonFilters {
   series?: string
