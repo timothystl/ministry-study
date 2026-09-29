@@ -228,7 +228,15 @@ const schema = z.object({
   liturgies: z.array(liturgy).default([]),
   sample: z.boolean(),
 })
-export const STORAGE_KEY = 'ministry-study.library.v1'
+const LIBRARY_KEY = 'ministry-study.library.v1'
+// The pastor's browser keeps the original keys, so nothing saved before people were added moves.
+// Anyone else who signs in on the same browser gets keys of their own and never sees the pastor's copy.
+let owner = ''
+export function setStorageOwner(email: string | null) {
+  owner = email ? email.toLowerCase() : ''
+}
+export const scopedKey = (base: string) => (owner ? `${base}.${owner}` : base)
+export const storageKey = () => scopedKey(LIBRARY_KEY)
 export function parseBackup(input: unknown): Library {
   const data = schema.parse(input)
   for (const items of [
@@ -263,10 +271,25 @@ export function parseBackup(input: unknown): Library {
   }
   return data
 }
+const emptyLibrary = (): Library => ({
+  version: 1,
+  books: [],
+  series: [],
+  loans: [],
+  sermons: [],
+  prayers: [],
+  prayerSets: [],
+  notes: [],
+  hymns: [],
+  liturgies: [],
+  sample: false,
+})
 export function loadLibrary(): { library: Library; error: string } {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    return { library: raw ? parseBackup(JSON.parse(raw)) : sampleLibrary(), error: '' }
+    const raw = localStorage.getItem(storageKey())
+    // A new person starts with an empty library, not the pastor's illustrative samples.
+    const fresh = owner ? emptyLibrary() : sampleLibrary()
+    return { library: raw ? parseBackup(JSON.parse(raw)) : fresh, error: '' }
   } catch {
     return {
       library: {

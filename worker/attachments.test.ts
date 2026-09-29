@@ -39,15 +39,43 @@ describe('attachments', () => {
   it('stores a large file in pieces and returns it whole; delete removes it', async () => {
     const db = fakeD1()
     const b = png()
-    await putAttachment(db, 'abcdefgh', 'page.png', 'image/png', b)
-    const got = await getAttachment(db, 'abcdefgh')
+    await putAttachment(db, 'admin', 'abcdefgh', 'page.png', 'image/png', b)
+    const got = await getAttachment(db, 'admin', 'abcdefgh')
     expect(got).toMatchObject({ name: 'page.png', mime: 'image/png', size: b.length })
     expect(got!.pieces).toBeGreaterThan(2)
     expect(same(got!.bytes, b)).toBe(true)
-    await putAttachment(db, 'abcdefgh', 'again.pdf', 'application/pdf', pdf)
-    expect(same((await getAttachment(db, 'abcdefgh'))!.bytes, pdf)).toBe(true)
-    await deleteAttachment(db, 'abcdefgh')
-    expect(await getAttachment(db, 'abcdefgh')).toBeNull()
+    await putAttachment(db, 'admin', 'abcdefgh', 'again.pdf', 'application/pdf', pdf)
+    expect(same((await getAttachment(db, 'admin', 'abcdefgh'))!.bytes, pdf)).toBe(true)
+    await deleteAttachment(db, 'admin', 'abcdefgh')
+    expect(await getAttachment(db, 'admin', 'abcdefgh')).toBeNull()
+  })
+  it('keeps each person’s files private, even if an id is guessed', async () => {
+    const db = fakeD1()
+    await putAttachment(db, 'admin', 'abcdefgh', 'mine.pdf', 'application/pdf', pdf)
+    expect(await getAttachment(db, 'g@x.org', 'abcdefgh')).toBeNull()
+    expect(
+      await putAttachment(db, 'g@x.org', 'abcdefgh', 'theirs.pdf', 'application/pdf', pdf),
+    ).toBe(false)
+    await deleteAttachment(db, 'g@x.org', 'abcdefgh')
+    expect((await getAttachment(db, 'admin', 'abcdefgh'))?.name).toBe('mine.pdf')
+  })
+  it('gives files saved before people were added to the pastor', async () => {
+    const db = fakeD1()
+    await db.batch([
+      db.prepare(
+        `CREATE TABLE attachment (id TEXT PRIMARY KEY, name TEXT NOT NULL, mime TEXT NOT NULL,
+          size INTEGER NOT NULL, pieces INTEGER NOT NULL, created_at TEXT NOT NULL)`,
+      ),
+      db.prepare(
+        `CREATE TABLE attachment_piece (id TEXT NOT NULL, seq INTEGER NOT NULL, data TEXT NOT NULL, PRIMARY KEY (id, seq))`,
+      ),
+      db.prepare(
+        `INSERT INTO attachment VALUES ('oldfile01', 'old.pdf', 'application/pdf', 3, 1, 't')`,
+      ),
+      db.prepare(`INSERT INTO attachment_piece VALUES ('oldfile01', 0, 'AAEC')`),
+    ])
+    expect((await getAttachment(db, 'admin', 'oldfile01'))?.name).toBe('old.pdf')
+    expect(await getAttachment(db, 'g@x.org', 'oldfile01')).toBeNull()
   })
 })
 
