@@ -66,3 +66,7 @@ The library can now save to a free Cloudflare D1 database (see README → Shared
 ## Latest update: sermon catalog
 
 Sermons is built (see README → Sermons): passage search, import of an archive index, text history and structure review, and a shared-database record kind. Next: save full manuscript text for search and backup (needs a separate table, not the library payload), then occasional sermons (funerals, weddings, ordinations), devotions, prayers and notes (the earlier prayer catalog is still to be brought in), and a visual library. ISBN lookup and cover search are to be merged into one flow.
+
+## Latest update: ISBN and cover in one step, scanning, photos, summaries
+
+Find ISBN and cover is now one lookup; Scan a Book reads barcodes (camera, or typed ISBN) and matches or adds books; a cover photo can be taken; published summaries are offered with their source. See README → Finding a book's ISBN, cover and summary. Photo covers are stored inside the record (small JPEG); if many are taken, move images to Cloudflare R2.

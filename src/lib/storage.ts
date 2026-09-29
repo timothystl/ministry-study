@@ -3,6 +3,7 @@ import {
   blankBook,
   formats,
   ownerships,
+  validCoverUrl,
   readingStatuses,
   verificationStatuses,
   type Library,
@@ -24,10 +25,7 @@ const book = z.object({
   coverSource: z
     .object({
       name: z.string(),
-      url: z
-        .string()
-        .url()
-        .refine((v) => v.startsWith('https://')),
+      url: z.string().refine((v) => v === '' || (URL.canParse(v) && v.startsWith('https://'))),
       selectedAt: z.string(),
     })
     .optional(),
@@ -42,10 +40,7 @@ const book = z.object({
   subtitle: z.string().optional(),
   coverUrl: z
     .string()
-    .refine(
-      (v) => !v || v.startsWith('/assets/') || /^https:\/\//.test(v),
-      'Use an HTTPS cover URL',
-    )
+    .refine((v) => !v || validCoverUrl(v), 'Use an HTTPS cover URL')
     .optional(),
   useFor: z.array(z.string()).optional(),
   id: z.string().min(1),

@@ -18,6 +18,7 @@ import {
   Download,
   SlidersHorizontal,
   Mic,
+  ScanBarcode,
 } from 'lucide-react'
 import {
   blankBook,
@@ -41,6 +42,7 @@ import { LibraryData } from './components/LibraryData'
 import { WishlistImport } from './components/WishlistImport'
 import { LoanForm } from './components/LoanForm'
 import { SermonCatalog } from './components/SermonCatalog'
+import { ScanBook } from './components/ScanBook'
 import { Dashboard, type QuickScope } from './components/Dashboard'
 import { ReadingTable, LoansTable } from './components/RecordsTable'
 import { Modal } from './components/Modal'
@@ -78,6 +80,7 @@ export default function App() {
   const [detailId, setDetailId] = useState(''),
     [editing, setEditing] = useState<Book | null>(null),
     [lending, setLending] = useState<Book | null>(null),
+    [scanOpen, setScanOpen] = useState(false),
     [dataOpen, setDataOpen] = useState(false),
     [wishlistImportOpen, setWishlistImportOpen] = useState(false),
     [picker, setPicker] = useState<'loan' | 'read' | null>(null),
@@ -412,6 +415,15 @@ export default function App() {
               {name === 'Loans' && outCount > 0 && <b>{outCount}</b>}
             </button>
           ))}
+          <button
+            onClick={() => {
+              setScanOpen(true)
+              setMenu(false)
+            }}
+          >
+            <ScanBarcode size={19} />
+            <span>Scan a Book</span>
+          </button>
           <button
             onClick={() => {
               setEditing(blankBook())
@@ -800,6 +812,17 @@ export default function App() {
           More
         </button>
       </nav>
+      {scanOpen && (
+        <ScanBook
+          library={library}
+          onSave={commit}
+          onOpen={(book) => {
+            setScanOpen(false)
+            openBook(book)
+          }}
+          onClose={() => setScanOpen(false)}
+        />
+      )}
       {editing && (
         <BookEditor
           book={editing}

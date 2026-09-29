@@ -164,9 +164,14 @@ export function lendBook(library: Library, loan: Loan): Library {
     throw new Error('Check the borrower and loan dates.')
   return { ...library, loans: [...library.loans, loan] }
 }
+// A cover is a bundled image, an https address, or a small photo taken with the camera.
+export const validCoverUrl = (url: string) =>
+  url.startsWith('/assets/') ||
+  /^https:\/\//.test(url) ||
+  (/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(url) && url.length <= 150_000)
 export function saveBook(library: Library, book: Book, seriesName: string): Library {
   if (!book.title.trim()) throw new Error('Please enter a title.')
-  if (book.coverUrl && !book.coverUrl.startsWith('/assets/') && !/^https:\/\//.test(book.coverUrl))
+  if (book.coverUrl && !validCoverUrl(book.coverUrl))
     throw new Error('Please use an HTTPS cover image URL.')
   if (book.reading.started && book.reading.finished && book.reading.finished < book.reading.started)
     throw new Error('The finished date must follow the started date.')

@@ -50,3 +50,7 @@ The database holds rows of `(kind, id, data JSON, updated_at)` with `kind` in `b
 ## Sermons
 
 `Library.sermons` holds `Sermon` records (kind `sermon` in the shared database). A sermon is a catalog entry: `manuscript` and `recording` are locations, not contents. `scripture` is written one way on import and read by `src/lib/scripture.ts` into book/chapter/verse ranges so searches match by overlap. `sourceId` is the file number used to lay archive reviews over a sermon. Fields from a review (`structure*`, `centralImage`, `gospelHandle`, `opening`, `closing`, `scriptureSource`) carry their source and are only ever filled when empty. Older backups without sermons still restore, and restoring one keeps existing sermons.
+
+## Scanning, covers and summaries
+
+A scanned ISBN identifies the edition. `applyScan` fills only blank author/publisher/year, saves the ISBN with provenance in `sourceMetadata` (`ISBN lookup method`, `Summary source`), and adds a cover or summary only when chosen. `coverUrl` may be a bundled image, an https address, or a small `data:image/jpeg` photo (150,000 characters at most); `coverSource.url` is empty for a photo. Published summaries are third-party wording and are always stored with their source.
