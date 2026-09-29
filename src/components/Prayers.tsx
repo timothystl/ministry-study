@@ -1,15 +1,20 @@
 import { useMemo, useState, type FormEvent } from 'react'
-import { Download, Plus, Search, Upload } from 'lucide-react'
+import { Download, ExternalLink, Mail, Plus, Printer, Search, Upload } from 'lucide-react'
 import type { Library } from '../lib/model'
 import {
   blankPrayer,
   blankSet,
   buildPrayers,
   categories,
+  defaultSelections,
   deletePrayer,
+  lcmsLinks,
+  loadStarterBiddings,
   parsePrayerFile,
+  prayerMailto,
   prayerTypes,
   previewPrayerImport,
+  printableHtml,
   savePrayer,
   searchPrayers,
   stripResponse,
@@ -267,7 +272,13 @@ function LibraryTab({ library, onSave }: { library: Library; onSave: (l: Library
       </div>
       {library.prayers.length === 0 ? (
         <div className="empty-state">
-          <p>No prayers yet. Import your Prayers of the Church builder file, or add a prayer.</p>
+          <p>
+            No prayers yet. Start with the built-in biddings, import your Prayers of the Church
+            builder file, or add a prayer.
+          </p>
+          <button className="primary" onClick={() => onSave(loadStarterBiddings(library).library)}>
+            Load starter biddings
+          </button>
         </div>
       ) : shown.length === 0 ? (
         <p className="muted">Nothing matches.</p>
@@ -354,6 +365,14 @@ function BuildTab({
 }) {
   const [copied, setCopied] = useState(false)
   const [saved, setSaved] = useState('')
+  const [emailNote, setEmailNote] = useState('')
+  const [emailTo, setEmailTo] = useState(() => {
+    try {
+      return localStorage.getItem('prayerEmailTo') || ''
+    } catch {
+      return ''
+    }
+  })
   const cats = useMemo(() => categories(library.prayers), [library.prayers])
   const starters = library.prayers.filter((p) => p.type === 'Sermon starter')
   const biddings = (name: string) =>
@@ -391,6 +410,7 @@ function BuildTab({
             { ...ordered, names: { sick: '', grieving: '', birthdays: '' } },
             library.prayers,
           ),
+      lcms: draft.lcms,
       updatedAt: new Date().toISOString(),
     }
     const exists = library.prayerSets.some((s) => s.id === record.id)
@@ -403,6 +423,33 @@ function BuildTab({
     setSaved(onSave(next) ? 'Saved.' : 'Could not save.')
   }
   void text
+  function email() {
+    const sub = `Prayers of the Church${draft.sunday ? ` — ${draft.sunday}` : ''}${draft.date ? ` (${draft.date})` : ''}`
+    const { href, complete } = prayerMailto(emailTo, sub, finalText)
+    try {
+      localStorage.setItem('prayerEmailTo', emailTo)
+    } catch {
+      // Remembering the address is a convenience only.
+    }
+    if (!complete) {
+      void navigator.clipboard?.writeText(finalText)
+      setEmailNote(
+        'These prayers are long for a link, so they were copied. Paste them into the email.',
+      )
+    } else setEmailNote('')
+    window.location.href = href
+  }
+  function print() {
+    const w = window.open('', '_blank')
+    if (!w) {
+      setEmailNote('Your browser blocked the print window. Allow pop-ups, or use Download.')
+      return
+    }
+    w.document.write(printableHtml(finalText))
+    w.document.close()
+    w.focus()
+    w.print()
+  }
   return (
     <div className="prayer-build">
       <section>
@@ -472,7 +519,26 @@ function BuildTab({
           ))}
         </div>
         <h3>Choose one bidding for each category</h3>
-        {cats.length === 0 && <p className="muted">Import your prayers first (Library tab).</p>}
+        {cats.length === 0 ? (
+          <div className="empty-state">
+            <p>There are no biddings to choose from yet.</p>
+            <button
+              className="primary"
+              onClick={() => onSave(loadStarterBiddings(library).library)}
+            >
+              Load starter biddings
+            </button>
+            <p className="muted">
+              You can also import your own builder file from the Library tab; nothing is replaced.
+            </p>
+          </div>
+        ) : (
+          <button
+            onClick={() => setDraft({ ...draft, selections: defaultSelections(library.prayers) })}
+          >
+            Choose the first bidding in every category
+          </button>
+        )}
         {cats.map((c) => {
           const key = c.key || c.name
           const current = chosen(key)
@@ -503,6 +569,28 @@ function BuildTab({
             </details>
           )
         })}
+        <h3>This week’s LCMS prayer</h3>
+        <p className="muted">
+          The LCMS posts its Prayers of the Church each week as a PDF. Open the page, copy the
+          prayer for {draft.sunday || 'this Sunday'}, and paste it below to pray with the wider
+          church. Each opens in a new tab.
+        </p>
+        <p className="lcms-links">
+          {lcmsLinks.map(([label, href]) => (
+            <a key={href} href={href} target="_blank" rel="noopener noreferrer">
+              <ExternalLink size={14} /> {label}
+            </a>
+          ))}
+        </p>
+        <label className="wide-field">
+          LCMS weekly prayer (pasted)
+          <textarea
+            rows={5}
+            value={draft.lcms}
+            onChange={(e) => setDraft({ ...draft, lcms: e.target.value })}
+            placeholder="Paste the LCMS prayer here. © The Lutheran Church—Missouri Synod."
+          />
+        </label>
         <h3>Other concerns and the sermon</h3>
         <label className="wide-field">
           Other concerns
@@ -570,6 +658,9 @@ function BuildTab({
           >
             <Download size={16} /> Download
           </button>
+          <button onClick={print}>
+            <Printer size={16} /> Print or save as PDF
+          </button>
           <button
             onClick={save}
             disabled={!ordered.selections.length && !draft.other.trim() && !draft.petition.trim()}
@@ -577,6 +668,23 @@ function BuildTab({
             Save this service
           </button>
         </div>
+        <div className="form-grid">
+          <label className="wide-field">
+            Email to
+            <input
+              type="email"
+              value={emailTo}
+              onChange={(e) => setEmailTo(e.target.value)}
+              placeholder="worship team, or leave blank"
+            />
+          </label>
+        </div>
+        <div className="sermon-actions">
+          <button onClick={email}>
+            <Mail size={16} /> Email these prayers
+          </button>
+        </div>
+        {emailNote && <p role="status">{emailNote}</p>}
         {saved && <p role="status">{saved}</p>}
       </section>
     </div>

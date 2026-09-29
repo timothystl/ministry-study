@@ -58,3 +58,24 @@ test('import prayers, build the prayers of the church, and save the service', as
   await nav(page, 'Prayers')
   await expect(page.getByText('4 prayers · 1 saved services')).toBeVisible()
 })
+
+test('a new library can build the prayers right away, with the LCMS prayer and an email', async ({
+  page,
+}) => {
+  await page.goto('/')
+  await nav(page, 'Prayers')
+  await page.getByRole('button', { name: 'Build the Prayers of the Church' }).click()
+  await page.getByRole('button', { name: 'Load starter biddings' }).click()
+  await page.getByRole('button', { name: 'Choose the first bidding in every category' }).click()
+  await page.getByLabel('Names of the sick').fill('Ann')
+  await page.getByLabel('LCMS weekly prayer (pasted)').fill('Almighty God, hear us.')
+  const preview = page.getByLabel('Prayers of the Church preview')
+  await expect(preview).toContainText('be near Ann and all who are ill')
+  await expect(preview).toContainText('FROM THE LCMS WEEKLY PRAYER\nAlmighty God, hear us.')
+  await expect(page.getByRole('link', { name: /Three-Year Series/ })).toHaveAttribute(
+    'href',
+    'https://www.lcms.org/worship/three-year-series-prayers',
+  )
+  await expect(page.getByRole('button', { name: 'Email these prayers' })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Print or save as PDF/ })).toBeVisible()
+})

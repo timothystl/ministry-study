@@ -2549,3 +2549,15 @@ mark {
 .note-body {
   max-height: none;
 }
+
+.lcms-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 0 0 10px;
+}
+.lcms-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
