@@ -1,3 +1,4 @@
+import type { Attachment } from './attachments'
 import type { Library } from './model'
 import { formatReferences, parseReferences, referencesOverlap } from './scripture'
 import { splitCsv } from './sermons'
@@ -43,6 +44,7 @@ export interface Hymn {
   copyright: string
   links: HymnLink[]
   files: HymnFile[]
+  attachments: Attachment[] // photos and PDFs kept in the shared library
   notes: string
   source: string
   sourceId: string
@@ -68,6 +70,7 @@ export const blankHymn = (): Hymn => ({
   copyright: '',
   links: [],
   files: [],
+  attachments: [],
   notes: '',
   source: '',
   sourceId: '',

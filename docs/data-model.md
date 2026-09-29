@@ -88,3 +88,9 @@ notes, source, sourceId. `liturgies` (kind `liturgy`): title, kind, season, date
 hymnId,scripture,text}], files[], notes. The RUF Hymnbook index is bundled at
 `public/data/ruf-hymnbook.json` (titles, credits and links only). Older backups without these
 collections restore without erasing them.
+
+## Attachments
+A hymn's `attachments` list holds `{id, name, mime, size, addedAt}`. The bytes are in D1 tables
+`attachment` and `attachment_piece` (base64 in 600,000-character rows), served at
+`/api/attachments/:id` (PUT to store, GET to read, DELETE to remove). Limits: JPEG, PNG, WebP, GIF
+and PDF only, 6 MB each. Served with `nosniff` and `sandbox` headers.

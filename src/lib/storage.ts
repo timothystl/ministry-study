@@ -167,6 +167,17 @@ const hymn = z.object({
   copyright: z.string().default(''),
   links: z.array(z.object({ label: z.string(), url: z.string() })).default([]),
   files: z.array(hymnFile).default([]),
+  attachments: z
+    .array(
+      z.object({
+        id: z.string().min(8),
+        name: z.string(),
+        mime: z.string(),
+        size: z.number(),
+        addedAt: z.string(),
+      }),
+    )
+    .default([]),
   notes: z.string().default(''),
   source: z.string().default(''),
   sourceId: z.string().default(''),

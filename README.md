@@ -182,3 +182,10 @@ Hymnary.org (Hymnary blocks automated lookups, so it opens in its own tab).
 **Liturgies** keep a service together: the hymns, readings, prayers and liturgy texts in order,
 plus the slides (PowerPoint) or order of service. A hymn's page lists the liturgies that use it.
 Both sync to the shared library and are included in backups.
+
+### Photos and PDFs on a hymn
+Open a hymn and choose "Attach photos or PDFs" (or "Take a photo" on a phone) to keep sheet music,
+a scanned hymnal page or a lead sheet with it. Photos over 1 MB are shrunk in the browser; a PDF can
+be up to 6 MB. Files are stored in the shared library's database, so they need the shared library
+(they are not in the JSON backup download; Cloudflare's own database backups cover them). Only
+photos and PDFs are accepted, and the file's contents are checked, not just its name.

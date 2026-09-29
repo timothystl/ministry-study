@@ -22,6 +22,8 @@ import {
   type RufEntry,
 } from '../lib/hymns'
 import type { Library } from '../lib/model'
+import { removeFile } from '../lib/attachments'
+import { Attachments } from './Attachments'
 import { Modal } from './Modal'
 
 const facts = (h: Hymn): [string, string][] => [
@@ -546,7 +548,10 @@ export function Hymns({
                 <span>Remove this hymn? Your files are not touched.</span>
                 <button
                   onClick={() => {
-                    if (onSave(deleteHymn(library, open.id))) setOpenId('')
+                    if (onSave(deleteHymn(library, open.id))) {
+                      open.attachments.forEach((a) => void removeFile(a.id))
+                      setOpenId('')
+                    }
                   }}
                 >
                   Yes, remove
@@ -596,6 +601,10 @@ export function Hymns({
               </li>
             </ul>
           </section>
+          <Attachments
+            attachments={open.attachments}
+            onChange={(next) => onSave(saveHymn(library, { ...open, attachments: next }))}
+          />
           {open.text && (
             <section className="detail-section">
               <h3>Words</h3>

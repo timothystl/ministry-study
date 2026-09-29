@@ -116,3 +116,10 @@ Hymns catalog (RUF Hymnbook index, CSV import, attach files from a folder) and L
 Not done: Hymnary.org lookups (it blocks automated requests, so each hymn links to a Hymnary
 search); reading a hymn's details from Finale files; PowerPoint contents. Ideas: hymn use history
 by Sunday, suggested hymns for a sermon passage, LSB numbers import.
+
+## Latest update: photos and PDFs on hymns
+Attachments stored in D1 (Access-protected). If large uploads fail on the Workers free plan (10 ms
+CPU per request), lower MAX_ATTACHMENT or move files to R2. Not in the JSON backup download.
+Cardiphonia's blog is reachable (archive); its Retuned Hymnal database (retunedhymnal.org) and
+cardiphonia.org were not reachable from the build environment, so hymns from there are added by
+link or by attaching downloaded lead sheets.
