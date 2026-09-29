@@ -2549,3 +2549,11 @@ mark {
 .note-body {
   max-height: none;
 }
+.liturgy-order {
+  padding-left: 22px;
+  display: grid;
+  gap: 8px;
+}
+.liturgy-order button {
+  margin-left: 4px;
+}

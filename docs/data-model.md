@@ -80,3 +80,11 @@ backups without `notes` restore without erasing notes already in the library.
 ## Children's messages
 Stored as `notes` with kind "Children's message" or "Chapel message". The Devotions & Notes page
 shows the other kinds; Children's Messages shows these two.
+
+## Hymns and liturgies
+`hymns` (kind `hymn`): title, firstLine, tune, composer, lyricist, arranger, meter, scripture,
+year, key, hymnal, usage[], themes[], text, copyright, links[{label,url}], files[{kind,location}],
+notes, source, sourceId. `liturgies` (kind `liturgy`): title, kind, season, date, items[{kind,label,
+hymnId,scripture,text}], files[], notes. The RUF Hymnbook index is bundled at
+`public/data/ruf-hymnbook.json` (titles, credits and links only). Older backups without these
+collections restore without erasing them.
