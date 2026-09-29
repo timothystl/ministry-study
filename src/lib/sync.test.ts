@@ -1,18 +1,31 @@
 import { describe, expect, it } from 'vitest'
 import { sampleLibrary } from './seed'
+import type { Library } from './model'
 import { parseBackup } from './storage'
 import { chunkChanges, diffRecords, hashRecords, libraryToRecords, recordsToLibrary } from './sync'
 
+// The sample books renamed as real records, since samples are deliberately never saved.
+const realLibrary = (): Library => {
+  const library = sampleLibrary()
+  return {
+    ...library,
+    sample: false,
+    books: library.books.map((b) => ({ ...b, id: b.id.replace('sample-', 'book-') })),
+  }
+}
 describe('sync helpers', () => {
+  it('never sends illustrative sample books', () => {
+    expect(libraryToRecords(sampleLibrary())).toEqual([])
+  })
   it('round-trips a library through records', () => {
-    const library = { ...sampleLibrary(), sample: false }
+    const library = realLibrary()
     const rebuilt = recordsToLibrary(libraryToRecords(library))
     const expected = parseBackup(library)
     expect(rebuilt.books).toEqual(expected.books)
     expect(rebuilt.loans).toEqual(expected.loans)
   })
   it('finds only changed and removed records', () => {
-    const library = sampleLibrary()
+    const library = realLibrary()
     const synced = hashRecords(libraryToRecords(library))
     expect(diffRecords(libraryToRecords(library), synced)).toEqual({ upserts: [], deletes: [] })
     const edited = { ...library, books: library.books.slice(1) }
