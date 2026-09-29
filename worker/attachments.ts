@@ -1,5 +1,8 @@
+import { hasColumn } from './store'
 // Photos and PDFs kept with a record (a hymn's sheet music, a scanned hymnal page). The bytes are
 // stored in the shared database in pieces, so nothing more is needed than what is already set up.
+// Each file belongs to one person (the pastor's is 'admin'); nobody can read, replace or delete
+// another person's file, even by guessing its id.
 export const MAX_ATTACHMENT = 6_000_000
 const PIECE = 600_000 // characters of base64 per row
 const ID = /^[A-Za-z0-9_-]{8,80}$/
@@ -23,7 +26,24 @@ const ready = new WeakSet<object>()
 async function ensure(db: D1Database) {
   if (ready.has(db)) return
   await db.batch(schema.map((sql) => db.prepare(sql)))
+  // Files saved before people were added belong to the pastor.
+  if (!(await hasColumn(db, 'attachment', 'owner'))) {
+    try {
+      await db
+        .prepare(`ALTER TABLE attachment ADD COLUMN owner TEXT NOT NULL DEFAULT 'admin'`)
+        .run()
+    } catch (error) {
+      if (!(await hasColumn(db, 'attachment', 'owner'))) throw error
+    }
+  }
   ready.add(db)
+}
+const ownedBy = async (db: D1Database, owner: string, id: string) => {
+  const { results } = await db
+    .prepare(`SELECT owner FROM attachment WHERE id = ?`)
+    .bind(id)
+    .all<{ owner: string }>()
+  return results.length === 0 ? null : results[0].owner === owner
 }
 type Native = { toBase64?: () => string }
 export function toBase64(bytes: Uint8Array): string {
@@ -63,8 +83,10 @@ export function checkUpload(bytes: Uint8Array, claimed: string) {
     throw new Error('That file is not the kind it says it is.')
   return real
 }
+// Returns false, and changes nothing, if the id already belongs to someone else.
 export async function putAttachment(
   db: D1Database,
+  owner: string,
   id: string,
   name: string,
   mime: string,
@@ -72,6 +94,7 @@ export async function putAttachment(
   now = new Date().toISOString(),
 ) {
   await ensure(db)
+  if ((await ownedBy(db, owner, id)) === false) return false
   const text = toBase64(bytes)
   const statements = [
     db.prepare(`DELETE FROM attachment_piece WHERE id = ?`).bind(id),
@@ -87,17 +110,18 @@ export async function putAttachment(
   statements.push(
     db
       .prepare(
-        `INSERT INTO attachment (id, name, mime, size, pieces, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO attachment (id, name, mime, size, pieces, created_at, owner) VALUES (?, ?, ?, ?, ?, ?, ?)`,
       )
-      .bind(id, name.slice(0, 200), mime, bytes.length, pieces, now),
+      .bind(id, name.slice(0, 200), mime, bytes.length, pieces, now, owner),
   )
   await db.batch(statements)
+  return true
 }
-export async function getAttachment(db: D1Database, id: string) {
+export async function getAttachment(db: D1Database, owner: string, id: string) {
   await ensure(db)
   const { results } = await db
-    .prepare(`SELECT name, mime, size, pieces FROM attachment WHERE id = ?`)
-    .bind(id)
+    .prepare(`SELECT name, mime, size, pieces FROM attachment WHERE id = ? AND owner = ?`)
+    .bind(id, owner)
     .all<{ name: string; mime: string; size: number; pieces: number }>()
   const meta = results[0]
   if (!meta) return null
@@ -108,8 +132,9 @@ export async function getAttachment(db: D1Database, id: string) {
   if (rows.length !== meta.pieces) return null
   return { ...meta, bytes: fromBase64(rows.map((r) => r.data).join('')) }
 }
-export async function deleteAttachment(db: D1Database, id: string) {
+export async function deleteAttachment(db: D1Database, owner: string, id: string) {
   await ensure(db)
+  if ((await ownedBy(db, owner, id)) !== true) return
   await db.batch([
     db.prepare(`DELETE FROM attachment_piece WHERE id = ?`).bind(id),
     db.prepare(`DELETE FROM attachment WHERE id = ?`).bind(id),
