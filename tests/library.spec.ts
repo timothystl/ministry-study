@@ -289,3 +289,52 @@ test('cover lookup handles missing and unavailable results without changing the 
   )
   await expect(page.locator('.verification-bar')).toContainText('Not checked')
 })
+
+test('ISBN lookup separates editions and saves only a reviewed identifier', async ({ page }) => {
+  await page.route('https://openlibrary.org/search.json?*', (route) =>
+    route.fulfill({
+      json: {
+        docs: [{ key: '/works/OL123W', title: 'Lookup title', author_name: ['Example Author'] }],
+      },
+    }),
+  )
+  await page.route('https://openlibrary.org/works/OL123W/editions.json?*', (route) =>
+    route.fulfill({
+      json: {
+        size: 2,
+        entries: [
+          {
+            key: '/books/OL123M',
+            title: 'Lookup title',
+            publishers: ['Example Press'],
+            publish_date: '2008',
+            physical_format: 'Hardcover',
+            isbn_13: ['9780061551826'],
+          },
+          { key: '/books/OL124M', title: 'Older edition', publish_date: '1900' },
+        ],
+      },
+    }),
+  )
+  await page.goto('/')
+  await addBook(page, 'My physical ISBN record')
+  await page.getByRole('button', { name: 'Find ISBN', exact: true }).click()
+  await page.getByRole('button', { name: 'Find matching books' }).click()
+  await page.getByRole('button', { name: /Lookup title Example Author/ }).click()
+  await expect(page.getByRole('dialog')).toContainText('No valid ISBN recorded')
+  await page.getByRole('button', { name: '9780061551826', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Save this ISBN' })).toBeDisabled()
+  await page.getByLabel('I checked this edition against my book.').check()
+  await page.getByRole('button', { name: 'Save this ISBN' }).click()
+  await expect(page.locator('.publication')).toContainText('9780061551826')
+  await expect(
+    page.getByRole('heading', { name: 'My physical ISBN record', exact: true }),
+  ).toBeVisible()
+  await expect(page.locator('.note-card')).toContainText('Remember this insight')
+  await page.reload()
+  await page.getByLabel('Search entire library').fill('9780061551826')
+  await expect(
+    page.getByRole('heading', { name: 'My physical ISBN record', exact: true }),
+  ).toBeVisible()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+})

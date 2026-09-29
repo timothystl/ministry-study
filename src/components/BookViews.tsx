@@ -12,6 +12,7 @@ import { Rating } from './Rating'
 import { CoverSearch } from './CoverSearch'
 import { Modal } from './Modal'
 import { VerifyBook } from './VerifyBook'
+import { IsbnLookup } from './IsbnLookup'
 export function Cover({ book, small = false }: { book: Book; small?: boolean }) {
   return (
     <img
@@ -85,6 +86,7 @@ export function BookDetail({
   onOpen: (book: Book) => void
   nextToVerify?: Book
 }) {
+  const [isbnOpen, setIsbnOpen] = useState(false)
   const [coverOpen, setCoverOpen] = useState(false)
   const [verifyOpen, setVerifyOpen] = useState(false)
   const [coverError, setCoverError] = useState('')
@@ -144,6 +146,7 @@ export function BookDetail({
               .filter(Boolean)
               .join(' · ') || 'Publication details not recorded'}
           </p>
+          <button onClick={() => setIsbnOpen(true)}>Find ISBN</button>
           <div className="book-tags">
             <span>{book.format}</span>
             {series && (
@@ -222,6 +225,7 @@ export function BookDetail({
           </div>
         </section>
       )}
+      {isbnOpen && <IsbnLookup book={book} onSave={onUpdate} onClose={() => setIsbnOpen(false)} />}
       {coverOpen && (
         <Modal title="Find a book cover" wide onClose={() => setCoverOpen(false)}>
           <CoverSearch
