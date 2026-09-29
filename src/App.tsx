@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   BookOpen,
   Bookmark,
@@ -32,6 +32,8 @@ import {
   type Library,
 } from './lib/model'
 import { downloadJson, loadLibrary, STORAGE_KEY } from './lib/storage'
+import { useSync } from './lib/useSync'
+import { SyncBanner } from './components/SyncBanner'
 import { BookCards, BookDetail } from './components/BookViews'
 import { BookEditor } from './components/BookEditor'
 import { LibraryData } from './components/LibraryData'
@@ -99,6 +101,18 @@ export default function App() {
       return false
     }
   }
+  const adoptShared = useCallback((next: Library) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+      setLibrary(next)
+      setError('')
+      return true
+    } catch {
+      setError('Could not save the shared library on this device. Export a backup and try again.')
+      return false
+    }
+  }, [])
+  const sync = useSync(library, adoptShared)
   function navigate(next: Page) {
     setPage(next)
     setDetailId('')
@@ -431,6 +445,12 @@ export default function App() {
           id="main"
           className={detail ? 'detail-main' : page === 'Home' && !searching ? 'home-main' : ''}
         >
+          <SyncBanner
+            status={sync.status}
+            remoteCount={sync.remoteCount}
+            onUseDevice={() => void sync.keepThisDevice()}
+            onUseShared={sync.takeShared}
+          />
           {error && (
             <div className="error" role="alert">
               <p>{error}</p>

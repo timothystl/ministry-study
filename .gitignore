@@ -28,3 +28,5 @@ private/
 *.backup.json
 playwright-report/
 test-results/
+.dev.vars
+.wrangler/

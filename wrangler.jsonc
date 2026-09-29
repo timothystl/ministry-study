@@ -1,0 +1,16 @@
+{
+  // The Worker name must match the existing Cloudflare project for study.timothystl.org.
+  "name": "ministry-study",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  // No database_id: Wrangler creates the free D1 database on first deploy. The worker creates
+  // its own tables on first use.
+  "d1_databases": [{ "binding": "DB", "database_name": "timothy-study-db" }],
+  // Set in the Cloudflare dashboard (Settings → Variables): STUDY_ACCESS_TEAM_DOMAIN, STUDY_ACCESS_AUD
+}

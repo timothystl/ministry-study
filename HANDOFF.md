@@ -58,3 +58,7 @@ The live address is https://study.timothystl.org on Cloudflare, connected to Git
 A private combined backup with 1,111 candidate physical records plus 661 Logos records was supplied outside the repo. It excludes the pending Amazon import and does not represent later browser edits. Do not commit personal catalog files. The app still uses local browser storage; hosting does not provide cross-device sync.
 
 ISBN lookup is now available from book detail. It searches Open Library works, fetches paginated edition records, validates ISBN checksums, and requires the user to confirm the edition before saving the selected identifier. It changes only the ISBN plus source provenance and retains the existing physical verification reset rules. The physical import has no recorded ISBNs; no bulk ISBN assignments have been made.
+
+## Latest update: shared library database
+
+The library can now save to a free Cloudflare D1 database (see README → Shared library database). The code is done and tested locally; it stays inactive, and the API refuses requests, until Cloudflare Access protection and the two `STUDY_ACCESS_*` variables are set. Planned order after this: sermons, children's messages, Bible studies and notes, hymns, then Scripture tools.

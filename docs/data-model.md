@@ -25,7 +25,7 @@ Borrowed reading sources can be recorded without ownership; outgoing loans are t
 
 ## Explicitly deferred
 
-Research a Text, Scripture reading/languages/patterns, hymn/music, sermons, teaching resources, external-resource discovery, EPUB/PDF reading, full-text indexing, provider APIs, automatic cover enrichment, spreadsheet/photo import and reconciliation, cloud sync/authentication, and automatic organization recommendations.
+Research a Text, Scripture reading/languages/patterns, hymn/music, sermons, teaching resources, external-resource discovery, EPUB/PDF reading, full-text indexing, provider APIs, automatic cover enrichment, spreadsheet/photo import and reconciliation, and automatic organization recommendations.
 
 ## Source review
 
@@ -42,3 +42,7 @@ Optional fields added without changing the version-1 import contract: `Book.subt
 Optional `coverSource` holds source name, HTTPS page URL, and selection timestamp. `coverUrl` remains an external image reference. Cover selection never applies title, author, identifiers, series, ownership, location or reading metadata. Open Library work searches are explicitly edition-unverified; ISBN searches display the matched edition.
 
 Optional `edition` is editable; older physical imports display the preserved `sourceMetadata.Edition` until edited. Optional `verification` holds `status` (Not checked / Needs correction / Confirmed), `checkedAt` (local date) and `notes`. Missing verification means Not checked, independent of imported catalog confidence. Confirmation requires a date and is reset on saved changes to title, subtitle, author, edition, ISBN, publisher, publication year, format, series, volume or current location. Reading, cover, recommended location and personal-note changes retain confirmation. Original catalog review flags are preserved, not rewritten by a physical check.
+
+## Shared database
+
+The database holds rows of `(kind, id, data JSON, updated_at)` with `kind` in `book`, `series`, `loan`; new record kinds need no schema change. Illustrative `sample-` books, and loans on them, are never saved. The stored JSON is the same validated shape as the backup file, and a library rebuilt from rows is validated before it replaces the local copy. Deletes are real deletes; the recovery copies are D1 time travel and exported backups.
