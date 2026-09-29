@@ -5,7 +5,15 @@ import { parseSermonLine, type Sermon } from './sermons'
 // Devotions and working notes: council devotions, midweek devotions, sermon-preparation notes,
 // illustrations, ideas and study notes. A note can be tied to a sermon and to a passage, so it
 // turns up wherever that passage is being worked on. The finished manuscripts live in Sermons.
-export const noteKinds = ['Devotion', 'Sermon note', 'Illustration', 'Idea', 'Study note'] as const
+export const childrenKinds = ["Children's message", 'Chapel message'] as const
+export const devotionKinds = [
+  'Devotion',
+  'Sermon note',
+  'Illustration',
+  'Idea',
+  'Study note',
+] as const
+export const noteKinds = [...devotionKinds, ...childrenKinds] as const
 export const MAX_NOTE = 30_000
 export interface Note {
   id: string
@@ -19,10 +27,11 @@ export interface Note {
   source: string
   updatedAt: string
 }
-export const blankNote = (): Note => ({
+export const isChildrensKind = (kind: string) => (childrenKinds as readonly string[]).includes(kind)
+export const blankNote = (kind: Note['kind'] = 'Devotion'): Note => ({
   id: crypto.randomUUID(),
   title: '',
-  kind: 'Devotion',
+  kind,
   body: '',
   scripture: '',
   date: '',

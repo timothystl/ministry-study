@@ -106,3 +106,7 @@ funeral/wedding/ordination list.
 
 ## Latest update: funeral, wedding and ordination list
 File numbers with a letter (F012, W003, O001) are now read like the archive's numbers. A wedding's occasion now decides its kind, so "Christ Memorial" no longer makes it a funeral. The list itself contains family names and lives outside the repository.
+
+## Latest update: children's messages
+New page over the notes records (two audiences). Next: hymns. Ideas: props/objects as a field,
+grade level, a "reuse next year" flag.
