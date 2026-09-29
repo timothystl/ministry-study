@@ -1,4 +1,12 @@
 import { verifyAccess, type AccessEnv } from './access'
+import {
+  checkUpload,
+  deleteAttachment,
+  getAttachment,
+  MAX_ATTACHMENT,
+  putAttachment,
+  validAttachmentId,
+} from './attachments'
 import { applyChanges, readAll, validateChange } from './store'
 import {
   deleteText,
@@ -87,6 +95,48 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
         }
         await putText(env.DB, id, input)
         return reply({ ok: true, chars: input.text.length })
+      }
+    }
+    const fileRoute = /^\/api\/attachments\/([^/]+)$/.exec(pathname)
+    if (fileRoute) {
+      const id = decodeURIComponent(fileRoute[1])
+      if (!validAttachmentId(id)) return reply({ error: 'Invalid file.' }, 400)
+      if (request.method === 'GET') {
+        const found = await getAttachment(env.DB, id)
+        if (!found) return reply({ error: 'No such file.' }, 404)
+        return new Response(found.bytes, {
+          headers: {
+            'Content-Type': found.mime,
+            'Content-Disposition': `inline; filename*=UTF-8''${encodeURIComponent(found.name)}`,
+            'Cache-Control': 'private, max-age=86400',
+            'X-Content-Type-Options': 'nosniff',
+            'Content-Security-Policy': 'sandbox',
+          },
+        })
+      }
+      if (request.method === 'DELETE') {
+        await deleteAttachment(env.DB, id)
+        return reply({ ok: true })
+      }
+      if (request.method === 'PUT') {
+        const declared = Number(request.headers.get('Content-Length') || 0)
+        if (declared > MAX_ATTACHMENT)
+          return reply({ error: 'That file is too large (6 MB at most).' }, 413)
+        const bytes = new Uint8Array(await request.arrayBuffer())
+        let mime
+        try {
+          mime = checkUpload(bytes, request.headers.get('Content-Type') || '')
+        } catch (error) {
+          return reply({ error: (error as Error).message }, 400)
+        }
+        let name = 'file'
+        try {
+          name = decodeURIComponent(request.headers.get('X-File-Name') || 'file')
+        } catch {
+          // keep the plain name
+        }
+        await putAttachment(env.DB, id, name, mime, bytes)
+        return reply({ ok: true, size: bytes.length, mime })
       }
     }
     return reply({ error: 'Not found.' }, 404)

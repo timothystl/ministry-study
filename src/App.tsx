@@ -21,6 +21,8 @@ import {
   ScanBarcode,
   HandHeart,
   Baby,
+  Music,
+  ScrollText,
   NotebookPen,
 } from 'lucide-react'
 import {
@@ -48,6 +50,8 @@ import { SermonCatalog } from './components/SermonCatalog'
 import { ScanBook } from './components/ScanBook'
 import { Prayers } from './components/Prayers'
 import { Notes } from './components/Notes'
+import { Hymns } from './components/Hymns'
+import { Liturgies } from './components/Liturgies'
 import { Dashboard, type QuickScope } from './components/Dashboard'
 import { ReadingTable, LoansTable } from './components/RecordsTable'
 import { Modal } from './components/Modal'
@@ -64,6 +68,8 @@ type Page =
   | 'Prayers'
   | 'Notes'
   | 'Children'
+  | 'Hymns'
+  | 'Liturgies'
 type Browse = 'Topic' | 'Author' | 'Series' | 'Physical shelf'
 const navigation = [
   { name: 'Home', label: 'Search', icon: Search },
@@ -76,11 +82,15 @@ const navigation = [
   { name: 'Prayers', label: 'Prayers', icon: HandHeart },
   { name: 'Notes', label: 'Devotions & Notes', icon: NotebookPen },
   { name: 'Children', label: 'Children’s Messages', icon: Baby },
+  { name: 'Hymns', label: 'Hymns', icon: Music },
+  { name: 'Liturgies', label: 'Liturgies', icon: ScrollText },
 ] as const
 export default function App() {
   const [initial] = useState(loadLibrary),
     [library, setLibrary] = useState(initial.library),
     [error, setError] = useState(initial.error)
+  const [liturgyId, setLiturgyId] = useState(''),
+    [hymnId, setHymnId] = useState('')
   const [page, setPage] = useState<Page>('Home'),
     [query, setQuery] = useState(''),
     [menu, setMenu] = useState(false),
@@ -519,6 +529,28 @@ export default function App() {
             <Prayers library={library} onSave={commit} />
           ) : page === 'Notes' ? (
             <Notes library={library} onSave={commit} />
+          ) : page === 'Hymns' ? (
+            <Hymns
+              library={library}
+              onSave={commit}
+              openId={hymnId}
+              setOpenId={setHymnId}
+              onOpenLiturgy={(id) => {
+                setLiturgyId(id)
+                setPage('Liturgies')
+              }}
+            />
+          ) : page === 'Liturgies' ? (
+            <Liturgies
+              library={library}
+              onSave={commit}
+              openId={liturgyId}
+              setOpenId={setLiturgyId}
+              onOpenHymn={(id) => {
+                setHymnId(id)
+                setPage('Hymns')
+              }}
+            />
           ) : page === 'Children' ? (
             <Notes library={library} onSave={commit} kidsPage />
           ) : detail ? (
