@@ -1,7 +1,14 @@
 import { describe, it, expect } from 'vitest'
 import { blankBook, lendBook, saveBook, searchBooks, type Library } from './model'
 import { importLogos, parseBackup } from './storage'
-const empty = (): Library => ({ version: 1, books: [], series: [], loans: [], sample: false })
+const empty = (): Library => ({
+  version: 1,
+  books: [],
+  series: [],
+  loans: [],
+  sermons: [],
+  sample: false,
+})
 const physical = () => ({ ...blankBook(), title: 'Test book' })
 describe('independent library concepts', () => {
   it('records reading without ownership or physical location', () => {

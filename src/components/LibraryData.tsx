@@ -30,9 +30,12 @@ export function LibraryData({
         )
       } else {
         const parsed = parseBackup(input)
+        // Backups made before sermons existed must not erase the sermon catalog.
+        const hasSermons = Array.isArray((input as { sermons?: unknown }).sermons)
+        if (!hasSermons) parsed.sermons = library.sermons
         setPending(parsed)
         setMessage(
-          `Restore ${parsed.books.length} books, ${parsed.series.length} series, and ${parsed.loans.length} loans. This replaces the current library on this device.`,
+          `Restore ${parsed.books.length} books, ${parsed.series.length} series, ${parsed.loans.length} loans${hasSermons ? ` and ${parsed.sermons.length} sermons.` : '. Your current sermons are kept because this backup has none.'} This replaces the current library.`,
         )
       }
     } catch (e) {
@@ -47,7 +50,7 @@ export function LibraryData({
     <Modal title="Your library data" onClose={onClose}>
       <p className="muted">
         Saved in this browser on this device. Export a backup to keep a copy or move to another
-        device. There is no account or cloud sync in v0.1.
+        device. When the shared library is on, changes also save there.
       </p>
       <button onClick={() => downloadJson(library, 'ministry-study.backup.json')}>
         <Download size={16} /> Export backup
@@ -118,7 +121,14 @@ export function LibraryData({
         <button
           disabled={!library.sample || library.books.some((b) => !b.id.startsWith('sample-'))}
           onClick={() => {
-            setPending({ version: 1, books: [], series: [], loans: [], sample: false })
+            setPending({
+              version: 1,
+              books: [],
+              series: [],
+              loans: [],
+              sermons: library.sermons,
+              sample: false,
+            })
             setMessage('Remove all illustrative samples and start an empty library.')
           }}
         >

@@ -45,7 +45,14 @@ describe('cover lookup', () => {
   })
 })
 describe('physical verification', () => {
-  const empty = (): Library => ({ version: 1, sample: false, books: [], series: [], loans: [] })
+  const empty = (): Library => ({
+    version: 1,
+    sample: false,
+    books: [],
+    series: [],
+    loans: [],
+    sermons: [],
+  })
   it('moves forward in shelf order, wraps, and skips confirmed copies', () => {
     const books = ['1', '2', '3'].map((position) => ({
       ...blankBook(),

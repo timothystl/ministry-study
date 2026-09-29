@@ -77,6 +77,35 @@ const book = z.object({
   sourceMetadata: z.record(z.string(), z.string()).optional(),
   updatedAt: z.string(),
 })
+const sermon = z.object({
+  id: z.string().min(1),
+  title: z.string().trim().min(1),
+  scripture: z.string(),
+  date: z.string().regex(/^(\d{4}-\d{2}-\d{2})?$/),
+  occasion: z.string(),
+  series: z.string(),
+  themes: z.array(z.string()),
+  summary: z.string(),
+  notes: z.string(),
+  manuscript: z.string(),
+  recording: z.string(),
+  sourceId: z.string().default(''),
+  season: z.string().default(''),
+  lectionaryYear: z.string().default(''),
+  liturgicalDay: z.string().default(''),
+  scriptureSource: z.string().default(''),
+  structure: z.string().default(''),
+  structureCategory: z.string().default(''),
+  structureConfidence: z.string().default(''),
+  structureNote: z.string().default(''),
+  structureSource: z.string().default(''),
+  centralImage: z.string().default(''),
+  gospelHandle: z.string().default(''),
+  opening: z.string().default(''),
+  closing: z.string().default(''),
+  source: z.string(),
+  updatedAt: z.string(),
+})
 const schema = z.object({
   version: z.literal(1),
   recentIds: z.array(z.string()).optional(),
@@ -93,12 +122,13 @@ const schema = z.object({
       notes: z.string(),
     }),
   ),
+  sermons: z.array(sermon).default([]),
   sample: z.boolean(),
 })
 export const STORAGE_KEY = 'ministry-study.library.v1'
 export function parseBackup(input: unknown): Library {
   const data = schema.parse(input)
-  for (const items of [data.books, data.series, data.loans])
+  for (const items of [data.books, data.series, data.loans, data.sermons])
     if (new Set(items.map((x) => x.id)).size !== items.length)
       throw new Error('Duplicate record IDs in backup.')
   const active = new Set<string>()
@@ -126,7 +156,7 @@ export function loadLibrary(): { library: Library; error: string } {
     return { library: raw ? parseBackup(JSON.parse(raw)) : sampleLibrary(), error: '' }
   } catch {
     return {
-      library: { version: 1, books: [], series: [], loans: [], sample: false },
+      library: { version: 1, books: [], series: [], loans: [], sermons: [], sample: false },
       error:
         'Saved data could not be opened. It has not been overwritten. Export the stored data to recover it, or restore a valid backup.',
     }
