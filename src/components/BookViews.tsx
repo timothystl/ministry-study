@@ -1,5 +1,14 @@
 import { useState } from 'react'
-import { ArrowLeft, BookOpen, MapPin, ArrowUpRight, Pencil, CheckCircle2, Plus } from 'lucide-react'
+import {
+  ArrowLeft,
+  BookOpen,
+  Camera,
+  MapPin,
+  ArrowUpRight,
+  Pencil,
+  CheckCircle2,
+  Plus,
+} from 'lucide-react'
 import {
   activeLoan,
   locationLabel,
@@ -9,10 +18,9 @@ import {
   type Library,
 } from '../lib/model'
 import { Rating } from './Rating'
-import { CoverSearch } from './CoverSearch'
-import { Modal } from './Modal'
 import { VerifyBook } from './VerifyBook'
 import { IsbnLookup } from './IsbnLookup'
+import { shrinkPhoto } from '../lib/photo'
 export function Cover({ book, small = false }: { book: Book; small?: boolean }) {
   return (
     <img
@@ -87,9 +95,8 @@ export function BookDetail({
   nextToVerify?: Book
 }) {
   const [isbnOpen, setIsbnOpen] = useState(false)
-  const [coverOpen, setCoverOpen] = useState(false)
+  const [photoError, setPhotoError] = useState('')
   const [verifyOpen, setVerifyOpen] = useState(false)
-  const [coverError, setCoverError] = useState('')
   const [tab, setTab] = useState('Overview')
   const loan = activeLoan(library, book.id),
     series = library.series.find((s) => s.id === book.seriesId),
@@ -118,19 +125,50 @@ export function BookDetail({
       <section className="detail-hero">
         <div className="detail-cover">
           <Cover book={book} />
-          <button
-            onClick={() => {
-              setCoverError('')
-              setCoverOpen(true)
-            }}
-          >
-            Find cover
-          </button>
-          {book.coverSource && (
-            <a href={book.coverSource.url} target="_blank" rel="noreferrer">
-              {book.coverSource.name}
-            </a>
+          <label className="file-label photo-label">
+            <Camera size={15} /> Take a photo of the cover
+            <input
+              aria-label="Take or choose a photo of the cover"
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                e.target.value = ''
+                if (!file) return
+                setPhotoError('')
+                shrinkPhoto(file)
+                  .then((url) => {
+                    if (
+                      !onUpdate({
+                        ...book,
+                        coverUrl: url,
+                        coverSource: {
+                          name: 'Photo taken by you',
+                          url: '',
+                          selectedAt: new Date().toISOString(),
+                        },
+                      })
+                    )
+                      setPhotoError('Could not save the photo.')
+                  })
+                  .catch((err: Error) => setPhotoError(err.message))
+              }}
+            />
+          </label>
+          {photoError && (
+            <p role="alert" className="error">
+              {photoError}
+            </p>
           )}
+          {book.coverSource &&
+            (book.coverSource.url ? (
+              <a href={book.coverSource.url} target="_blank" rel="noreferrer">
+                {book.coverSource.name}
+              </a>
+            ) : (
+              <span className="muted">{book.coverSource.name}</span>
+            ))}
         </div>
         <div className="detail-heading">
           <h1>{book.title}</h1>
@@ -146,7 +184,7 @@ export function BookDetail({
               .filter(Boolean)
               .join(' · ') || 'Publication details not recorded'}
           </p>
-          <button onClick={() => setIsbnOpen(true)}>Find ISBN</button>
+          <button onClick={() => setIsbnOpen(true)}>Find ISBN and cover</button>
           <div className="book-tags">
             <span>{book.format}</span>
             {series && (
@@ -226,33 +264,6 @@ export function BookDetail({
         </section>
       )}
       {isbnOpen && <IsbnLookup book={book} onSave={onUpdate} onClose={() => setIsbnOpen(false)} />}
-      {coverOpen && (
-        <Modal title="Find a book cover" wide onClose={() => setCoverOpen(false)}>
-          <CoverSearch
-            book={book}
-            onSelect={(candidate) => {
-              if (
-                onUpdate({
-                  ...book,
-                  coverUrl: candidate.imageUrl,
-                  coverSource: {
-                    name: 'Open Library',
-                    url: candidate.sourceUrl,
-                    selectedAt: new Date().toISOString(),
-                  },
-                })
-              )
-                setCoverOpen(false)
-              else setCoverError('Could not save the cover. Your selection is still here.')
-            }}
-          />
-          {coverError && (
-            <p role="alert" className="error">
-              {coverError}
-            </p>
-          )}
-        </Modal>
-      )}
       {verifyOpen && (
         <VerifyBook
           book={book}

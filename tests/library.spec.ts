@@ -199,7 +199,7 @@ test('Amazon saved-page import recognizes books, skips non-books and preserves s
   )
 })
 
-test('review cover candidates and verify a physical copy without replacing catalog details', async ({
+test('find an edition with its ISBN and cover together, then verify a physical copy', async ({
   page,
 }) => {
   await page.route('https://openlibrary.org/search.json?*', (route) =>
@@ -210,8 +210,23 @@ test('review cover candidates and verify a physical copy without replacing catal
             key: '/works/OL123W',
             title: 'Candidate edition',
             author_name: ['Catalog Author'],
-            first_publish_year: 2008,
-            cover_i: 123,
+          },
+        ],
+      },
+    }),
+  )
+  await page.route('https://openlibrary.org/works/OL123W/editions.json?*', (route) =>
+    route.fulfill({
+      json: {
+        size: 1,
+        entries: [
+          {
+            key: '/books/OL123M',
+            title: 'Candidate edition',
+            publishers: ['Example Press'],
+            publish_date: '2008',
+            isbn_13: ['9780061551826'],
+            covers: [123],
           },
         ],
       },
@@ -225,11 +240,16 @@ test('review cover candidates and verify a physical copy without replacing catal
   )
   await page.goto('/')
   await addBook(page, 'A physical review copy')
-  await page.getByRole('button', { name: 'Find cover', exact: true }).click()
-  await page.getByRole('button', { name: 'Search Open Library', exact: true }).click()
+  await page.getByRole('button', { name: 'Find ISBN and cover', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Find cover', exact: true })).toHaveCount(0)
+  await page.getByRole('button', { name: 'Find matching books' }).click()
   await page.getByRole('button', { name: /Candidate edition Catalog Author/ }).click()
-  await expect(page.getByRole('dialog')).toContainText('different edition')
-  await page.getByRole('button', { name: 'Use this cover', exact: true }).click()
+  await expect(page.getByRole('img', { name: /Cover of Candidate edition/ })).toBeVisible()
+  await page.getByRole('button', { name: '9780061551826', exact: true }).click()
+  await expect(page.getByLabel('Also use this edition’s cover')).toBeChecked()
+  await page.getByLabel('I checked this edition against my book.').check()
+  await page.getByRole('button', { name: 'Save ISBN and cover' }).click()
+  await expect(page.locator('.publication')).toContainText('9780061551826')
   await expect(
     page.getByRole('heading', { name: 'A physical review copy', exact: true }),
   ).toBeVisible()
@@ -266,7 +286,7 @@ test('review cover candidates and verify a physical copy without replacing catal
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 })
 
-test('cover lookup handles missing and unavailable results without changing the book', async ({
+test('lookup handles missing and unavailable results without changing the book', async ({
   page,
 }) => {
   await page.route('https://openlibrary.org/search.json?*', (route) =>
@@ -274,13 +294,13 @@ test('cover lookup handles missing and unavailable results without changing the 
   )
   await page.goto('/')
   await addBook(page, 'No cover match')
-  await page.getByRole('button', { name: 'Find cover', exact: true }).click()
-  await page.getByRole('button', { name: 'Search Open Library', exact: true }).click()
-  await expect(page.getByRole('dialog')).toContainText('No covers found')
+  await page.getByRole('button', { name: 'Find ISBN and cover', exact: true }).click()
+  await page.getByRole('button', { name: 'Find matching books' }).click()
+  await expect(page.getByRole('dialog')).toContainText('No matches')
   await page.route('https://openlibrary.org/search.json?*', (route) =>
     route.fulfill({ status: 429 }),
   )
-  await page.getByRole('button', { name: 'Search Open Library', exact: true }).click()
+  await page.getByRole('button', { name: 'Find matching books' }).click()
   await expect(page.getByRole('dialog').getByRole('alert')).toContainText('busy')
   await page.getByRole('button', { name: 'Close dialog' }).click()
   await expect(page.locator('.detail-cover img')).toHaveAttribute(
@@ -318,7 +338,7 @@ test('ISBN lookup separates editions and saves only a reviewed identifier', asyn
   )
   await page.goto('/')
   await addBook(page, 'My physical ISBN record')
-  await page.getByRole('button', { name: 'Find ISBN', exact: true }).click()
+  await page.getByRole('button', { name: 'Find ISBN and cover', exact: true }).click()
   await page.getByRole('button', { name: 'Find matching books' }).click()
   await page.getByRole('button', { name: /Lookup title Example Author/ }).click()
   await expect(page.getByRole('dialog')).toContainText('No valid ISBN recorded')

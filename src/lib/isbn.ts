@@ -20,6 +20,7 @@ export interface IsbnEdition {
   edition: string
   languages: string
   isbns: string[]
+  coverUrl: string // Open Library image for this edition, when it has one
 }
 export function isbnWorks(value: unknown): IsbnWork[] {
   const docs = record(value).docs
@@ -58,6 +59,12 @@ export function isbnEditions(value: unknown) {
               .filter(Boolean)
               .join(', ')
           : '',
+        coverUrl: (() => {
+          const id = Array.isArray(d.covers)
+            ? d.covers.find((c) => Number.isSafeInteger(c) && Number(c) > 0)
+            : undefined
+          return id ? `https://covers.openlibrary.org/b/id/${id}-L.jpg?default=false` : ''
+        })(),
         isbns: [
           ...new Set(
             [...strings(d.isbn_13), ...strings(d.isbn_10)].map(normalizeIsbn).filter(Boolean),
@@ -72,15 +79,42 @@ export function isbnEditions(value: unknown) {
       typeof data.size === 'number' && Number.isFinite(data.size) ? data.size : data.entries.length,
   }
 }
-export function applyEditionIsbn(book: Book, edition: IsbnEdition, isbn: string): Book {
+// One edition record, as returned when looking a book up directly by its ISBN.
+export function editionFromRecord(value: unknown, isbn = ''): IsbnEdition | null {
+  const edition = isbnEditions({ entries: [value] }).editions[0]
+  if (!edition) return null
+  const key = normalizeIsbn(isbn)
+  return key && !edition.isbns.includes(key)
+    ? { ...edition, isbns: [key, ...edition.isbns] }
+    : edition
+}
+// Saves the chosen ISBN and, if asked, the cover of the same edition. Nothing else changes.
+export function applyEditionIsbn(
+  book: Book,
+  edition: IsbnEdition,
+  isbn: string,
+  withCover = false,
+): Book {
   if (
     !normalizeIsbn(isbn) ||
     !edition.isbns.includes(isbn) ||
     !/^\/books\/OL\d+M$/.test(edition.key)
   )
     throw new Error('Choose a valid ISBN from this edition.')
+  const cover =
+    withCover && edition.coverUrl
+      ? {
+          coverUrl: edition.coverUrl,
+          coverSource: {
+            name: 'Open Library',
+            url: `https://openlibrary.org${edition.key}`,
+            selectedAt: new Date().toISOString(),
+          },
+        }
+      : {}
   return {
     ...book,
+    ...cover,
     isbn,
     sourceMetadata: {
       ...book.sourceMetadata,

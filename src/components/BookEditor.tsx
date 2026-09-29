@@ -9,7 +9,6 @@ import {
   saveBook,
 } from '../lib/model'
 import { Modal } from './Modal'
-import { CoverSearch } from './CoverSearch'
 export function BookEditor({
   book,
   library,
@@ -111,28 +110,9 @@ export function BookEditor({
               }
             />
           </label>
-          <details className="span-two">
-            <summary>Find a cover online</summary>
-            <CoverSearch
-              book={draft}
-              onSelect={(candidate) => {
-                setDraft({
-                  ...draft,
-                  coverUrl: candidate.imageUrl,
-                  coverSource: {
-                    name: 'Open Library',
-                    url: candidate.sourceUrl,
-                    selectedAt: new Date().toISOString(),
-                  },
-                })
-              }}
-            />
-            {draft.coverSource && (
-              <p role="status">
-                Selected cover from {draft.coverSource.name}. Save book to keep it.
-              </p>
-            )}
-          </details>
+          <p className="muted span-two">
+            To find a cover online, open the book and choose Find ISBN and cover.
+          </p>
           {field('publisher', 'Publisher')}
           {field('year', 'Publication year')}
           <label>
