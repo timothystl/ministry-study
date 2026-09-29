@@ -8,6 +8,7 @@ import {
   verificationStatuses,
   type Library,
 } from './model'
+import { fileKinds, itemKinds, liturgyKinds } from './hymns'
 import { noteKinds } from './notes'
 import { prayerTypes } from './prayers'
 import { sampleLibrary } from './seed'
@@ -147,6 +148,63 @@ const note = z.object({
   source: z.string(),
   updatedAt: z.string(),
 })
+const hymnFile = z.object({ kind: z.enum(fileKinds), location: z.string() })
+const hymn = z.object({
+  id: z.string().min(1),
+  title: z.string().trim().min(1),
+  firstLine: z.string().default(''),
+  tune: z.string().default(''),
+  composer: z.string().default(''),
+  lyricist: z.string().default(''),
+  arranger: z.string().default(''),
+  meter: z.string().default(''),
+  scripture: z.string().default(''),
+  year: z.string().default(''),
+  key: z.string().default(''),
+  hymnal: z.string().default(''),
+  usage: z.array(z.string()).default([]),
+  themes: z.array(z.string()).default([]),
+  text: z.string().default(''),
+  copyright: z.string().default(''),
+  links: z.array(z.object({ label: z.string(), url: z.string() })).default([]),
+  files: z.array(hymnFile).default([]),
+  attachments: z
+    .array(
+      z.object({
+        id: z.string().min(8),
+        name: z.string(),
+        mime: z.string(),
+        size: z.number(),
+        addedAt: z.string(),
+      }),
+    )
+    .default([]),
+  notes: z.string().default(''),
+  source: z.string().default(''),
+  sourceId: z.string().default(''),
+  updatedAt: z.string(),
+})
+const liturgy = z.object({
+  id: z.string().min(1),
+  title: z.string().trim().min(1),
+  kind: z.enum(liturgyKinds),
+  season: z.string().default(''),
+  date: z.string().regex(/^(\d{4}-\d{2}-\d{2})?$/),
+  items: z.array(
+    z.object({
+      id: z.string().min(1),
+      kind: z.enum(itemKinds),
+      label: z.string(),
+      hymnId: z.string(),
+      scripture: z.string(),
+      text: z.string(),
+    }),
+  ),
+  files: z.array(hymnFile).default([]),
+  notes: z.string().default(''),
+  source: z.string().default(''),
+  updatedAt: z.string(),
+})
 const schema = z.object({
   version: z.literal(1),
   recentIds: z.array(z.string()).optional(),
@@ -167,6 +225,8 @@ const schema = z.object({
   prayers: z.array(prayer).default([]),
   prayerSets: z.array(prayerSet).default([]),
   notes: z.array(note).default([]),
+  hymns: z.array(hymn).default([]),
+  liturgies: z.array(liturgy).default([]),
   sample: z.boolean(),
 })
 export const STORAGE_KEY = 'ministry-study.library.v1'
@@ -180,6 +240,8 @@ export function parseBackup(input: unknown): Library {
     data.prayers,
     data.prayerSets,
     data.notes,
+    data.hymns,
+    data.liturgies,
   ])
     if (new Set(items.map((x) => x.id)).size !== items.length)
       throw new Error('Duplicate record IDs in backup.')
@@ -216,6 +278,8 @@ export function loadLibrary(): { library: Library; error: string } {
         sermons: [],
         prayers: [],
         prayerSets: [],
+        hymns: [],
+        liturgies: [],
         notes: [],
         sample: false,
       },

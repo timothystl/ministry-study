@@ -54,6 +54,8 @@ describe('physical verification', () => {
     sermons: [],
     prayers: [],
     prayerSets: [],
+    hymns: [],
+    liturgies: [],
     notes: [],
   })
   it('moves forward in shelf order, wraps, and skips confirmed copies', () => {

@@ -36,6 +36,10 @@ export function LibraryData({
         // Older backups have no prayers; restoring one must not erase them.
         // Likewise for devotions and notes.
         if (!Array.isArray((input as { notes?: unknown }).notes)) parsed.notes = library.notes
+        // And for hymns and liturgies.
+        if (!Array.isArray((input as { hymns?: unknown }).hymns)) parsed.hymns = library.hymns
+        if (!Array.isArray((input as { liturgies?: unknown }).liturgies))
+          parsed.liturgies = library.liturgies
         const hasPrayers = Array.isArray((input as { prayers?: unknown }).prayers)
         if (!hasPrayers) {
           parsed.prayers = library.prayers
@@ -138,6 +142,8 @@ export function LibraryData({
               prayers: library.prayers,
               prayerSets: library.prayerSets,
               notes: library.notes,
+              hymns: library.hymns,
+              liturgies: library.liturgies,
               sample: false,
             })
             setMessage('Remove all illustrative samples and start an empty library.')
