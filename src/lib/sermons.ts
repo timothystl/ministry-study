@@ -30,6 +30,9 @@ export interface Sermon {
   gospelHandle: string
   opening: string
   closing: string
+  // From an approved review: what the reviewer said, and the titles the sermon had before.
+  reviewNote: string
+  formerTitles: string[]
   source: string
   updatedAt: string
 }
@@ -59,6 +62,8 @@ export const blankSermon = (): Sermon => ({
   gospelHandle: '',
   opening: '',
   closing: '',
+  reviewNote: '',
+  formerTitles: [],
   source: '',
   updatedAt: '',
 })

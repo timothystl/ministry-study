@@ -58,3 +58,7 @@ A scanned ISBN identifies the edition. `applyScan` fills only blank author/publi
 ## Sermon manuscripts
 
 Full text is not part of the library payload. D1 holds `sermon_text (sermon_id, body, chars, hash, file_name, indexed, updated_at)` and an FTS5 table `sermon_fts` (porter stemming) over the same text. `hash` is the SHA-256 of the extracted text, so re-uploading a folder saves only changed files. `indexed = 0` keeps the text but leaves it out of search. API: `GET /api/sermon-text` (status), `GET|PUT|PATCH|DELETE /api/sermon-text/:id`, `GET /api/sermon-search?q=`, `GET /api/sermon-export?after=`. Queries are rewritten to quoted words joined by AND, so punctuation cannot break the search.
+
+## Sermon review
+
+`reviewNote` (confidence and evidence from an approved review) and `formerTitles` (titles replaced by a review) are set only when a change is approved. `scriptureSource` and `structureSource` become `Review (approved)` when those fields change through a review. A review row matches a sermon by `Sermon ID`, or by file number when that number is unique; unmatched rows are reported. Blank cells and values equal to the current one are ignored.

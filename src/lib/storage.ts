@@ -98,6 +98,8 @@ const sermon = z.object({
   gospelHandle: z.string().default(''),
   opening: z.string().default(''),
   closing: z.string().default(''),
+  reviewNote: z.string().default(''),
+  formerTitles: z.array(z.string()).default([]),
   source: z.string(),
   updatedAt: z.string(),
 })

@@ -116,3 +116,12 @@ Personal archive files are imported through the app and are never committed. Tes
 - A sermon's page shows its manuscript, with copy, replace, remove, and an Include in search switch.
 - **Download all manuscripts** makes a zip of plain text files as a backup that lives outside Cloudflare. Keep it private.
 - Needs the shared library (sign-in); without it the section says so. The text is stored in D1 tables `sermon_text` (the backup copy) and `sermon_fts` (an FTS5 index), created on first use.
+
+### Reviewing and correcting the catalog
+
+**Sermons → Review** is for improving titles, passages, themes, summaries and structures with an outside reader, such as Claude Cowork reading the manuscripts.
+
+1. **Download review package** makes a zip with `catalog.csv` (one row per sermon, with each sermon's ID and what the catalog says now), `manuscripts/` (each saved manuscript, named in the catalog's Text File column), `structures.txt` (the structure names already in use), and `README.md`, the instructions for the reader. The instructions say exactly what to return: a `review.csv` with a Sermon ID, blank cells where there is nothing to propose, a Confidence and a short Evidence sentence, and rules (use only what is in the manuscript, never invent a date or passage, keep Andrew's voice for titles, do not copy personal details from funerals and weddings). **Catalog only (CSV)** downloads just the spreadsheet. Without the shared library the package has the catalog and instructions only.
+2. **Choose review.csv** shows every proposed change beside what is there now. Additions to empty fields start approved; replacing something already filled in starts unapproved. Approve one change, one sermon, all additions, or everything, then apply. Passages are rewritten one way and unreadable passages or dates are skipped with a warning. A replaced title is kept as a "former title", and the reviewer's confidence and evidence are kept on the sermon. Nothing changes until approved.
+
+The instructions live in `src/lib/reviewBrief.ts`.
