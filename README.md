@@ -154,5 +154,5 @@ characters belongs in Sermons → Manuscripts). Notes sync to the shared library
 ### Scanning when adding or updating a book
 
 Add Book has "Scan the barcode to fill this in" (title, author, publisher, year, ISBN, cover and
-summary; you review before saving). An open book has "Scan barcode", which saves the ISBN and fills
-only blank details, cover and summary. The camera can be replaced by typing the ISBN.
+summary; you review before saving). An open book has "Scan barcode", which saves the ISBN. The
+author, publisher, year and subtitle from the scan replace what was recorded; the cover and summary are added only if the book has none. The camera can be replaced by typing the ISBN.

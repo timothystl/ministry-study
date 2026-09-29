@@ -141,7 +141,7 @@ describe('looking up a scanned ISBN', () => {
     sourceUrl: 'https://openlibrary.org/isbn/x',
     summary: { text: 'About.', source: 'Open Library', url: 'https://openlibrary.org/works/OL1W' },
   }
-  it('matches existing books without an ISBN and keeps what is recorded', () => {
+  it('matches existing books without an ISBN; the scan replaces publication details only', () => {
     const mine = {
       ...blankBook(),
       title: 'Surprised by Hope',
@@ -157,7 +157,10 @@ describe('looking up a scanned ISBN', () => {
     const updated = applyScan(mine, scanned, { cover: true, summary: true })
     expect(updated).toMatchObject({
       isbn: ISBN,
-      publisher: 'My press',
+      author: 'N. T. Wright',
+      publisher: 'HarperOne',
+      year: '2008',
+      title: 'Surprised by Hope',
       notes: 'Keep me',
       summary: 'About.',
     })
