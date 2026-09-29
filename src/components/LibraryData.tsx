@@ -33,6 +33,12 @@ export function LibraryData({
         // Backups made before sermons existed must not erase the sermon catalog.
         const hasSermons = Array.isArray((input as { sermons?: unknown }).sermons)
         if (!hasSermons) parsed.sermons = library.sermons
+        // Older backups have no prayers; restoring one must not erase them.
+        const hasPrayers = Array.isArray((input as { prayers?: unknown }).prayers)
+        if (!hasPrayers) {
+          parsed.prayers = library.prayers
+          parsed.prayerSets = library.prayerSets
+        }
         setPending(parsed)
         setMessage(
           `Restore ${parsed.books.length} books, ${parsed.series.length} series, ${parsed.loans.length} loans${hasSermons ? ` and ${parsed.sermons.length} sermons.` : '. Your current sermons are kept because this backup has none.'} This replaces the current library.`,
@@ -127,6 +133,8 @@ export function LibraryData({
               series: [],
               loans: [],
               sermons: library.sermons,
+              prayers: library.prayers,
+              prayerSets: library.prayerSets,
               sample: false,
             })
             setMessage('Remove all illustrative samples and start an empty library.')

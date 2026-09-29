@@ -9,6 +9,8 @@ const empty = (): Library => ({
   series: [],
   loans: [],
   sermons: [],
+  prayers: [],
+  prayerSets: [],
   sample: false,
 })
 const ISBN = '9780061551826'

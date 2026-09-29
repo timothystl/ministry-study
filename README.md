@@ -125,3 +125,13 @@ Personal archive files are imported through the app and are never committed. Tes
 2. **Choose review.csv** shows every proposed change beside what is there now. Additions to empty fields start approved; replacing something already filled in starts unapproved. Approve one change, one sermon, all additions, or everything, then apply. Passages are rewritten one way and unreadable passages or dates are skipped with a warning. A replaced title is kept as a "former title", and the reviewer's confidence and evidence are kept on the sermon. Nothing changes until approved.
 
 The instructions live in `src/lib/reviewBrief.ts`.
+
+## Prayers
+
+**Prayers** (in the menu) has three parts. Everything is saved and shared like the rest of the library.
+
+- **Library.** Biddings, sermon-theme starters, prayers and devotions, searchable by words, category and type, with add, edit, copy and remove. **Import prayers** reads the Prayers of the Church builder file (its `LIBRARY` and `STARTERS`), or the same data as JSON, shows a preview, and skips prayers already there. A bidding is stored without its closing "Lord, in your mercy," (the builder adds it once). Write `[names]` where names should go.
+- **Build the Prayers of the Church.** Enter the Sunday or occasion, date and text (or pick a sermon to fill the text), names of the sick, the grieving and birthdays, then choose one bidding per category. Names replace `[names]` in those three categories. Add other concerns and a sermon-tied petition (optionally started from a sermon-theme starter). A live preview shows the whole service; **Copy all** or **Download** it as text.
+- **Saved services.** **Save this service** keeps the built text. Names are left out of the saved copy unless you tick Keep the names, since they are private pastoral information. Open a saved service to reuse it.
+
+The prayer texts are personal content and are never committed; tests use invented prayers in the same shape. Drafting new biddings with an AI model (as the original builder did) is not part of the app.

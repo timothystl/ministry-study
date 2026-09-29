@@ -18,6 +18,8 @@ const empty = (): Library => ({
   series: [],
   loans: [],
   sermons: [],
+  prayers: [],
+  prayerSets: [],
   sample: false,
 })
 const sermon = (over: Partial<Sermon>): Sermon => ({ ...blankSermon(), title: 'Untitled', ...over })
