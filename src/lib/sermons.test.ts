@@ -154,3 +154,89 @@ describe('sermon list import', () => {
     expect(preview.library.sermons[1].source).toBe('Imported list')
   })
 })
+
+describe('funerals, weddings and ordinations', () => {
+  const list = [
+    sermon({
+      id: 'f',
+      title: 'Hope at the grave',
+      occasion: 'Funeral',
+      subject: 'Mary Example',
+      scripture: 'John 11:17–27',
+    }),
+    sermon({ id: 'w', title: 'Two become one', occasion: 'Wedding', subject: 'Pat and Sam' }),
+    sermon({ id: 'o', title: '0922 Ordination Someone', occasion: 'Ordination' }),
+    sermon({ id: 'r', title: 'Meaning of marriage', series: 'Marriage', scripture: 'Ephesians 5' }),
+    sermon({
+      id: 'm',
+      title: 'A widow at Nain',
+      summary: 'Opens with a funeral procession.',
+      occasion: 'Proper 9',
+    }),
+  ]
+  it('recognizes the kind of service from the record, not from passing mentions', async () => {
+    const { occasionKind, isPrivateOccasion } = await import('./sermons')
+    expect(list.map((s) => occasionKind(s))).toEqual([
+      'Funeral & memorial',
+      'Wedding',
+      'Ordination & installation',
+      '',
+      '',
+    ])
+    expect(list.map((s) => isPrivateOccasion(s))).toEqual([true, true, false, false, false])
+  })
+  it('filters by kind of service, searches the subject, and reads a Subject column', () => {
+    const ids = (q: string, kind = '') => searchSermons(list, q, { kind }).map((h) => h.sermon.id)
+    expect(ids('', 'Funeral & memorial')).toEqual(['f'])
+    expect(ids('', 'Wedding')).toEqual(['w'])
+    expect(ids('John 11', 'Funeral & memorial')).toEqual(['f'])
+    expect(ids('mary')).toEqual(['f'])
+    const rows = parseSermonList(
+      'Title,Occasion,Subject,Date\nHope,Funeral,"Mary Example",2019-05-04\n',
+    )
+    expect(rows[0]).toMatchObject({
+      occasion: 'Funeral',
+      subject: 'Mary Example',
+      date: '2019-05-04',
+    })
+    const saved = previewSermonImport(rows, empty()).library.sermons[0]
+    expect(saved.subject).toBe('Mary Example')
+  })
+})
+
+describe('sermon filters', () => {
+  const list = [
+    sermon({
+      id: 'a',
+      title: 'A',
+      series: 'Lent',
+      date: '2024-03-01',
+      season: 'Lent',
+      structure: 'Analogy',
+    }),
+    sermon({
+      id: 'b',
+      title: 'B',
+      series: 'Lent',
+      date: '2023-03-01',
+      season: 'Lent',
+      structure: 'Law/Gospel',
+    }),
+    sermon({
+      id: 'c',
+      title: 'C',
+      series: '',
+      date: '2024-05-01',
+      season: 'Easter',
+      structure: 'Analogy',
+    }),
+  ]
+  const ids = (f: object) => searchSermons(list, '', f).map((h) => h.sermon.id)
+  it('applies every filter, together and with a search', () => {
+    expect(ids({ season: 'Lent' })).toEqual(['a', 'b'])
+    expect(ids({ structure: 'Analogy' })).toEqual(['c', 'a'])
+    expect(ids({ season: 'Lent', structure: 'Analogy' })).toEqual(['a'])
+    expect(ids({ series: 'Lent', year: '2023' })).toEqual(['b'])
+    expect(searchSermons(list, 'law', { season: 'Easter' }).map((h) => h.sermon.id)).toEqual([])
+  })
+})

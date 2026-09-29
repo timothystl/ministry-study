@@ -9,6 +9,7 @@ export interface Sermon {
   scripture: string
   date: string // YYYY-MM-DD, only when known
   occasion: string
+  subject: string // for a funeral, wedding or ordination: whom the service was for
   series: string
   themes: string[]
   summary: string
@@ -42,6 +43,7 @@ export const blankSermon = (): Sermon => ({
   scripture: '',
   date: '',
   occasion: '',
+  subject: '',
   series: '',
   themes: [],
   summary: '',
@@ -69,6 +71,30 @@ export const blankSermon = (): Sermon => ({
 })
 const normalize = (value: string) =>
   value.trim().normalize('NFKC').toLocaleLowerCase().replace(/\s+/g, ' ')
+// Funerals, weddings and ordinations are recognized from the words the record itself uses (its
+// occasion, title, series or subject), never from the manuscript. A sermon that merely mentions a
+// funeral is not one.
+export const occasionKinds = ['Funeral & memorial', 'Wedding', 'Ordination & installation'] as const
+export type OccasionKind = (typeof occasionKinds)[number]
+const KIND_WORDS: [OccasionKind, RegExp][] = [
+  [
+    'Funeral & memorial',
+    /\b(funeral|memorial|committal|graveside|burial|in memory|celebration of life)\b/i,
+  ],
+  ['Wedding', /\b(wedding|marriage service|nuptial|matrimony)\b/i],
+  ['Ordination & installation', /\b(ordination|installation|commissioning|consecration)\b/i],
+]
+export function occasionKind(
+  s: Pick<Sermon, 'occasion' | 'title' | 'series' | 'subject'>,
+): OccasionKind | '' {
+  const text = [s.occasion, s.title, s.series, s.subject].join(' ')
+  return KIND_WORDS.find(([, re]) => re.test(text))?.[0] ?? ''
+}
+// Funerals and weddings name real families, so they start out of search and out of review packages.
+export const isPrivateOccasion = (s: Pick<Sermon, 'occasion' | 'title' | 'series' | 'subject'>) => {
+  const kind = occasionKind(s)
+  return kind === 'Funeral & memorial' || kind === 'Wedding'
+}
 export const isWebLink = (location: string) => /^https?:\/\/\S+$/i.test(location.trim())
 export const sermonYear = (s: Sermon) => s.date.slice(0, 4)
 
@@ -119,6 +145,7 @@ export interface SermonFilters {
   year?: string
   season?: string
   structure?: string
+  kind?: string
 }
 // Passage searches match by chapter and verse overlap; everything else is a case-insensitive AND
 // across title, passage, themes, series, occasion, summary and notes. Each result says why it
@@ -131,7 +158,10 @@ export function searchSermons(
   const pool = sortSermons(sermons).filter(
     (s) =>
       (!filters.series || s.series === filters.series) &&
-      (!filters.year || sermonYear(s) === filters.year),
+      (!filters.year || sermonYear(s) === filters.year) &&
+      (!filters.season || s.season === filters.season) &&
+      (!filters.structure || s.structure === filters.structure) &&
+      (!filters.kind || occasionKind(s) === filters.kind),
   )
   const q = normalize(query)
   if (!q) return pool.map((sermon) => ({ sermon, reasons: [] }))
@@ -149,6 +179,7 @@ export function searchSermons(
       ['themes', sermon.themes.join(' ')],
       ['series', sermon.series],
       ['occasion', `${sermon.occasion} ${sermon.liturgicalDay} ${sermon.season}`],
+      ['subject', sermon.subject],
       ['structure', sermon.structure],
       ['central image', sermon.centralImage],
       ['gospel statement', sermon.gospelHandle],
@@ -179,6 +210,7 @@ export interface SermonRow {
   date: string
   series: string
   occasion: string
+  subject: string
   manuscript: string
   themes: string
   sourceId: string
@@ -234,6 +266,7 @@ const blankRow = (): SermonRow => ({
   date: '',
   series: '',
   occasion: '',
+  subject: '',
   manuscript: '',
   themes: '',
   sourceId: '',
@@ -340,6 +373,7 @@ export function parseSermonList(text: string, folder = ''): SermonRow[] {
           date,
           series: value('series'),
           occasion: value('occasion'),
+          subject: value('subject') || value('for') || value('honoree'),
           manuscript: path && folderPart && !isWebLink(path) ? `${folderPart}/${path}` : path,
           themes: value('themes'),
           // Other reviews of the archive use the numbering of the suggested file names, so that number
@@ -394,6 +428,7 @@ export function previewSermonImport(rows: SermonRow[], library: Library): Sermon
       date: row.date,
       series: row.series,
       occasion: row.occasion,
+      subject: row.subject,
       manuscript: row.manuscript,
       themes: row.themes
         .split(';')

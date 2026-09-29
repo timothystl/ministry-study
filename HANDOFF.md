@@ -94,3 +94,7 @@ Prayers is built (README → Prayers): library, import of the Prayers of the Chu
 **Chatbot builders (Voiceflow, Botpress).** These build visitor-facing chatbots, so they fit the church website or Connect (service times, events, forwarding prayer requests), not this study library. Voiceflow is hosted only (free tier, then about $60 a month); Botpress has a free pay-as-you-go plan plus AI usage, and its old self-hosted version is retired. Any use belongs to the Website and Connect plans, not here.
 
 **OpenClaw (skipped for now).** An open-source personal AI agent that runs on your own computer, reads and writes files, runs commands and controls a browser, and answers through messaging apps. In 2026 it had serious security problems (a one-click remote-code-execution flaw, over 100,000 instances exposed to the internet, and malicious add-ons on its marketplace). It should not run on a computer that holds church, giving, or pastoral data. Claude Cowork already covers reading and organizing files.
+
+## Latest update: occasional services
+
+Funerals, weddings and ordinations: For field, Kind of service filter, private-by-default handling (README → Funerals, weddings and ordinations). The Church season and Structure filters on the sermon list did not filter until this change; fixed. Waiting on the pastor's list of occasional sermons to import; the master index has almost none. Next: devotions and sermon notes, then a visual library.

@@ -14,6 +14,8 @@ import {
   blankSermon,
   deleteSermon,
   isWebLink,
+  occasionKind,
+  occasionKinds,
   parseSermonList,
   previewSermonImport,
   samePassage,
@@ -146,6 +148,14 @@ function SermonEditor({
           ))}
         </datalist>
         {text('occasion', 'Occasion', 'For example Lent 3, funeral, wedding, ordination.')}
+        <label>
+          For (funeral, wedding, ordination)
+          <span className="muted">Whom the service was for. Kept private; searchable.</span>
+          <input
+            value={draft.subject}
+            onChange={(e) => setDraft({ ...draft, subject: e.target.value })}
+          />
+        </label>
         <label>
           Church season
           <input
@@ -317,8 +327,9 @@ function SermonImport({
           <label>
             Sermon list
             <span className="muted">
-              A CSV with a Title column (also Scripture, Date, Series, Occasion, Path, Liturgical
-              Season, Lectionary Year), or file names such as 2025-03-16 Luke 15 The Lost Son.docx
+              A CSV with a Title column (also Scripture, Date, Series, Occasion, Subject, Path,
+              Liturgical Season, Lectionary Year), or file names such as 2025-03-16 Luke 15 The Lost
+              Son.docx
             </span>
             <textarea
               rows={6}
@@ -523,6 +534,18 @@ function SermonDetail({
             <dd>{sermon.occasion}</dd>
           </>
         )}
+        {occasionKind(sermon) && (
+          <>
+            <dt>Kind of service</dt>
+            <dd>{occasionKind(sermon)}</dd>
+          </>
+        )}
+        {sermon.subject && (
+          <>
+            <dt>For</dt>
+            <dd>{sermon.subject}</dd>
+          </>
+        )}
         {(sermon.season || sermon.liturgicalDay || sermon.lectionaryYear) && (
           <>
             <dt>Church year</dt>
@@ -661,6 +684,7 @@ export function SermonCatalog({
   const [year, setYear] = useState('')
   const [season, setSeason] = useState('')
   const [structure, setStructure] = useState('')
+  const [kind, setKind] = useState('')
   const [openId, setOpenId] = useState('')
   const [editing, setEditing] = useState<Sermon | null>(null)
   const [importing, setImporting] = useState(false)
@@ -693,8 +717,8 @@ export function SermonCatalog({
     [sermons],
   )
   const metadataHits = useMemo(
-    () => searchSermons(sermons, query, { series, year, season, structure }),
-    [sermons, query, series, year, season, structure],
+    () => searchSermons(sermons, query, { series, year, season, structure, kind }),
+    [sermons, query, series, year, season, structure, kind],
   )
   // Words in the saved manuscripts are searched on the shared library, shortly after typing.
   const q = query.trim()
@@ -735,7 +759,7 @@ export function SermonCatalog({
         : h,
     )
     const allowed = new Map(
-      searchSermons(sermons, '', { series, year, season, structure }).map((h) => [
+      searchSermons(sermons, '', { series, year, season, structure, kind }).map((h) => [
         h.sermon.id,
         h.sermon,
       ]),
@@ -745,7 +769,7 @@ export function SermonCatalog({
       if (sermon && !known.has(id)) merged.push({ sermon, reasons: ['In the manuscript'], snippet })
     }
     return merged
-  }, [metadataHits, textHits, sermons, series, year, season, structure])
+  }, [metadataHits, textHits, sermons, series, year, season, structure, kind])
   const open = sermons.find((s) => s.id === openId)
   return (
     <section className="sermons" aria-label="Sermons">
@@ -828,6 +852,15 @@ export function SermonCatalog({
                   <option value="">All years</option>
                   {years.map((y) => (
                     <option key={y}>{y}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Kind of service
+                <select value={kind} onChange={(e) => setKind(e.target.value)}>
+                  <option value="">All sermons</option>
+                  {occasionKinds.map((k) => (
+                    <option key={k}>{k}</option>
                   ))}
                 </select>
               </label>

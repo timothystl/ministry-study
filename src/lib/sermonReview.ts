@@ -1,6 +1,6 @@
 import { strToU8, zipSync } from 'fflate'
 import { formatReferences, parseReferences } from './scripture'
-import { fileIndex, splitCsv, type Sermon } from './sermons'
+import { fileIndex, isPrivateOccasion, splitCsv, type Sermon } from './sermons'
 import type { Library } from './model'
 import { REVIEW_BRIEF } from './reviewBrief'
 import { fetchAllManuscripts, safeFileName } from './sermonText'
@@ -53,10 +53,14 @@ export function catalogCsv(sermons: Sermon[], withText: Set<string> = new Set())
   ])
   return '﻿' + toCsv([CATALOG_HEADERS, ...rows])
 }
+// Funeral and wedding sermons are left out unless asked for, since they name real families.
 export async function buildReviewPackage(
-  sermons: Sermon[],
+  all: Sermon[],
   onProgress: (message: string) => void,
-): Promise<{ zip: Uint8Array; withText: number; note: string }> {
+  includePrivate = false,
+): Promise<{ zip: Uint8Array; withText: number; note: string; leftOut: number }> {
+  const sermons = includePrivate ? all : all.filter((s) => !isPrivateOccasion(s))
+  const leftOut = all.length - sermons.length
   const files: Record<string, Uint8Array> = {}
   let note = ''
   const withText = new Set<string>()
@@ -87,7 +91,7 @@ export async function buildReviewPackage(
           .join('\n') + '\n'
       : 'No structures are recorded yet.\n',
   )
-  return { zip: zipSync(files), withText: withText.size, note }
+  return { zip: zipSync(files), withText: withText.size, note, leftOut }
 }
 
 // ----- Review import -----

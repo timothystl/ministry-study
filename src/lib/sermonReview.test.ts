@@ -147,3 +147,24 @@ describe('review package', () => {
     vi.unstubAllGlobals()
   })
 })
+
+describe('review package and private occasions', () => {
+  it('leaves funeral and wedding sermons out unless asked', async () => {
+    vi.stubGlobal(
+      'fetch',
+      async () => new Response('[]', { headers: { 'Content-Type': 'application/json' } }),
+    )
+    const { buildReviewPackage } = await import('./sermonReview')
+    const funeral = sermon({ id: 'ffff0000-x', title: 'Hope at the grave', occasion: 'Funeral' })
+    const plain = sermon({ id: 'aaaa0000-x', title: 'Waves' })
+    const out = await buildReviewPackage([funeral, plain], () => undefined)
+    const csv = strFromU8(unzipSync(out.zip)['catalog.csv'])
+    expect(out.leftOut).toBe(1)
+    expect(csv).toContain('Waves')
+    expect(csv).not.toContain('Hope at the grave')
+    const all = await buildReviewPackage([funeral, plain], () => undefined, true)
+    expect(all.leftOut).toBe(0)
+    expect(strFromU8(unzipSync(all.zip)['catalog.csv'])).toContain('Hope at the grave')
+    vi.unstubAllGlobals()
+  })
+})

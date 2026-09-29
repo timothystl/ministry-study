@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Download, Upload } from 'lucide-react'
 import type { Library } from '../lib/model'
-import { parseSermonLine, previewSermonImport, type Sermon } from '../lib/sermons'
+import {
+  isPrivateOccasion,
+  parseSermonLine,
+  previewSermonImport,
+  type Sermon,
+} from '../lib/sermons'
 import {
   buildBackup,
   deleteSermonText,
@@ -57,6 +62,7 @@ export function SermonTextManager({
   const [reading, setReading] = useState(0)
   const [addUnmatched, setAddUnmatched] = useState(false)
   const [keepOut, setKeepOut] = useState(false)
+  const [searchPrivate, setSearchPrivate] = useState(false)
   const [saving, setSaving] = useState<{ done: number; total: number } | null>(null)
   const [result, setResult] = useState('')
   const [failures, setFailures] = useState<string[]>([])
@@ -144,7 +150,8 @@ export function SermonTextManager({
           text: manuscript.text,
           hash: manuscript.hash,
           fileName: match.file.name,
-          indexed: !keepOut,
+          // Funerals and weddings name real families, so they stay out of search unless asked.
+          indexed: !keepOut && (searchPrivate || !isPrivateOccasion(match.sermon)),
         })
       try {
         try {
@@ -180,6 +187,12 @@ export function SermonTextManager({
   }
   const saved = Array.isArray(status) ? status.length : 0
   const total = plan ? plan.fresh.length + plan.changed.length : 0
+  const privateCount = plan
+    ? [...plan.fresh, ...plan.changed].filter((p) => isPrivateOccasion(p.match.sermon)).length +
+      (addUnmatched
+        ? plan.unmatched.filter((f) => isPrivateOccasion(parseSermonLine(f.name))).length
+        : 0)
+    : 0
   return (
     <Modal title="Sermon manuscripts" onClose={onClose} wide>
       {status === 'unavailable' ? (
@@ -281,6 +294,17 @@ export function SermonTextManager({
                     ))}
                   </ul>
                 </details>
+              )}
+              {privateCount > 0 && (
+                <label className="check">
+                  <input
+                    type="checkbox"
+                    checked={searchPrivate}
+                    onChange={(e) => setSearchPrivate(e.target.checked)}
+                  />
+                  Include the {privateCount} funeral and wedding sermons in search (they are kept
+                  out of search unless you tick this)
+                </label>
               )}
               <label className="check">
                 <input

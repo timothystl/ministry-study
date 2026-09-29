@@ -66,3 +66,7 @@ Full text is not part of the library payload. D1 holds `sermon_text (sermon_id, 
 ## Prayers
 
 `Library.prayers` (kind `prayer`) holds `Prayer` records: `type` is Bidding, Sermon starter, Prayer or Devotion; biddings carry `category`, `categoryKey` (`sick`, `grieving` and `birthdays` take names when building) and `categoryNote`. Text never includes the closing response, which `buildPrayers` adds once. `Library.prayerSets` (kind `prayerset`) holds built services: the inputs, and the built text with names only when `namesKept`. Restoring an older backup keeps existing prayers.
+
+## Occasional services
+
+`Sermon.subject` (whom a funeral, wedding or ordination was for). `occasionKind` recognizes the kind of service from `occasion`, `title`, `series` and `subject`; `isPrivateOccasion` is true for funerals and weddings, whose manuscripts default to `indexed = 0` and which are excluded from the review package unless included.

@@ -110,3 +110,47 @@ test('save manuscripts, read them on the sermon, and search their words', async 
   await page.getByLabel('Search sermons').fill('younger asked')
   await expect(page.getByText('0 matches')).toBeVisible()
 })
+
+test('a funeral sermon is saved but kept out of search unless asked', async ({ page }) => {
+  const rows = await manuscriptServer(page)
+  await page.goto('/')
+  await nav(page, 'Sermons')
+  await page.getByRole('button', { name: 'Import list' }).click()
+  await page
+    .getByRole('textbox', { name: /^Sermon list/ })
+    .fill(
+      'Title,Occasion,Subject,Path\nHope at the grave,Funeral,Mary Example,funeral-mary.docx\nWaves,,,waves.docx\n',
+    )
+  await page.getByRole('button', { name: 'Preview import' }).click()
+  await page.getByRole('button', { name: 'Import 2 sermons' }).click()
+  await page.getByLabel('Kind of service').selectOption('Funeral & memorial')
+  await expect(page.getByText('Hope at the grave')).toBeVisible()
+  await expect(page.getByText('Waves')).toHaveCount(0)
+  await page.getByLabel('Kind of service').selectOption('')
+
+  await page.getByRole('button', { name: 'Manuscripts' }).click()
+  const dialog = page.getByRole('dialog')
+  await dialog.getByLabel('Choose manuscript files').setInputFiles([
+    {
+      name: 'funeral-mary.docx',
+      mimeType: 'application/octet-stream',
+      buffer: docx(['We gather in sorrow and hope.']),
+    },
+    {
+      name: 'waves.docx',
+      mimeType: 'application/octet-stream',
+      buffer: docx(['The waves came crashing down.']),
+    },
+  ])
+  await expect(
+    dialog.getByText('Include the 1 funeral and wedding sermons in search'),
+  ).toBeVisible()
+  await dialog.getByRole('button', { name: 'Save 2 manuscripts' }).click()
+  await expect(dialog.getByText('Saved 2 manuscripts.')).toBeVisible()
+  expect([...rows.values()].map((r) => r.indexed).sort()).toEqual([false, true])
+  await dialog.getByRole('button', { name: 'Close dialog' }).click()
+  await page.getByLabel('Search sermons').fill('sorrow and hope')
+  await expect(page.getByText('0 matches')).toBeVisible()
+  await page.getByLabel('Search sermons').fill('crashing')
+  await expect(page.getByText('In the manuscript')).toBeVisible()
+})
