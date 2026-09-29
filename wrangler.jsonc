@@ -7,10 +7,16 @@
     "directory": "./dist",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*"]
+    "run_worker_first": ["/api/*"],
   },
-  // No database_id: Wrangler creates the free D1 database on first deploy. The worker creates
+  // The database was created in the Cloudflare dashboard. The worker creates
   // its own tables on first use.
-  "d1_databases": [{ "binding": "DB", "database_name": "timothy-study-db" }],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "timothy-study-db",
+      "database_id": "90b2cca9-a368-4185-8263-55f32d8dce1a",
+    },
+  ],
   // Set in the Cloudflare dashboard (Settings → Variables): STUDY_ACCESS_TEAM_DOMAIN, STUDY_ACCESS_AUD
 }
