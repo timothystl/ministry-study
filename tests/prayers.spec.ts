@@ -58,3 +58,43 @@ test('import prayers, build the prayers of the church, and save the service', as
   await nav(page, 'Prayers')
   await expect(page.getByText('4 prayers · 1 saved services')).toBeVisible()
 })
+
+test('a new library can build the prayers right away, with the LCMS prayer and an email', async ({
+  page,
+}) => {
+  await page.goto('/')
+  await nav(page, 'Prayers')
+  await page.getByRole('button', { name: 'Build the Prayers of the Church' }).click()
+  await page.getByRole('button', { name: 'Load starter biddings' }).click()
+  await page.getByRole('button', { name: 'Choose the first bidding in every category' }).click()
+  await page.getByLabel('Names of the sick').fill('Ann')
+  await page.route('**/api/lcms-prayer*', (route) =>
+    route.fulfill({
+      json: {
+        prayers: [
+          {
+            title: 'Third Sunday of Testing',
+            responsive:
+              'Gracious Lord, keep us. [especially _____________]. Lord, in Your mercy, hear our prayer.',
+            ektene: 'In peace, let us pray to the Lord: Lord, have mercy.',
+          },
+        ],
+      },
+    }),
+  )
+  await page.getByRole('button', { name: 'Get this Sunday’s LCMS prayer' }).click()
+  await expect(page.getByText('From the LCMS: Third Sunday of Testing.')).toBeVisible()
+  const preview = page.getByLabel('Prayers of the Church preview')
+  await expect(preview).toContainText('be near Ann and all who are ill')
+  await expect(preview).toContainText(
+    'LCMS PRAYER OF THE CHURCH\nGracious Lord, keep us. especially Ann.',
+  )
+  await page.getByLabel('Form').selectOption('ektene')
+  await expect(preview).toContainText('In peace, let us pray to the Lord')
+  await expect(page.getByRole('link', { name: /Three-Year Series/ })).toHaveAttribute(
+    'href',
+    'https://www.lcms.org/worship/three-year-series-prayers',
+  )
+  await expect(page.getByRole('button', { name: 'Email these prayers' })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Print or save as PDF/ })).toBeVisible()
+})

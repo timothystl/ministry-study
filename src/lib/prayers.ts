@@ -29,6 +29,7 @@ export interface PrayerSet {
   namesKept: boolean
   other: string
   petition: string
+  lcms: string // the LCMS weekly Prayer of the Church, pasted in for the week
   text: string
   updatedAt: string
 }
@@ -47,9 +48,15 @@ export const blankPrayer = (): Prayer => ({
   sourceId: '',
   updatedAt: '',
 })
+// The coming Sunday (today, if it is Sunday) as yyyy-mm-dd.
+export function nextSunday(from = new Date()) {
+  const d = new Date(from.getFullYear(), from.getMonth(), from.getDate())
+  d.setDate(d.getDate() + ((7 - d.getDay()) % 7))
+  return d.toLocaleDateString('en-CA')
+}
 export const blankSet = (): PrayerSet => ({
   id: crypto.randomUUID(),
-  date: new Date().toLocaleDateString('en-CA'),
+  date: nextSunday(),
   sunday: '',
   scripture: '',
   sermonId: '',
@@ -58,6 +65,7 @@ export const blankSet = (): PrayerSet => ({
   namesKept: false,
   other: '',
   petition: '',
+  lcms: '',
   text: '',
   updatedAt: '',
 })
@@ -122,6 +130,7 @@ export interface BuildInput {
   names: PrayerSet['names']
   other: string
   petition: string
+  lcms?: string
 }
 const PLACEHOLDER = /\[names?[^\]]*\]/gi
 export function withNames(text: string, categoryKey: string, names: PrayerSet['names']) {
@@ -145,6 +154,16 @@ const longDate = (iso: string) => {
       })
     : iso
 }
+// The LCMS prayer leaves "[especially _____]" for the names of the sick.
+export function fillLcmsBlanks(text: string, names: PrayerSet['names']) {
+  const sick = names.sick.trim()
+  return sick ? text.replace(/\[especially\s*_{3,}(,?)\]/gi, `especially ${sick}$1`) : text
+}
+const NAME_FALLBACKS = [
+  ['sick', 'THE SICK', 'Lord Jesus, healer of the sick, be near'],
+  ['grieving', 'THE GRIEVING', 'God of all comfort, hold those who mourn:'],
+  ['birthdays', 'BIRTHDAYS AND ANNIVERSARIES', 'We give thanks for'],
+] as const
 export function buildPrayers(input: BuildInput, prayers: Prayer[]): string {
   const byId = new Map(prayers.map((p) => [p.id, p]))
   const blocks: string[] = []
@@ -155,13 +174,23 @@ export function buildPrayers(input: BuildInput, prayers: Prayer[]): string {
   if (input.date) head.push(longDate(input.date))
   if (input.scripture.trim()) head.push(`Text: ${input.scripture.trim()}`)
   blocks.push(head.join('\n'))
+  const covered = new Set<string>()
   for (const { categoryKey, prayerId } of input.selections) {
     const p = byId.get(prayerId)
     if (!p) continue
+    covered.add(categoryKey || p.categoryKey)
     blocks.push(
       `${(p.category || 'Other').toUpperCase()}\n${withNames(stripResponse(p.text), categoryKey || p.categoryKey, input.names)}\n${RESPONSE}`,
     )
   }
+  // Names typed in without a chosen bidding still get prayed for.
+  for (const [key, heading, lead] of NAME_FALLBACKS) {
+    const names = input.names[key].trim()
+    if (names && !covered.has(key)) blocks.push(`${heading}\n${lead} ${names}.\n${RESPONSE}`)
+  }
+  // The LCMS prayer already carries its own responses and closing, so it is used as it is.
+  if (input.lcms?.trim())
+    blocks.push(`LCMS PRAYER OF THE CHURCH\n${fillLcmsBlanks(input.lcms.trim(), input.names)}`)
   if (input.other.trim()) blocks.push(`OTHER CONCERNS\n${input.other.trim()}`)
   if (input.petition.trim())
     blocks.push(`SERMON-TIED PETITION\n${stripResponse(input.petition)}\n${RESPONSE}`)
@@ -267,4 +296,155 @@ export function previewPrayerImport(found: PrayerImport, library: Library) {
     added: fresh.length,
     skipped: found.prayers.length - fresh.length,
   }
+}
+
+// ----- A starter set, so the builder works before anything is imported -----
+const starterSource = 'Starter biddings'
+const starter = (
+  categoryKey: string,
+  category: string,
+  categoryNote: string,
+  items: [string, string][],
+): Prayer[] =>
+  items.map(([title, text], i) => ({
+    ...blankPrayer(),
+    title,
+    text,
+    type: 'Bidding',
+    category,
+    categoryKey,
+    categoryNote,
+    source: starterSource,
+    sourceId: `${categoryKey}_${i + 1}`,
+  }))
+export const starterBiddings = (): Prayer[] => [
+  ...starter('church', 'The Church', 'For the church throughout the world and this congregation', [
+    [
+      'Option A — Sent',
+      'Gracious God, you gather your church around word and table and send us out in your name. Keep our pastors, teachers and people faithful, and make this congregation a place where the weary find rest and the lost are found.',
+    ],
+    [
+      'Option B — One body',
+      'Lord Jesus, you are the head of your body, the church. Where we are divided, make us one; where we are tired, renew us; where we are afraid, give us the courage of your Spirit.',
+    ],
+  ]),
+  ...starter('world', 'The World', 'For peace, creation and those who suffer', [
+    [
+      'Option A — Peace',
+      'God of all nations, you love the world you made. Bring peace where there is war, safety to refugees and the displaced, and food to the hungry, and teach us to be neighbors to people we will never meet.',
+    ],
+  ]),
+  ...starter('nation', 'Our Nation and Community', 'For those in authority and for our neighbors', [
+    [
+      'Option A — Those in authority',
+      'Lord, you rule over all things. Guide those who govern and serve in our nation, state and city with wisdom and integrity, and help us seek the good of the place where you have set us.',
+    ],
+  ]),
+  ...starter('need', 'Those in Need', 'For the poor, the lonely, the burdened', [
+    [
+      'Option A — The burdened',
+      'Father of mercies, we pray for those weighed down by poverty, loneliness, addiction, unemployment or fear. Meet them through your people and give us open hands and honest eyes.',
+    ],
+  ]),
+  ...starter('sick', 'The Sick', 'Names are added from the sick field when building', [
+    [
+      'Option A — Healing',
+      'Lord Jesus, healer of the sick, be near [names] and all who are ill or in pain. Give them your peace, strengthen those who care for them, and grant healing according to your good will.',
+    ],
+    [
+      'Option B — Hold them',
+      'Merciful God, we lift up [names]. Where we cannot fix, hold; where we cannot understand, stay; and let them know they are not forgotten.',
+    ],
+  ]),
+  ...starter('grieving', 'The Grieving', 'Names are added from the grieving field when building', [
+    [
+      'Option A — Comfort',
+      'God of all comfort, you wept at the tomb of your friend. Be with [names] and all who mourn; carry them through the long days, and keep before us the promise of the resurrection.',
+    ],
+  ]),
+  ...starter(
+    'birthdays',
+    'Birthdays and Anniversaries',
+    'Names are added from the birthdays field',
+    [
+      [
+        'Option A — Thanksgiving',
+        'We give thanks for the gift of life and love, and for [names], celebrating birthdays and anniversaries. Bless them in the year ahead and keep them in your care.',
+      ],
+    ],
+  ),
+  ...starter('thanks', 'Thanksgiving', 'For daily bread and every blessing', [
+    [
+      'Option A — Daily bread',
+      'Giver of every good gift, we thank you for daily bread, for family and friends, for work and rest, and above all for Jesus Christ, our Savior. Teach us to receive it all with grateful hearts.',
+    ],
+  ]),
+]
+// Adds any starter biddings not already in the library.
+export function loadStarterBiddings(library: Library) {
+  return previewPrayerImport({ prayers: starterBiddings(), categories: 8, starters: 0 }, library)
+}
+// One bidding from each category, in category order, as a quick place to begin.
+export function defaultSelections(prayers: Prayer[]) {
+  return categories(prayers).map((c) => {
+    const p = prayers.find((x) => x.type === 'Bidding' && (x.category || 'Other') === c.name)!
+    return { categoryKey: c.key || c.name, prayerId: p.id }
+  })
+}
+
+// ----- LCMS weekly prayers and sharing -----
+// The LCMS posts its Prayers of the Church, free to use, as one Word file per Sunday. The app reads
+// them through the server (see worker/lcms.ts); these links are the fallback, with a box to paste into.
+export const lcmsLinks = [
+  [
+    'Prayers of the Church: Three-Year Series',
+    'https://www.lcms.org/worship/three-year-series-prayers',
+  ],
+  [
+    'Prayers of the Church: One-Year Series',
+    'https://www.lcms.org/worship/one-year-series-prayers',
+  ],
+  ['Pray for Us calendar', 'https://www.lcms.org/worship/pray-for-us-calendar'],
+] as const
+const MAILTO_LIMIT = 1800
+// A mailto link for the prayers. Long prayers do not fit in a link, so the caller is told to paste.
+export function prayerMailto(to: string, subject: string, body: string) {
+  const link = (b: string) =>
+    `mailto:${encodeURIComponent(to.trim())}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(b)}`
+  const full = link(body)
+  if (full.length <= MAILTO_LIMIT) return { href: full, complete: true }
+  return {
+    href: link('The prayers are copied to your clipboard. Paste them here.'),
+    complete: false,
+  }
+}
+const escapeHtml = (t: string) =>
+  t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+// A clean printable page (also saved as a PDF from the print dialog).
+export const printableHtml = (text: string) =>
+  `<!doctype html><meta charset="utf-8"><title>Prayers of the Church</title><style>body{font:16pt/1.5 Georgia,serif;max-width:6.5in;margin:.75in auto;white-space:pre-wrap}</style><body>${escapeHtml(text)}</body>`
+
+export interface LcmsPrayer {
+  title: string
+  responsive: string
+  ektene: string
+}
+export type LcmsSeries = 'three' | 'one'
+// Asks the server for the LCMS prayers posted for a date (a Sunday can have two, such as a festival).
+export async function fetchLcmsPrayers(date: string, series: LcmsSeries): Promise<LcmsPrayer[]> {
+  let response: Response
+  try {
+    response = await fetch(`/api/lcms-prayer?date=${date}&series=${series}`, {
+      headers: { Accept: 'application/json' },
+    })
+  } catch {
+    throw new Error('Could not reach the LCMS prayers from here. Use the links and paste instead.')
+  }
+  const body = (await response.json().catch(() => ({}))) as {
+    prayers?: LcmsPrayer[]
+    error?: string
+  }
+  if (!response.ok || !body.prayers?.length)
+    throw new Error(body.error || 'Could not get the LCMS prayer. Use the links and paste instead.')
+  return body.prayers
 }

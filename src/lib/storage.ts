@@ -132,6 +132,7 @@ const prayerSet = z.object({
   namesKept: z.boolean(),
   other: z.string(),
   petition: z.string(),
+  lcms: z.string().default(''),
   text: z.string(),
   updatedAt: z.string(),
 })
