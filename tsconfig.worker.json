@@ -16,5 +16,5 @@
     "erasableSyntaxOnly": true
   },
   "include": ["worker"],
-  "exclude": ["worker/**/*.test.ts"]
+  "exclude": ["worker/**/*.test.ts", "worker/**/*.testing.ts"]
 }

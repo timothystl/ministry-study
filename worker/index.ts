@@ -1,5 +1,16 @@
 import { verifyAccess, type AccessEnv } from './access'
 import { applyChanges, readAll, validateChange } from './store'
+import {
+  deleteText,
+  exportAll,
+  getText,
+  listStatus,
+  putText,
+  searchText,
+  setIndexed,
+  validateText,
+  validSermonId,
+} from './sermonText'
 
 interface Env extends AccessEnv {
   DB: D1Database
@@ -34,6 +45,49 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
       }
       const result = await applyChanges(env.DB, body.baseRevision as number, change)
       return result.ok ? reply(result) : reply({ error: 'changed-elsewhere', ...result }, 409)
+    }
+    if (pathname === '/api/sermon-text' && request.method === 'GET')
+      return reply(await listStatus(env.DB))
+    if (pathname === '/api/sermon-search' && request.method === 'GET') {
+      const q = new URL(request.url).searchParams.get('q') || ''
+      return reply(q.length > 200 ? [] : await searchText(env.DB, q))
+    }
+    if (pathname === '/api/sermon-export' && request.method === 'GET') {
+      const after = new URL(request.url).searchParams.get('after') || ''
+      return reply(await exportAll(env.DB, after))
+    }
+    const textRoute = /^\/api\/sermon-text\/([^/]+)$/.exec(pathname)
+    if (textRoute) {
+      const id = decodeURIComponent(textRoute[1])
+      if (!validSermonId(id)) return reply({ error: 'Invalid sermon.' }, 400)
+      if (request.method === 'GET') {
+        const found = await getText(env.DB, id)
+        return found ? reply(found) : reply({ error: 'No text saved.' }, 404)
+      }
+      if (request.method === 'DELETE') {
+        await deleteText(env.DB, id)
+        return reply({ ok: true })
+      }
+      if (request.method === 'PUT' || request.method === 'PATCH') {
+        if (!request.headers.get('Content-Type')?.includes('application/json'))
+          return reply({ error: 'Send JSON.' }, 415)
+        const body = (await request.json()) as { indexed?: unknown }
+        if (request.method === 'PATCH') {
+          if (typeof body.indexed !== 'boolean')
+            return reply({ error: 'Say whether to index.' }, 400)
+          return (await setIndexed(env.DB, id, body.indexed))
+            ? reply({ ok: true })
+            : reply({ error: 'No text saved.' }, 404)
+        }
+        let input
+        try {
+          input = validateText(body)
+        } catch (error) {
+          return reply({ error: (error as Error).message }, 400)
+        }
+        await putText(env.DB, id, input)
+        return reply({ ok: true, chars: input.text.length })
+      }
     }
     return reply({ error: 'Not found.' }, 404)
   } catch {

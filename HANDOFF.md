@@ -70,3 +70,7 @@ Sermons is built (see README → Sermons): passage search, import of an archive 
 ## Latest update: ISBN and cover in one step, scanning, photos, summaries
 
 Find ISBN and cover is now one lookup; Scan a Book reads barcodes (camera, or typed ISBN) and matches or adds books; a cover photo can be taken; published summaries are offered with their source. See README → Finding a book's ISBN, cover and summary. Photo covers are stored inside the record (small JPEG); if many are taken, move images to Cloudflare R2.
+
+## Latest update: sermon manuscripts
+
+Full manuscript text can be saved, searched and downloaded (README → Sermon manuscripts). Next: an export of the catalog and a review import that shows old and new values side by side, so an outside review (such as a Cowork pass over the manuscripts) can propose better titles, passages, themes and structures for approval; then occasional sermons, devotions, prayers and notes, and a visual library.

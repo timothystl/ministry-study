@@ -2422,3 +2422,27 @@ main {
   font-size: 12px;
   padding: 7px 10px;
 }
+
+.manuscript {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 420px;
+  overflow: auto;
+  background: #fff;
+  border: 1px solid #dfe5eb;
+  border-radius: 6px;
+  padding: 12px;
+  font: inherit;
+  line-height: 1.55;
+}
+mark {
+  background: #fff1b8;
+  color: inherit;
+  padding: 0 1px;
+}
+
+.sermon-snippet {
+  font-size: 13px;
+  color: #3b4f63;
+  overflow-wrap: anywhere;
+}
