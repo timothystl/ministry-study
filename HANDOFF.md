@@ -82,3 +82,9 @@ Sermons → Review builds a package (catalog.csv, manuscripts, structures, instr
 ## Latest update: prayers
 
 Prayers is built (README → Prayers): library, import of the Prayers of the Church builder file, a builder with names and a live preview, and saved services. Next: occasional sermons (funerals, weddings, ordinations) and devotions/sermon notes in the same family, then a visual library.
+
+## Ideas for later
+
+**AI drafting of prayers (chosen for later: a claude.ai page).** The original Prayers of the Church builder drafted new biddings by calling Claude straight from the browser, which only works inside claude.ai. Instead of adding an API key to this app, publish a small drafting page on claude.ai (an Artifact that can ask Claude for a draft using the pastor's own Claude account). It would use the builder's rules (2–4 sentences, address God directly, concrete nouns, no "be with us", no therapeutic language, end "Lord, in your mercy,") and the pastor's Every Moment Holy voice, and hand its drafts to the app as a file that Prayers → Import prayers already reads (the same JSON shape as the builder's `LIBRARY`). No new cost, no key to keep. An in-app "Draft with AI" button (needs a paid Anthropic API key kept as a Cloudflare secret, with a spending limit) was considered and set aside for now.
+
+**Other AI uses that fit the same pattern.** Cloudflare Workers AI (models that run on the existing Cloudflare account, with a small free daily allowance) for "sermons like this one" search and automatic tags; a model with vision for reading a photo of a shelf or a book cover; Claude for anything written in the pastor's voice. Avoid free tiers that may train on the input for anything private (funerals, weddings, pastoral notes).
