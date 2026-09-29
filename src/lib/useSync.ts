@@ -168,6 +168,10 @@ export function useSync(library: Library, adopt: (library: Library) => boolean) 
   // After each edit, save the changes shortly afterward; retry when the connection returns.
   useEffect(() => {
     if (!active.current) return
+    // Say "saving" as soon as there is something unsaved, not only once the request starts.
+    const change = diffRecords(libraryToRecords(library), baseline.current.hashes)
+    if (!change.upserts.length && !change.deletes.length) return
+    setStatus((current) => (current === 'synced' ? 'saving' : current))
     const timer = setTimeout(() => void push(), 700)
     return () => clearTimeout(timer)
   }, [library, push])

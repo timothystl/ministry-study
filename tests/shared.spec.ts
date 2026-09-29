@@ -4,7 +4,8 @@ import { test, expect, type BrowserContext } from '@playwright/test'
 function sharedServer() {
   let revision = 0
   const rows = new Map<string, { kind: string; id: string; data: string }>()
-  return async (context: BrowserContext) => {
+  const saved = () => rows.size
+  const attach = async (context: BrowserContext) => {
     await context.route('**/api/library', (route) =>
       route.fulfill({ json: { revision, records: [...rows.values()] } }),
     )
@@ -18,9 +19,10 @@ function sharedServer() {
       return route.fulfill({ json: { ok: true, revision } })
     })
   }
+  return { attach, saved }
 }
 test('a book added on one device appears on another', async ({ browser }) => {
-  const attach = sharedServer()
+  const { attach, saved } = sharedServer()
   const first = await browser.newContext(),
     second = await browser.newContext()
   await attach(first)
@@ -33,6 +35,8 @@ test('a book added on one device appears on another', async ({ browser }) => {
   await dialog.getByLabel('Title', { exact: true }).fill('Shared between devices')
   await dialog.getByLabel('Author / contributors').fill('Test Author')
   await dialog.getByRole('button', { name: 'Save book' }).click()
+  // Wait until the save has actually reached the shared database before opening a second device.
+  await expect.poll(saved).toBeGreaterThan(0)
   await expect(a.getByRole('status').filter({ hasText: 'up to date' })).toBeVisible()
   const b = await second.newPage()
   await b.goto('/')
