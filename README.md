@@ -42,7 +42,7 @@ Use **Library data → Import Logos catalog** to select `logos-library-inventory
 
 Personal catalogs belong outside the repository or in ignored `private/`. Never place them in `src/`, `public/`, or tracked fixtures. No catalog or personal notes are uploaded by the app. Google Fonts may be requested for typography; local fallback fonts work if unavailable. Imported Amazon cover URLs request images from Amazon when displayed. Saved HTML is parsed in an inert template and is never mounted as page content.
 
-Records are stored in **localStorage for this browser and origin**. There is no cloud sync, authentication, server backup, or cross-device persistence. Changing host/port creates a different storage origin; clearing site data removes local records. Export backups regularly and before restoring. Storage failures are surfaced without closing your form. Corrupt saved data is not automatically overwritten, and can be exported for recovery.
+Records are kept in **localStorage for this browser** and, once the shared database below is switched on, also saved to a Cloudflare D1 database so every device sees the same library. Until then there is no cross-device persistence. Changing host/port creates a different storage origin; clearing site data removes local records. Export backups regularly and before restoring. Storage failures are surfaced without closing your form. Corrupt saved data is not automatically overwritten, and can be exported for recovery.
 
 A private combined restore file has been prepared separately with 1,111 candidate physical holdings and 661 Logos records. Physical records retain their source IDs, locations, duplicate flags and uncertainty in source metadata; they are not yet confirmed shelf holdings. The general physical-spreadsheet importer is still deferred. No physical ownership, locations, or recommendations are inferred from Logos metadata.
 
@@ -82,3 +82,20 @@ Older backups load as Not checked. New backups retain verification and cover pro
 ## ISBN lookup
 
 Open a book → **Find ISBN** → **Find matching books** → choose a title → compare its editions. Edition records show publisher, publication date, format, edition and language where supplied. Choose an ISBN and check **I checked this edition against my book** before saving. Existing ISBN replacement is explicit. Only the ISBN and lookup provenance change; other bibliography, covers, locations and personal notes are retained. Missing/invalid ISBNs are not guessed, and editions without identifiers remain visible. Pagination retrieves 20 editions at a time. Manual ISBN entry remains available in Edit book. This is a reviewed per-book lookup, not automatic bulk enrichment.
+
+## Shared library database
+
+The app can save to a free Cloudflare D1 database, following the same pattern as the other Timothy apps (Worker + D1 + Cloudflare Access). Each catalog item is one row (`kind` + `id` + JSON), so a save sends only what changed, and the same table will hold sermons, children's messages, hymns and other kinds later. A revision number stops a device with an out-of-date copy from overwriting newer work; it is asked to choose instead. This browser's copy remains a working offline cache and saves are retried when the connection returns.
+
+- `worker/`: the API (`GET /api/library`, `POST /api/changes`), D1 storage, and Cloudflare Access token verification. Tables are created on first use.
+- `src/lib/sync.ts`, `src/lib/useSync.ts`, `src/components/SyncBanner.tsx`: change detection, start-up decision, and the banner.
+- `wrangler.jsonc`: Worker, static assets, and the `DB` binding.
+
+**One-time setup on Cloudflare** (the app keeps working locally, and the API refuses all requests, until this is done):
+
+1. Make sure the `name` in `wrangler.jsonc` matches the existing Cloudflare project for study.timothystl.org.
+2. In Zero Trust → Access → Applications, protect `study.timothystl.org` (self-hosted; policy limited to the people who should see the library). The site is otherwise public and the repository is public.
+3. In the project's Settings → Variables, set `STUDY_ACCESS_TEAM_DOMAIN` (the `…cloudflareaccess.com` team domain) and `STUDY_ACCESS_AUD` (the Access application's audience tag).
+4. Deploy. The D1 database `timothy-study-db` was created in the dashboard and is referenced by ID in `wrangler.jsonc`; the worker creates its tables on first use.
+
+The first device to open the app after that is offered **Save this library to the shared library**; later devices adopt it. D1 keeps 30 days of point-in-time recovery; **Export backup** remains the private off-Cloudflare copy. Local runs use `npx wrangler dev` with `STUDY_DEV_NO_AUTH=1` in an ignored `.dev.vars`. Free-tier limits (5 GB, 100,000 writes a day) are far above this use.
