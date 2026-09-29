@@ -18,5 +18,10 @@
       "database_id": "90b2cca9-a368-4185-8263-55f32d8dce1a",
     },
   ],
-  // Set in the Cloudflare dashboard (Settings → Variables): STUDY_ACCESS_TEAM_DOMAIN, STUDY_ACCESS_AUD
+  // Identifiers of the Cloudflare Access application that protects study.timothystl.org.
+  // Neither is a secret; the API refuses every request that does not carry a valid Access token.
+  "vars": {
+    "STUDY_ACCESS_TEAM_DOMAIN": "timothystl.cloudflareaccess.com",
+    "STUDY_ACCESS_AUD": "a3a08cd0874810dfbbb02bb7a207db943b83631f8e40c95be952ae751817c362",
+  },
 }
