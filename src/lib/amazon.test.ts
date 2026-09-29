@@ -11,6 +11,7 @@ const empty = (): Library => ({
   sermons: [],
   prayers: [],
   prayerSets: [],
+  notes: [],
   sample: false,
 })
 describe('Amazon wishlist imports', () => {

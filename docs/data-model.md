@@ -70,3 +70,9 @@ Full text is not part of the library payload. D1 holds `sermon_text (sermon_id, 
 ## Occasional services
 
 `Sermon.subject` (whom a funeral, wedding or ordination was for). `occasionKind` recognizes the kind of service from `occasion`, `title`, `series` and `subject`; `isPrivateOccasion` is true for funerals and weddings, whose manuscripts default to `indexed = 0` and which are excluded from the review package unless included.
+
+## Devotions and notes
+
+`notes` records (kind `note`): id, title, kind (Devotion, Sermon note, Illustration, Idea, Study
+note), body (max 30,000 characters), scripture, date, sermonId, tags, source, updatedAt. Older
+backups without `notes` restore without erasing notes already in the library.

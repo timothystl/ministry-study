@@ -68,3 +68,29 @@ test('a photo of the cover is kept small and saved with the book', async ({ page
     /^data:image\/jpeg;base64,/,
   )
 })
+
+test('Add Book can be filled in by scanning, and an existing book can be scanned', async ({
+  page,
+}) => {
+  await routes(page)
+  await page.goto('/')
+  await nav(page, 'Add Book')
+  const editor = page.getByRole('dialog')
+  await editor.getByRole('button', { name: 'Scan the barcode to fill this in' }).click()
+  const scanner = page.getByRole('dialog', { name: 'Scan the barcode' })
+  await scanner.getByLabel('Or type the ISBN').fill(ISBN)
+  await scanner.getByRole('button', { name: 'Look up' }).click()
+  await expect(editor.getByLabel('Title', { exact: true })).toHaveValue('Mockingbird Theology')
+  await expect(editor.getByLabel('ISBN / identifier')).toHaveValue(ISBN)
+  await editor.getByRole('button', { name: 'Save book' }).click()
+  await expect(page.locator('.publication')).toContainText(ISBN)
+  await expect(page.locator('.detail-cover img')).toHaveAttribute('src', /covers.openlibrary.org/)
+
+  await addBook(page, 'A book with no ISBN yet', 'Someone')
+  await page.getByRole('button', { name: 'Scan barcode', exact: true }).click()
+  const again = page.getByRole('dialog')
+  await again.getByLabel('Or type the ISBN').fill(ISBN)
+  await again.getByRole('button', { name: 'Look up' }).click()
+  await expect(page.locator('.publication')).toContainText(ISBN)
+  await expect(page.getByRole('heading', { name: 'A book with no ISBN yet' })).toBeVisible()
+})

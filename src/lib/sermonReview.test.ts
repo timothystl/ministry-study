@@ -13,6 +13,7 @@ const library = (sermons: Sermon[]): Library => ({
   sermons,
   prayers: [],
   prayerSets: [],
+  notes: [],
   sample: false,
 })
 const a = sermon({

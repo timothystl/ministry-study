@@ -98,3 +98,8 @@ Prayers is built (README → Prayers): library, import of the Prayers of the Chu
 ## Latest update: occasional services
 
 Funerals, weddings and ordinations: For field, Kind of service filter, private-by-default handling (README → Funerals, weddings and ordinations). The Church season and Structure filters on the sermon list did not filter until this change; fixed. Waiting on the pastor's list of occasional sermons to import; the master index has almost none. Next: devotions and sermon notes, then a visual library.
+
+## Latest update: devotions, notes, and scanning on Add Book
+Devotions & Notes page (search, kinds, import, notes on each sermon's page). Add Book and the open
+book page both have a barcode scan. Next: children's messages, then hymns; still waiting on the
+funeral/wedding/ordination list.

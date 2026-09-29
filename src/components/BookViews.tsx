@@ -20,6 +20,8 @@ import {
 import { Rating } from './Rating'
 import { VerifyBook } from './VerifyBook'
 import { IsbnLookup } from './IsbnLookup'
+import { ScanIsbn } from './ScanIsbn'
+import { applyScan } from '../lib/scan'
 import { shrinkPhoto } from '../lib/photo'
 export function Cover({ book, small = false }: { book: Book; small?: boolean }) {
   return (
@@ -95,6 +97,7 @@ export function BookDetail({
   nextToVerify?: Book
 }) {
   const [isbnOpen, setIsbnOpen] = useState(false)
+  const [scanOpen, setScanOpen] = useState(false)
   const [photoError, setPhotoError] = useState('')
   const [verifyOpen, setVerifyOpen] = useState(false)
   const [tab, setTab] = useState('Overview')
@@ -184,6 +187,7 @@ export function BookDetail({
               .filter(Boolean)
               .join(' · ') || 'Publication details not recorded'}
           </p>
+          <button onClick={() => setScanOpen(true)}>Scan barcode</button>{' '}
           <button onClick={() => setIsbnOpen(true)}>Find ISBN and cover</button>
           <div className="book-tags">
             <span>{book.format}</span>
@@ -262,6 +266,23 @@ export function BookDetail({
             {nextToVerify && <button onClick={() => onOpen(nextToVerify)}>Next to check</button>}
           </div>
         </section>
+      )}
+      {scanOpen && (
+        <ScanIsbn
+          title="Scan this book’s barcode"
+          onClose={() => setScanOpen(false)}
+          onFound={(result) => {
+            if (
+              onUpdate(
+                applyScan(book, result, {
+                  cover: !book.coverUrl || book.coverUrl.startsWith('/assets/'),
+                  summary: !book.summary,
+                }),
+              )
+            )
+              setScanOpen(false)
+          }}
+        />
       )}
       {isbnOpen && <IsbnLookup book={book} onSave={onUpdate} onClose={() => setIsbnOpen(false)} />}
       {verifyOpen && (

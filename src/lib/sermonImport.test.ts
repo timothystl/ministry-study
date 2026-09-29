@@ -16,6 +16,7 @@ const empty = (): Library => ({
   sermons: [],
   prayers: [],
   prayerSets: [],
+  notes: [],
   sample: false,
 })
 // Invented entries in the same shapes as a real archive index, text history and structure review.

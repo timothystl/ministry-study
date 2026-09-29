@@ -21,6 +21,7 @@ const empty = (): Library => ({
   sermons: [],
   prayers: [],
   prayerSets: [],
+  notes: [],
   sample: false,
 })
 // Invented text in the shape of the prayer builder file.
