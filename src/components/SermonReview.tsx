@@ -26,6 +26,7 @@ export function SermonReview({
   onSave: (library: Library) => boolean
   onClose: () => void
 }) {
+  const [includePrivate, setIncludePrivate] = useState(false)
   const [busy, setBusy] = useState('')
   const [note, setNote] = useState('')
   const [error, setError] = useState('')
@@ -39,9 +40,15 @@ export function SermonReview({
     setBusy('Preparing the review package…')
     setError('')
     try {
-      const { zip, withText, note } = await buildReviewPackage(library.sermons, setBusy)
+      const { zip, withText, note, leftOut } = await buildReviewPackage(
+        library.sermons,
+        setBusy,
+        includePrivate,
+      )
       downloadBlob(zip, 'sermon-review-package.zip', 'application/zip')
-      setNote(`Downloaded with ${withText} manuscripts. ${note}`.trim())
+      setNote(
+        `Downloaded with ${withText} manuscripts.${leftOut ? ` ${leftOut} funeral and wedding sermons were left out.` : ''} ${note}`.trim(),
+      )
     } catch (e) {
       setError((e as Error).message)
     } finally {
@@ -100,6 +107,15 @@ export function SermonReview({
           reader (the instructions say exactly what to return). Give it to Claude Cowork or anyone
           else who will read the sermons. It contains your sermons, so keep it private.
         </p>
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={includePrivate}
+            onChange={(e) => setIncludePrivate(e.target.checked)}
+          />
+          Include funeral and wedding sermons (left out unless ticked, since they name real
+          families)
+        </label>
         <div className="sermon-actions">
           <button onClick={() => void download()} disabled={Boolean(busy)}>
             <Download size={16} /> Download review package

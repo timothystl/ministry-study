@@ -79,6 +79,7 @@ const sermon = z.object({
   scripture: z.string(),
   date: z.string().regex(/^(\d{4}-\d{2}-\d{2})?$/),
   occasion: z.string(),
+  subject: z.string().default(''),
   series: z.string(),
   themes: z.array(z.string()),
   summary: z.string(),

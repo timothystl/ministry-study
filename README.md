@@ -135,3 +135,9 @@ The instructions live in `src/lib/reviewBrief.ts`.
 - **Saved services.** **Save this service** keeps the built text. Names are left out of the saved copy unless you tick Keep the names, since they are private pastoral information. Open a saved service to reuse it.
 
 The prayer texts are personal content and are never committed; tests use invented prayers in the same shape. Drafting new biddings with an AI model (as the original builder did) is not part of the app.
+
+### Funerals, weddings and ordinations
+
+Occasional services are cataloged as sermons, with an Occasion and a **For** field (whom the service was for; searchable). A **Kind of service** filter shows Funeral & memorial, Wedding, or Ordination & installation. The kind is recognized from the record's own occasion, title, series and For fields (words like funeral, memorial, committal, wedding, ordination, installation), never from the manuscript, so a sermon that only mentions a funeral is not one; a regular sermon whose title uses one of those words would be, and setting its occasion does not change that. Import a list with a CSV (Title, Occasion, Subject, Date, Path and the usual columns).
+
+Funerals and weddings name real families, so they are private by default: their manuscripts are saved but **kept out of search** unless you tick the box in Manuscripts, and they are **left out of the review package** unless you tick Include funeral and wedding sermons. Ordinations and installations are treated like any other sermon.
