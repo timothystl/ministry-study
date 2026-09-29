@@ -68,10 +68,29 @@ test('a new library can build the prayers right away, with the LCMS prayer and a
   await page.getByRole('button', { name: 'Load starter biddings' }).click()
   await page.getByRole('button', { name: 'Choose the first bidding in every category' }).click()
   await page.getByLabel('Names of the sick').fill('Ann')
-  await page.getByLabel('LCMS weekly prayer (pasted)').fill('Almighty God, hear us.')
+  await page.route('**/api/lcms-prayer*', (route) =>
+    route.fulfill({
+      json: {
+        prayers: [
+          {
+            title: 'Third Sunday of Testing',
+            responsive:
+              'Gracious Lord, keep us. [especially _____________]. Lord, in Your mercy, hear our prayer.',
+            ektene: 'In peace, let us pray to the Lord: Lord, have mercy.',
+          },
+        ],
+      },
+    }),
+  )
+  await page.getByRole('button', { name: 'Get this Sunday’s LCMS prayer' }).click()
+  await expect(page.getByText('From the LCMS: Third Sunday of Testing.')).toBeVisible()
   const preview = page.getByLabel('Prayers of the Church preview')
   await expect(preview).toContainText('be near Ann and all who are ill')
-  await expect(preview).toContainText('FROM THE LCMS WEEKLY PRAYER\nAlmighty God, hear us.')
+  await expect(preview).toContainText(
+    'LCMS PRAYER OF THE CHURCH\nGracious Lord, keep us. especially Ann.',
+  )
+  await page.getByLabel('Form').selectOption('ektene')
+  await expect(preview).toContainText('In peace, let us pray to the Lord')
   await expect(page.getByRole('link', { name: /Three-Year Series/ })).toHaveAttribute(
     'href',
     'https://www.lcms.org/worship/three-year-series-prayers',

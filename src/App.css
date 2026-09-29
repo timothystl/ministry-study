@@ -2561,3 +2561,7 @@ mark {
   align-items: center;
   gap: 4px;
 }
+.lcms-get {
+  display: flex;
+  align-items: end;
+}

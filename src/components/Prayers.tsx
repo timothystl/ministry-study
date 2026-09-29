@@ -7,6 +7,7 @@ import {
   buildPrayers,
   categories,
   defaultSelections,
+  fetchLcmsPrayers,
   deletePrayer,
   lcmsLinks,
   loadStarterBiddings,
@@ -18,6 +19,8 @@ import {
   savePrayer,
   searchPrayers,
   stripResponse,
+  type LcmsPrayer,
+  type LcmsSeries,
   type Prayer,
   type PrayerSet,
 } from '../lib/prayers'
@@ -366,6 +369,18 @@ function BuildTab({
   const [copied, setCopied] = useState(false)
   const [saved, setSaved] = useState('')
   const [emailNote, setEmailNote] = useState('')
+  const [lcmsFound, setLcmsFound] = useState<LcmsPrayer[]>([])
+  const [lcmsPick, setLcmsPick] = useState(0)
+  const [lcmsForm, setLcmsForm] = useState<'responsive' | 'ektene'>('responsive')
+  const [lcmsBusy, setLcmsBusy] = useState(false)
+  const [lcmsError, setLcmsError] = useState('')
+  const [series, setSeries] = useState<LcmsSeries>(() => {
+    try {
+      return localStorage.getItem('lcmsSeries') === 'one' ? 'one' : 'three'
+    } catch {
+      return 'three'
+    }
+  })
   const [emailTo, setEmailTo] = useState(() => {
     try {
       return localStorage.getItem('prayerEmailTo') || ''
@@ -423,6 +438,26 @@ function BuildTab({
     setSaved(onSave(next) ? 'Saved.' : 'Could not save.')
   }
   void text
+  const applyLcms = (found: LcmsPrayer[], pick: number, form: 'responsive' | 'ektene') => {
+    const chosen = found[pick]
+    if (chosen) setDraft({ ...draft, lcms: chosen[form] || chosen.responsive || chosen.ektene })
+  }
+  async function getLcms() {
+    setLcmsBusy(true)
+    setLcmsError('')
+    try {
+      const found = await fetchLcmsPrayers(draft.date, series)
+      setLcmsFound(found)
+      setLcmsPick(0)
+      setLcmsForm('responsive')
+      applyLcms(found, 0, 'responsive')
+    } catch (e) {
+      setLcmsFound([])
+      setLcmsError(e instanceof Error ? e.message : 'Could not get the LCMS prayer.')
+    } finally {
+      setLcmsBusy(false)
+    }
+  }
   function email() {
     const sub = `Prayers of the Church${draft.sunday ? ` — ${draft.sunday}` : ''}${draft.date ? ` (${draft.date})` : ''}`
     const { href, complete } = prayerMailto(emailTo, sub, finalText)
@@ -571,10 +606,79 @@ function BuildTab({
         })}
         <h3>This week’s LCMS prayer</h3>
         <p className="muted">
-          The LCMS posts its Prayers of the Church each week as a PDF. Open the page, copy the
-          prayer for {draft.sunday || 'this Sunday'}, and paste it below to pray with the wider
-          church. Each opens in a new tab.
+          The LCMS posts its Prayers of the Church for every Sunday. Choose the date above, then get
+          the prayer for that day. It lands in the box below, where you can edit it. Names of the
+          sick are filled in where the LCMS leaves a blank.
         </p>
+        <div className="form-grid">
+          <label>
+            LCMS series
+            <select
+              value={series}
+              onChange={(e) => {
+                const next = e.target.value as LcmsSeries
+                setSeries(next)
+                try {
+                  localStorage.setItem('lcmsSeries', next)
+                } catch {
+                  // Remembering the series is a convenience only.
+                }
+              }}
+            >
+              <option value="three">Three-Year Series</option>
+              <option value="one">One-Year Series</option>
+            </select>
+          </label>
+          <div className="lcms-get">
+            <button onClick={() => void getLcms()} disabled={lcmsBusy || !draft.date}>
+              {lcmsBusy ? 'Getting the prayer…' : 'Get this Sunday’s LCMS prayer'}
+            </button>
+          </div>
+        </div>
+        {lcmsError && (
+          <p className="error" role="alert">
+            {lcmsError}
+          </p>
+        )}
+        {lcmsFound.length > 0 && (
+          <div className="form-grid">
+            {lcmsFound.length > 1 && (
+              <label>
+                Which day
+                <select
+                  value={lcmsPick}
+                  onChange={(e) => {
+                    setLcmsPick(Number(e.target.value))
+                    applyLcms(lcmsFound, Number(e.target.value), lcmsForm)
+                  }}
+                >
+                  {lcmsFound.map((p, i) => (
+                    <option key={p.title} value={i}>
+                      {p.title}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <label>
+              Form
+              <select
+                value={lcmsForm}
+                onChange={(e) => {
+                  const form = e.target.value as 'responsive' | 'ektene'
+                  setLcmsForm(form)
+                  applyLcms(lcmsFound, lcmsPick, form)
+                }}
+              >
+                <option value="responsive">Responsive</option>
+                <option value="ektene">Ektene</option>
+              </select>
+            </label>
+          </div>
+        )}
+        {lcmsFound[lcmsPick] && (
+          <p className="muted">From the LCMS: {lcmsFound[lcmsPick].title}.</p>
+        )}
         <p className="lcms-links">
           {lcmsLinks.map(([label, href]) => (
             <a key={href} href={href} target="_blank" rel="noopener noreferrer">
@@ -583,12 +687,12 @@ function BuildTab({
           ))}
         </p>
         <label className="wide-field">
-          LCMS weekly prayer (pasted)
+          LCMS Prayer of the Church
           <textarea
             rows={5}
             value={draft.lcms}
             onChange={(e) => setDraft({ ...draft, lcms: e.target.value })}
-            placeholder="Paste the LCMS prayer here. © The Lutheran Church—Missouri Synod."
+            placeholder="Get the LCMS prayer above, or paste one here."
           />
         </label>
         <h3>Other concerns and the sermon</h3>

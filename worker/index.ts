@@ -1,3 +1,4 @@
+import { findPrayers, seriesPages, type Series } from './lcms'
 import { verifyAccess, type AccessEnv } from './access'
 import { applyChanges, readAll, validateChange } from './store'
 import {
@@ -28,6 +29,23 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
   if (access.status === 'unconfigured')
     return reply({ error: 'Sign-in protection is not set up for the shared library.' }, 503)
   if (access.status !== 'ok') return reply({ error: 'Please sign in.' }, 401)
+  if (pathname === '/api/lcms-prayer' && request.method === 'GET') {
+    const params = new URL(request.url).searchParams
+    const date = params.get('date') || ''
+    const series = (params.get('series') || 'three') as Series
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !(series in seriesPages))
+      return reply({ error: 'Choose a date and a series.' }, 400)
+    try {
+      const prayers = await findPrayers(date, series, (url) =>
+        fetch(url, { cf: { cacheTtl: 86400, cacheEverything: true } }),
+      )
+      return prayers.length
+        ? reply({ date, series, prayers })
+        : reply({ error: 'The LCMS has not posted a prayer for that date.' }, 404)
+    } catch {
+      return reply({ error: 'The LCMS prayers could not be read right now.' }, 502)
+    }
+  }
   if (!env.DB) return reply({ error: 'The shared database is not connected.' }, 503)
   try {
     if (pathname === '/api/library' && request.method === 'GET') return reply(await readAll(env.DB))

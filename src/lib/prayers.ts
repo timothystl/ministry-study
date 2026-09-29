@@ -154,6 +154,11 @@ const longDate = (iso: string) => {
       })
     : iso
 }
+// The LCMS prayer leaves "[especially _____]" for the names of the sick.
+export function fillLcmsBlanks(text: string, names: PrayerSet['names']) {
+  const sick = names.sick.trim()
+  return sick ? text.replace(/\[especially\s*_{3,}(,?)\]/gi, `especially ${sick}$1`) : text
+}
 const NAME_FALLBACKS = [
   ['sick', 'THE SICK', 'Lord Jesus, healer of the sick, be near'],
   ['grieving', 'THE GRIEVING', 'God of all comfort, hold those who mourn:'],
@@ -183,8 +188,9 @@ export function buildPrayers(input: BuildInput, prayers: Prayer[]): string {
     const names = input.names[key].trim()
     if (names && !covered.has(key)) blocks.push(`${heading}\n${lead} ${names}.\n${RESPONSE}`)
   }
+  // The LCMS prayer already carries its own responses and closing, so it is used as it is.
   if (input.lcms?.trim())
-    blocks.push(`FROM THE LCMS WEEKLY PRAYER\n${stripResponse(input.lcms)}\n${RESPONSE}`)
+    blocks.push(`LCMS PRAYER OF THE CHURCH\n${fillLcmsBlanks(input.lcms.trim(), input.names)}`)
   if (input.other.trim()) blocks.push(`OTHER CONCERNS\n${input.other.trim()}`)
   if (input.petition.trim())
     blocks.push(`SERMON-TIED PETITION\n${stripResponse(input.petition)}\n${RESPONSE}`)
@@ -387,8 +393,8 @@ export function defaultSelections(prayers: Prayer[]) {
 }
 
 // ----- LCMS weekly prayers and sharing -----
-// The LCMS publishes its Prayers of the Church as one PDF per Sunday. The text is copyrighted, so
-// this links to the pages and lets the pastor paste the week's prayer in.
+// The LCMS posts its Prayers of the Church, free to use, as one Word file per Sunday. The app reads
+// them through the server (see worker/lcms.ts); these links are the fallback, with a box to paste into.
 export const lcmsLinks = [
   [
     'Prayers of the Church: Three-Year Series',
@@ -417,3 +423,28 @@ const escapeHtml = (t: string) =>
 // A clean printable page (also saved as a PDF from the print dialog).
 export const printableHtml = (text: string) =>
   `<!doctype html><meta charset="utf-8"><title>Prayers of the Church</title><style>body{font:16pt/1.5 Georgia,serif;max-width:6.5in;margin:.75in auto;white-space:pre-wrap}</style><body>${escapeHtml(text)}</body>`
+
+export interface LcmsPrayer {
+  title: string
+  responsive: string
+  ektene: string
+}
+export type LcmsSeries = 'three' | 'one'
+// Asks the server for the LCMS prayers posted for a date (a Sunday can have two, such as a festival).
+export async function fetchLcmsPrayers(date: string, series: LcmsSeries): Promise<LcmsPrayer[]> {
+  let response: Response
+  try {
+    response = await fetch(`/api/lcms-prayer?date=${date}&series=${series}`, {
+      headers: { Accept: 'application/json' },
+    })
+  } catch {
+    throw new Error('Could not reach the LCMS prayers from here. Use the links and paste instead.')
+  }
+  const body = (await response.json().catch(() => ({}))) as {
+    prayers?: LcmsPrayer[]
+    error?: string
+  }
+  if (!response.ok || !body.prayers?.length)
+    throw new Error(body.error || 'Could not get the LCMS prayer. Use the links and paste instead.')
+  return body.prayers
+}
