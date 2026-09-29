@@ -2542,3 +2542,7 @@ mark {
     position: static;
   }
 }
+
+.note-body {
+  max-height: none;
+}

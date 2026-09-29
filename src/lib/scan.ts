@@ -150,8 +150,9 @@ const sourceNote = (book: Book, result: ScanResult) => ({
   'ISBN selection date': new Date().toISOString(),
   'ISBN lookup method': 'Barcode scan or typed ISBN',
 })
-// A scanned barcode identifies the edition. Details already recorded are kept; only blanks are
-// filled. The cover and summary are added only when asked.
+// A scanned barcode identifies the edition, so its author, publisher, year and subtitle replace
+// what was recorded (a blank in the scan leaves the recorded value alone). Title, notes, location
+// and reading records are never touched. The cover and summary are added only when asked.
 export function applyScan(
   book: Book,
   result: ScanResult,
@@ -172,10 +173,10 @@ export function applyScan(
     ...book,
     ...coverPart,
     isbn: result.isbn,
-    author: book.author || result.authors,
-    publisher: book.publisher || result.publisher,
-    year: book.year || result.year,
-    subtitle: book.subtitle || result.subtitle || undefined,
+    author: result.authors || book.author,
+    publisher: result.publisher || book.publisher,
+    year: result.year || book.year,
+    subtitle: result.subtitle || book.subtitle || undefined,
     summary: options.summary && result.summary ? result.summary.text : book.summary,
     sourceMetadata: {
       ...sourceNote(book, result),

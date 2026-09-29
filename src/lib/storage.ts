@@ -8,6 +8,7 @@ import {
   verificationStatuses,
   type Library,
 } from './model'
+import { noteKinds } from './notes'
 import { prayerTypes } from './prayers'
 import { sampleLibrary } from './seed'
 const location = z.object({
@@ -133,6 +134,18 @@ const prayerSet = z.object({
   text: z.string(),
   updatedAt: z.string(),
 })
+const note = z.object({
+  id: z.string().min(1),
+  title: z.string(),
+  kind: z.enum(noteKinds),
+  body: z.string(),
+  scripture: z.string(),
+  date: z.string().regex(/^(\d{4}-\d{2}-\d{2})?$/),
+  sermonId: z.string(),
+  tags: z.array(z.string()),
+  source: z.string(),
+  updatedAt: z.string(),
+})
 const schema = z.object({
   version: z.literal(1),
   recentIds: z.array(z.string()).optional(),
@@ -152,6 +165,7 @@ const schema = z.object({
   sermons: z.array(sermon).default([]),
   prayers: z.array(prayer).default([]),
   prayerSets: z.array(prayerSet).default([]),
+  notes: z.array(note).default([]),
   sample: z.boolean(),
 })
 export const STORAGE_KEY = 'ministry-study.library.v1'
@@ -164,6 +178,7 @@ export function parseBackup(input: unknown): Library {
     data.sermons,
     data.prayers,
     data.prayerSets,
+    data.notes,
   ])
     if (new Set(items.map((x) => x.id)).size !== items.length)
       throw new Error('Duplicate record IDs in backup.')
@@ -200,6 +215,7 @@ export function loadLibrary(): { library: Library; error: string } {
         sermons: [],
         prayers: [],
         prayerSets: [],
+        notes: [],
         sample: false,
       },
       error:

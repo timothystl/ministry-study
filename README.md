@@ -141,3 +141,18 @@ The prayer texts are personal content and are never committed; tests use invente
 Occasional services are cataloged as sermons, with an Occasion and a **For** field (whom the service was for; searchable). A **Kind of service** filter shows Funeral & memorial, Wedding, or Ordination & installation. The kind is recognized from the record's own occasion, title, series and For fields (words like funeral, memorial, committal, wedding, ordination, installation), never from the manuscript, so a sermon that only mentions a funeral is not one; a regular sermon whose title uses one of those words would be, and setting its occasion does not change that. Import a list with a CSV (Title, Occasion, Subject, Date, Path and the usual columns).
 
 Funerals and weddings name real families, so they are private by default: their manuscripts are saved but **kept out of search** unless you tick the box in Manuscripts, and they are **left out of the review package** unless you tick Include funeral and wedding sermons. Ordinations and installations are treated like any other sermon.
+
+## Devotions & Notes
+
+A page for council and midweek devotions, sermon-preparation notes, illustrations, ideas and study
+notes. Each note has a kind, an optional passage and date, tags, and an optional link to a sermon.
+Search matches words, or a passage by chapter and verse. A sermon's page lists its linked notes and
+other notes on the same passage, with "Add a note" pre-linked to that sermon. "Import" turns a
+folder of text or Word files into notes (already-imported files are skipped; anything over 30,000
+characters belongs in Sermons → Manuscripts). Notes sync to the shared library like other records.
+
+### Scanning when adding or updating a book
+
+Add Book has "Scan the barcode to fill this in" (title, author, publisher, year, ISBN, cover and
+summary; you review before saving). An open book has "Scan barcode", which saves the ISBN. The
+author, publisher, year and subtitle from the scan replace what was recorded; the cover and summary are added only if the book has none. The camera can be replaced by typing the ISBN.

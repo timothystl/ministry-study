@@ -238,8 +238,8 @@ export function ScanBook({
             <div>
               <h3>Is this one of your books?</h3>
               <p className="muted">
-                Saves the ISBN, and the cover and summary if the record has none. Nothing else
-                changes.
+                Saves the ISBN and replaces the author, publisher and year with the published
+                details. Your title, notes and location stay as they are.
               </p>
               {matches.similar.map((b) => (
                 <p key={b.id}>

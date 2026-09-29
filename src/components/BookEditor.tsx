@@ -9,6 +9,9 @@ import {
   saveBook,
 } from '../lib/model'
 import { Modal } from './Modal'
+import { ScanIsbn } from './ScanIsbn'
+import { applyScan } from '../lib/scan'
+import { ScanBarcode } from 'lucide-react'
 export function BookEditor({
   book,
   library,
@@ -29,6 +32,8 @@ export function BookEditor({
   )
   const [topics, setTopics] = useState(book.topics.join('; '))
   const [error, setError] = useState('')
+  const [scanning, setScanning] = useState(false)
+  const [scanned, setScanned] = useState('')
   function submit(e: FormEvent) {
     e.preventDefault()
     try {
@@ -89,6 +94,12 @@ export function BookEditor({
             {error}
           </p>
         )}
+        <p>
+          <button type="button" onClick={() => setScanning(true)}>
+            <ScanBarcode size={16} /> Scan the barcode to fill this in
+          </button>{' '}
+          {scanned && <span role="status">{scanned}</span>}
+        </p>
         <div className="form-grid">
           {field('title', 'Title')}
           {field('author', 'Author / contributors')}
@@ -292,6 +303,20 @@ export function BookEditor({
           </button>
         </div>
       </form>
+      {scanning && (
+        <ScanIsbn
+          onClose={() => setScanning(false)}
+          onFound={(result) => {
+            setDraft((d) => ({
+              ...applyScan(d, result, { cover: true, summary: true }),
+              title: d.title.trim() ? d.title : result.title,
+              source: d.source || 'Barcode scan',
+            }))
+            setScanned(`Filled in from “${result.title}”. Check it, then save.`)
+            setScanning(false)
+          }}
+        />
+      )}
     </Modal>
   )
 }

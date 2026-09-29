@@ -1,3 +1,4 @@
+import type { Note } from './notes'
 import type { Prayer, PrayerSet } from './prayers'
 import type { Sermon } from './sermons'
 export const ownerships = ['Owned', 'Not owned', 'Previously owned'] as const
@@ -99,6 +100,7 @@ export interface Library {
   sermons: Sermon[]
   prayers: Prayer[]
   prayerSets: PrayerSet[]
+  notes: Note[]
   sample: boolean
 }
 export const blankLocation = (): Location => ({ room: '', bookcase: '', shelf: '', position: '' })

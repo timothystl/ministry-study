@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import type { Library } from './model'
 import {
   blankSermon,
+  fileIndex,
+  occasionKind,
   isWebLink,
   parseSermonLine,
   parseSermonList,
@@ -20,6 +22,7 @@ const empty = (): Library => ({
   sermons: [],
   prayers: [],
   prayerSets: [],
+  notes: [],
   sample: false,
 })
 const sermon = (over: Partial<Sermon>): Sermon => ({ ...blankSermon(), title: 'Untitled', ...over })
@@ -156,6 +159,19 @@ describe('sermon list import', () => {
 })
 
 describe('funerals, weddings and ordinations', () => {
+  it('lets the occasion decide, and reads letter-prefixed file numbers', () => {
+    expect(
+      occasionKind({
+        occasion: 'Wedding',
+        title: 'I will',
+        series: '',
+        subject: 'Christ Memorial',
+      }),
+    ).toBe('Wedding')
+    expect(fileIndex('F012_Name.docx')).toBe('F012')
+    expect(fileIndex('0876_Proper 12_Labor.docx')).toBe('0876')
+    expect(fileIndex('2004.12.02_Wedding_x.docx')).toBe('')
+  })
   const list = [
     sermon({
       id: 'f',

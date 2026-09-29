@@ -36,6 +36,8 @@ import { searchSermonText } from '../lib/sermonText'
 import { ManuscriptSection, SermonTextManager } from './SermonText'
 import { SermonReview } from './SermonReview'
 import { Modal } from './Modal'
+import { NoteEditor } from './Notes'
+import { blankNote, notesForSermon, type Note } from '../lib/notes'
 
 const dateLabel = (date: string) =>
   date
@@ -498,9 +500,11 @@ function SermonDetail({
   onEdit,
   onOpen,
   onDelete,
+  onSave,
 }: {
   sermon: Sermon
   library: Library
+  onSave: (library: Library) => boolean
   onBack: () => void
   onEdit: () => void
   onOpen: (id: string) => void
@@ -508,6 +512,8 @@ function SermonDetail({
 }) {
   const related = samePassage(library, sermon)
   const [confirming, setConfirming] = useState(false)
+  const [note, setNote] = useState<Note | null>(null)
+  const { linked, onPassage } = notesForSermon(library, sermon)
   return (
     <article className="sermon-detail">
       <button onClick={onBack}>
@@ -653,6 +659,48 @@ function SermonDetail({
           <p>{sermon.notes}</p>
         </section>
       )}
+      <section className="detail-section">
+        <h3>Devotions and notes</h3>
+        {linked.length === 0 && onPassage.length === 0 && (
+          <p className="muted">Nothing yet for this sermon.</p>
+        )}
+        <ul className="sermon-related">
+          {[...linked, ...onPassage].map((n) => (
+            <li key={n.id}>
+              <button onClick={() => setNote(n)}>{n.title}</button>
+              <span className="muted">
+                {[n.kind, n.sermonId !== sermon.id && 'Same passage', n.scripture]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <button
+          onClick={() =>
+            setNote({
+              ...blankNote(),
+              kind: 'Sermon note',
+              sermonId: sermon.id,
+              scripture: sermon.scripture,
+            })
+          }
+        >
+          Add a note
+        </button>
+      </section>
+      {note && (
+        <NoteEditor
+          note={note}
+          library={library}
+          onSave={(next) => {
+            const ok = onSave(next)
+            if (ok) setNote(null)
+            return ok
+          }}
+          onClose={() => setNote(null)}
+        />
+      )}
       {related.length > 0 && (
         <section className="detail-section">
           <h3>Other sermons on this passage</h3>
@@ -778,6 +826,7 @@ export function SermonCatalog({
           key={open.id}
           sermon={open}
           library={library}
+          onSave={onSave}
           onBack={() => {
             setOpenId('')
             setEpoch((n) => n + 1)

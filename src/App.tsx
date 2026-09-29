@@ -20,6 +20,7 @@ import {
   Mic,
   ScanBarcode,
   HandHeart,
+  NotebookPen,
 } from 'lucide-react'
 import {
   blankBook,
@@ -45,6 +46,7 @@ import { LoanForm } from './components/LoanForm'
 import { SermonCatalog } from './components/SermonCatalog'
 import { ScanBook } from './components/ScanBook'
 import { Prayers } from './components/Prayers'
+import { Notes } from './components/Notes'
 import { Dashboard, type QuickScope } from './components/Dashboard'
 import { ReadingTable, LoansTable } from './components/RecordsTable'
 import { Modal } from './components/Modal'
@@ -59,6 +61,7 @@ type Page =
   | 'Wishlist'
   | 'Sermons'
   | 'Prayers'
+  | 'Notes'
 type Browse = 'Topic' | 'Author' | 'Series' | 'Physical shelf'
 const navigation = [
   { name: 'Home', label: 'Search', icon: Search },
@@ -69,6 +72,7 @@ const navigation = [
   { name: 'Wishlist', label: 'Wishlist', icon: Heart },
   { name: 'Sermons', label: 'Sermons', icon: Mic },
   { name: 'Prayers', label: 'Prayers', icon: HandHeart },
+  { name: 'Notes', label: 'Devotions & Notes', icon: NotebookPen },
 ] as const
 export default function App() {
   const [initial] = useState(loadLibrary),
@@ -510,6 +514,8 @@ export default function App() {
             <SermonCatalog library={library} onSave={commit} />
           ) : page === 'Prayers' ? (
             <Prayers library={library} onSave={commit} />
+          ) : page === 'Notes' ? (
+            <Notes library={library} onSave={commit} />
           ) : detail ? (
             <BookDetail
               key={detail.id}

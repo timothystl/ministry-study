@@ -87,8 +87,9 @@ const KIND_WORDS: [OccasionKind, RegExp][] = [
 export function occasionKind(
   s: Pick<Sermon, 'occasion' | 'title' | 'series' | 'subject'>,
 ): OccasionKind | '' {
-  const text = [s.occasion, s.title, s.series, s.subject].join(' ')
-  return KIND_WORDS.find(([, re]) => re.test(text))?.[0] ?? ''
+  // What the occasion says wins: a wedding at "Christ Memorial" is still a wedding.
+  const kindOf = (text: string) => KIND_WORDS.find(([, re]) => re.test(text))?.[0]
+  return kindOf(s.occasion) ?? kindOf([s.title, s.series, s.subject].join(' ')) ?? ''
 }
 // Funerals and weddings name real families, so they start out of search and out of review packages.
 export const isPrivateOccasion = (s: Pick<Sermon, 'occasion' | 'title' | 'series' | 'subject'>) => {
@@ -333,9 +334,10 @@ export const CSV_HEADERS = 'Title,Scripture,Date,Series,Occasion,Themes,Location
 // The file name part of a path, without number prefix or extension, as a fallback title.
 const titleFromFile = (file: string) =>
   file.split(/[\\/]/).pop()!.replace(EXTENSION, '').replace(/^\d+_/, '').split('_').pop()!.trim()
-// The number at the start of a file name: 0876_Proper 12_Labor.docx is sermon 0876.
+// The number at the start of a file name: 0876_Proper 12_Labor.docx is sermon 0876. Funerals,
+// weddings and ordinations carry a letter too: F012_Name.docx is funeral F012.
 export const fileIndex = (file: string) =>
-  /^(\d{3,5})_/.exec(file.trim().split(/[\\/]/).pop() || '')?.[1] || ''
+  /^([FWOC]?\d{3,5})_/.exec(file.trim().split(/[\\/]/).pop() || '')?.[1] || ''
 // CSV with a Title column, or one file name per line. Recognized columns: Title, Scripture, Date,
 // Series, Occasion, Themes, Location (or Path), Index, Liturgical Season, Liturgical Sunday,
 // Lectionary Year. Anything that cannot be read is left blank and reported, never guessed.
