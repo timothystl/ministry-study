@@ -1,3 +1,4 @@
+import type { Sermon } from './sermons'
 export const ownerships = ['Owned', 'Not owned', 'Previously owned'] as const
 export const readingStatuses = [
   'Not recorded',
@@ -94,6 +95,7 @@ export interface Library {
   books: Book[]
   series: Series[]
   loans: Loan[]
+  sermons: Sermon[]
   sample: boolean
 }
 export const blankLocation = (): Location => ({ room: '', bookcase: '', shelf: '', position: '' })

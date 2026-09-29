@@ -17,6 +17,7 @@ import {
   Grid2X2,
   Download,
   SlidersHorizontal,
+  Mic,
 } from 'lucide-react'
 import {
   blankBook,
@@ -39,11 +40,13 @@ import { BookEditor } from './components/BookEditor'
 import { LibraryData } from './components/LibraryData'
 import { WishlistImport } from './components/WishlistImport'
 import { LoanForm } from './components/LoanForm'
+import { SermonCatalog } from './components/SermonCatalog'
 import { Dashboard, type QuickScope } from './components/Dashboard'
 import { ReadingTable, LoansTable } from './components/RecordsTable'
 import { Modal } from './components/Modal'
 import './App.css'
-type Page = 'Home' | 'Search' | 'Browse' | 'My Collection' | 'Reading' | 'Loans' | 'Wishlist'
+type Page =
+  'Home' | 'Search' | 'Browse' | 'My Collection' | 'Reading' | 'Loans' | 'Wishlist' | 'Sermons'
 type Browse = 'Topic' | 'Author' | 'Series' | 'Physical shelf'
 const navigation = [
   { name: 'Home', label: 'Search', icon: Search },
@@ -52,6 +55,7 @@ const navigation = [
   { name: 'Reading', label: 'Reading', icon: Bookmark },
   { name: 'Loans', label: 'Loans', icon: Users },
   { name: 'Wishlist', label: 'Wishlist', icon: Heart },
+  { name: 'Sermons', label: 'Sermons', icon: Mic },
 ] as const
 export default function App() {
   const [initial] = useState(loadLibrary),
@@ -87,6 +91,9 @@ export default function App() {
   }, [menu])
   const detail = library.books.find((b) => b.id === detailId),
     searching = Boolean(query.trim())
+  // The browser keeps a working copy, but it holds only a few megabytes. A large library that
+  // is safely in the shared database can go without it.
+  const sharedAndSafe = () => sync.status === 'synced' || sync.status === 'saving'
   function commit(next: Library) {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
@@ -95,6 +102,15 @@ export default function App() {
       setNotice('Saved on this device')
       return true
     } catch {
+      if (sharedAndSafe()) {
+        localStorage.removeItem(STORAGE_KEY)
+        setLibrary(next)
+        setError('')
+        setNotice(
+          'Saved to the shared library. This library is too large to also keep a copy on this device.',
+        )
+        return true
+      }
       setError(
         'Could not save. Browser storage may be full or unavailable. Export a backup and try again.',
       )
@@ -104,13 +120,13 @@ export default function App() {
   const adoptShared = useCallback((next: Library) => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
-      setLibrary(next)
-      setError('')
-      return true
     } catch {
-      setError('Could not save the shared library on this device. Export a backup and try again.')
-      return false
+      // Too large for the browser's copy; the shared library still has everything.
+      localStorage.removeItem(STORAGE_KEY)
     }
+    setLibrary(next)
+    setError('')
+    return true
   }, [])
   const sync = useSync(library, adoptShared)
   function navigate(next: Page) {
@@ -467,7 +483,9 @@ export default function App() {
               </button>
             </div>
           )}
-          {detail ? (
+          {page === 'Sermons' ? (
+            <SermonCatalog library={library} onSave={commit} />
+          ) : detail ? (
             <BookDetail
               key={detail.id}
               book={detail}

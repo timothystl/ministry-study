@@ -62,3 +62,7 @@ ISBN lookup is now available from book detail. It searches Open Library works, f
 ## Latest update: shared library database
 
 The library can now save to a free Cloudflare D1 database (see README → Shared library database). The code is done and tested locally; it stays inactive, and the API refuses requests, until Cloudflare Access protection and the two `STUDY_ACCESS_*` variables are set. Planned order after this: sermons, children's messages, Bible studies and notes, hymns, then Scripture tools.
+
+## Latest update: sermon catalog
+
+Sermons is built (see README → Sermons): passage search, import of an archive index, text history and structure review, and a shared-database record kind. Next: save full manuscript text for search and backup (needs a separate table, not the library payload), then occasional sermons (funerals, weddings, ordinations), devotions, prayers and notes (the earlier prayer catalog is still to be brought in), and a visual library. ISBN lookup and cover search are to be merged into one flow.

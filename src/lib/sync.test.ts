@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { sampleLibrary } from './seed'
 import type { Library } from './model'
 import { parseBackup } from './storage'
+import { blankSermon } from './sermons'
 import { chunkChanges, diffRecords, hashRecords, libraryToRecords, recordsToLibrary } from './sync'
 
 // The sample books renamed as real records, since samples are deliberately never saved.
@@ -14,6 +15,15 @@ const realLibrary = (): Library => {
   }
 }
 describe('sync helpers', () => {
+  it('carries sermons through the shared database and back', () => {
+    const library = {
+      ...realLibrary(),
+      sermons: [{ ...blankSermon(), id: 's1', title: 'The Lost Son' }],
+    }
+    const records = libraryToRecords(library)
+    expect(records.filter((r) => r.kind === 'sermon')).toHaveLength(1)
+    expect(recordsToLibrary(records).sermons[0].title).toBe('The Lost Son')
+  })
   it('never sends illustrative sample books', () => {
     expect(libraryToRecords(sampleLibrary())).toEqual([])
   })

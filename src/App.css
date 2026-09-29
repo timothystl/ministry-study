@@ -2240,3 +2240,112 @@ main {
   flex: 1 1 100%;
   margin: 0;
 }
+
+.sermons {
+  max-width: 900px;
+}
+.sermons h1,
+.sermon-detail h1 {
+  font-size: 26px;
+  margin: 0 0 4px;
+}
+.sermons-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.sermon-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.sermon-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 12px 0;
+}
+.sermon-filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+}
+.sermon-list {
+  list-style: none;
+  margin: 12px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sermon-row {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 3px;
+  text-align: left;
+  padding: 12px 14px;
+}
+.sermon-reason {
+  font-size: 12px;
+  color: #1f6f4a;
+}
+.sermon-detail h1 {
+  margin-top: 14px;
+}
+.sermon-detail .detail-section {
+  margin-top: 18px;
+}
+.sermon-facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 14px;
+}
+.sermon-facts dt {
+  font-weight: 500;
+}
+.sermon-facts dd {
+  margin: 0;
+}
+.sermon-location {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0;
+}
+.sermon-location .muted {
+  overflow-wrap: anywhere;
+}
+.sermon-related {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sermon-preview {
+  max-height: 260px;
+  overflow: auto;
+  padding-left: 18px;
+}
+.empty-state {
+  padding: 24px 0;
+  max-width: 560px;
+  line-height: 1.5;
+}
+.wide-field {
+  grid-column: 1 / -1;
+}
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

@@ -25,7 +25,7 @@ Borrowed reading sources can be recorded without ownership; outgoing loans are t
 
 ## Explicitly deferred
 
-Research a Text, Scripture reading/languages/patterns, hymn/music, sermons, teaching resources, external-resource discovery, EPUB/PDF reading, full-text indexing, provider APIs, automatic cover enrichment, spreadsheet/photo import and reconciliation, and automatic organization recommendations.
+Research a Text, Scripture reading/languages/patterns, hymn/music, teaching resources, devotions/prayers, visual library, sermon full text, external-resource discovery, EPUB/PDF reading, full-text indexing, provider APIs, automatic cover enrichment, spreadsheet/photo import and reconciliation, and automatic organization recommendations.
 
 ## Source review
 
@@ -46,3 +46,7 @@ Optional `edition` is editable; older physical imports display the preserved `so
 ## Shared database
 
 The database holds rows of `(kind, id, data JSON, updated_at)` with `kind` in `book`, `series`, `loan`; new record kinds need no schema change. Illustrative `sample-` books, and loans on them, are never saved. The stored JSON is the same validated shape as the backup file, and a library rebuilt from rows is validated before it replaces the local copy. Deletes are real deletes; the recovery copies are D1 time travel and exported backups.
+
+## Sermons
+
+`Library.sermons` holds `Sermon` records (kind `sermon` in the shared database). A sermon is a catalog entry: `manuscript` and `recording` are locations, not contents. `scripture` is written one way on import and read by `src/lib/scripture.ts` into book/chapter/verse ranges so searches match by overlap. `sourceId` is the file number used to lay archive reviews over a sermon. Fields from a review (`structure*`, `centralImage`, `gospelHandle`, `opening`, `closing`, `scriptureSource`) carry their source and are only ever filled when empty. Older backups without sermons still restore, and restoring one keeps existing sermons.

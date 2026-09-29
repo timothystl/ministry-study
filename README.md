@@ -6,7 +6,7 @@ A working home for sermons, Bible studies, hymnody, library, and other resources
 
 The first release starts with a calm personal library for books, reading, and the ideas worth returning to.
 
-**v0.1 is the responsive application shell and Library only.** Research a Text, Scripture and pattern tools, hymns/music, sermons, teaching resources, and other broader modules are explicitly deferred. There are no nonfunctional navigation placeholders for them.
+**Library and Sermons are built.** Research a Text, Scripture and pattern tools, hymns/music, teaching resources, and other broader modules are explicitly deferred. There are no nonfunctional navigation placeholders for them.
 
 ## Run locally
 
@@ -99,3 +99,13 @@ The app can save to a free Cloudflare D1 database, following the same pattern as
 4. Deploy. The D1 database `timothy-study-db` was created in the dashboard and is referenced by ID in `wrangler.jsonc`; the worker creates its tables on first use.
 
 The first device to open the app after that is offered **Save this library to the shared library**; later devices adopt it. D1 keeps 30 days of point-in-time recovery; **Export backup** remains the private off-Cloudflare copy. Local runs use `npx wrangler dev` with `STUDY_DEV_NO_AUTH=1` in an ignored `.dev.vars`. Free-tier limits (5 GB, 100,000 writes a day) are far above this use.
+
+## Sermons
+
+**Sermons** (in the menu) is a catalog of what has been preached and where each manuscript lives. A record holds title, passage, date, series, occasion, church season, themes, summary, notes, and manuscript and recording locations (a OneDrive or web link, or a file path). Files stay where they are; a web address opens, and a file path can be copied.
+
+- **Passage search.** Search "Luke 15", "1 Cor 13:4", or "Ps 23" and every sermon whose passage overlaps is found, newest first. A record's page also lists other sermons on the same passage. Other searches match words across every field. Each result says why it matched, and search covers what is recorded, not manuscript text.
+- **Import sermon information** (three tabs). _Sermon list_ reads a CSV index (Title; optional Scripture, Date, Series, Occasion, Path, Liturgical Season, Liturgical Sunday, Lectionary Year) or pasted file names, using only a leading date and a written passage. Filing styles such as `Matt 13.24-30`, `Matt 18v1-6,19v13-15` and `Isa 42.1-7` are read and rewritten one way; anything unreadable is left blank and reported. _Text history_ (.md) fills opening, closing, central image and gospel statement, and a passage where the index had none. _Structure review_ (.xlsx or CSV) fills structure, category and rationale, marked as an AI review. The overlays match by the number at the start of the file name (the suggested-name number when the index has one) and fill only empty fields; nothing typed by hand is replaced. Every import shows a preview first.
+- Sermons are saved and shared like the rest of the library. A library too large for the browser's own copy keeps saving to the shared database and says so.
+
+Personal archive files are imported through the app and are never committed. Tests use invented entries in the same shapes.

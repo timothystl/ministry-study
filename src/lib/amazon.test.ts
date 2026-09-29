@@ -3,7 +3,14 @@ import { amazonListUrl, parseAmazonText } from './amazon'
 import { previewWishlist } from './wishlist'
 import { blankBook, type Library } from './model'
 import { parseBackup } from './storage'
-const empty = (): Library => ({ version: 1, books: [], loans: [], series: [], sample: false })
+const empty = (): Library => ({
+  version: 1,
+  books: [],
+  loans: [],
+  series: [],
+  sermons: [],
+  sample: false,
+})
 describe('Amazon wishlist imports', () => {
   it('accepts only Amazon wishlist URLs and removes tracking parameters', () => {
     expect(amazonListUrl('https://www.amazon.com/hz/wishlist/ls/EXAMPLE?ref_=wl_share')).toBe(

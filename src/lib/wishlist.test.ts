@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { blankBook, type Library } from './model'
 import { parseWishlistCsv, parseWishlistText, previewWishlist } from './wishlist'
-const empty = (): Library => ({ version: 1, books: [], series: [], loans: [], sample: false })
+const empty = (): Library => ({
+  version: 1,
+  books: [],
+  series: [],
+  loans: [],
+  sermons: [],
+  sample: false,
+})
 
 describe('wishlist imports', () => {
   it('reads spreadsheet CSV with BOM, quoted commas, escaped quotes and multiline notes', () => {
