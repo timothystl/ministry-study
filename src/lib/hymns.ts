@@ -310,6 +310,7 @@ export function hymnsFromRuf(
     ].filter((l) => l.url)
     hymns.push({
       ...blankHymn(),
+      id: `ruf-${e.id}`,
       title: e.title,
       lyricist: e.lyricist,
       composer: e.composer,

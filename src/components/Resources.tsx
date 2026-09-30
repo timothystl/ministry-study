@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react'
-import { Download, Plus, Search } from 'lucide-react'
+import { Plus, Search } from 'lucide-react'
 import { removeFile } from '../lib/attachments'
 import { fileKinds } from '../lib/hymns'
 import type { Library } from '../lib/model'
@@ -8,10 +8,8 @@ import {
   blankResource,
   deleteResource,
   resourceKinds,
-  resourcesFromBundle,
   saveResource,
   searchResources,
-  type BundledResource,
   type Resource,
 } from '../lib/resources'
 import { Attachments } from './Attachments'
@@ -164,69 +162,6 @@ function ResourceEditor({
   )
 }
 
-function BundleImport({
-  library,
-  onSave,
-  onClose,
-}: {
-  library: Library
-  onSave: (l: Library) => boolean
-  onClose: () => void
-}) {
-  const [entries, setEntries] = useState<BundledResource[] | null>(null)
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  async function load() {
-    setLoading(true)
-    setError('')
-    try {
-      const res = await fetch('/data/retuned-resources.json')
-      if (!res.ok) throw new Error('not available')
-      setEntries((await res.json()) as BundledResource[])
-    } catch {
-      setError('The list could not be loaded. Try again in a moment.')
-    }
-    setLoading(false)
-  }
-  const plan = entries ? resourcesFromBundle(entries, library) : null
-  return (
-    <Modal title="Add the Retuned Hymn Movement list" onClose={onClose} wide>
-      <p>
-        Your workbook of artists, albums, articles and books about the retuned hymn movement, with
-        the links it had. Adding it does not change anything you have entered yourself.
-      </p>
-      {!entries && (
-        <button className="primary" disabled={loading} onClick={() => void load()}>
-          {loading ? 'Loading…' : 'Look at the list'}
-        </button>
-      )}
-      {error && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
-      {plan && (
-        <section className="import-review">
-          <p>
-            {plan.resources.length} to add; {plan.skipped} already in your catalog.
-          </p>
-          <button
-            className="primary"
-            disabled={!plan.resources.length}
-            onClick={() => {
-              if (onSave({ ...library, resources: [...library.resources, ...plan.resources] }))
-                onClose()
-              else setError('Could not save.')
-            }}
-          >
-            Add {plan.resources.length} resources
-          </button>
-        </section>
-      )}
-    </Modal>
-  )
-}
-
 export function Resources({
   library,
   onSave,
@@ -239,7 +174,6 @@ export function Resources({
   const [tag, setTag] = useState('')
   const [openId, setOpenId] = useState('')
   const [editing, setEditing] = useState<Resource | null>(null)
-  const [bundle, setBundle] = useState(false)
   const [confirm, setConfirm] = useState(false)
   const [limit, setLimit] = useState(60)
   const items = library.resources
@@ -331,9 +265,6 @@ export function Resources({
               <button className="primary" onClick={() => setEditing(blankResource())}>
                 <Plus size={16} /> Add resource
               </button>
-              <button onClick={() => setBundle(true)}>
-                <Download size={16} /> Retuned Hymn Movement list
-              </button>
             </div>
           </header>
           <div className="search-bar">
@@ -421,9 +352,6 @@ export function Resources({
             return false
           }}
         />
-      )}
-      {bundle && (
-        <BundleImport library={library} onSave={onSave} onClose={() => setBundle(false)} />
       )}
     </section>
   )

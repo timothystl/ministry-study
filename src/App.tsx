@@ -40,6 +40,7 @@ import {
   type Library,
 } from './lib/model'
 import { downloadJson, loadLibrary, STORAGE_KEY } from './lib/storage'
+import { useBundled } from './lib/useBundled'
 import { useSync } from './lib/useSync'
 import { SyncBanner } from './components/SyncBanner'
 import { BookCards, BookDetail } from './components/BookViews'
@@ -164,6 +165,7 @@ export default function App() {
     return true
   }, [])
   const sync = useSync(library, adoptShared)
+  useBundled(library, commit, sync.status === 'synced')
   function navigate(next: Page) {
     setPage(next)
     setDetailId('')

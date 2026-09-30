@@ -6,6 +6,8 @@ function sharedServer() {
   const rows = new Map<string, { kind: string; id: string; data: string }>()
   const saved = () => rows.size
   const attach = async (context: BrowserContext) => {
+    // This test is about books; the hymnbook lists are covered in bundled.spec.ts.
+    await context.addInitScript(() => localStorage.setItem('ministry-study.bundled.v1', '1'))
     await context.route('**/api/library', (route) =>
       route.fulfill({ json: { revision, records: [...rows.values()] } }),
     )

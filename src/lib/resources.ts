@@ -143,6 +143,7 @@ export function resourcesFromBundle(
     }
     resources.push({
       ...blankResource(e.kind),
+      id: `retuned-${e.id}`,
       title: e.title,
       creator: e.creator,
       year: e.year,
