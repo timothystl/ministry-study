@@ -221,6 +221,13 @@ export function BibleStudy() {
           reload={reload}
         />
       ))}
+      {[...new Set(all.filter((v) => ids.includes(v.id) && v.credit).map((v) => v.credit))].map(
+        (c) => (
+          <p key={c} className="muted bible-note">
+            {c}
+          </p>
+        ),
+      )}
       {ids.includes('esv') && <p className="muted bible-note">{ESV_COPYRIGHT}</p>}
       {ids.includes('net') && <p className="muted bible-note">{NET_COPYRIGHT}</p>}
       {ids.some((id) => id.startsWith('yvp:')) && <p className="muted bible-note">{YVP_NOTICE}</p>}
