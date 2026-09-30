@@ -65,7 +65,7 @@ test('a new library can build the prayers right away, with the LCMS prayer and a
   await page.goto('/')
   await nav(page, 'Prayers')
   await page.getByRole('button', { name: 'Build the Prayers of the Church' }).click()
-  await page.getByRole('button', { name: 'Load starter biddings' }).click()
+  await page.getByRole('button', { name: 'Or load a small starter set' }).click()
   await page.getByRole('button', { name: 'Choose the first bidding in every category' }).click()
   await page.getByLabel('Names of the sick').fill('Ann')
   await page.route('**/api/lcms-prayer*', (route) =>
@@ -97,4 +97,24 @@ test('a new library can build the prayers right away, with the LCMS prayer and a
   )
   await expect(page.getByRole('button', { name: 'Email these prayers' })).toBeVisible()
   await expect(page.getByRole('button', { name: /Print or save as PDF/ })).toBeVisible()
+})
+
+test("Load Timothy's prayers fills the library and the builder", async ({ page }) => {
+  await page.goto('/')
+  await nav(page, 'Prayers')
+  await page.getByRole('button', { name: 'Load Timothy’s prayers' }).first().click()
+  await expect(page.getByText('Added 103 prayers.')).toBeVisible()
+  await expect(page.getByText('103 prayers · 0 saved services')).toBeVisible()
+  await page.getByLabel('Search prayers').fill('waiting rooms')
+  await expect(page.getByText('Option F — Father of compassion')).toBeVisible()
+  await page.getByLabel('Search prayers').fill('')
+
+  await page.getByRole('button', { name: 'Build the Prayers of the Church' }).click()
+  await page.getByLabel('Names of the sick').fill('Ann')
+  await page.locator('summary', { hasText: 'The Sick and Suffering' }).click()
+  await page.getByRole('checkbox', { name: /Option A — Healer of bodies/ }).check()
+  await page.getByLabel('Start from a sermon theme').selectOption({ label: 'Grace' })
+  const preview = page.getByLabel('Prayers of the Church preview')
+  await expect(preview).toContainText('We name Ann who carry burdens')
+  await expect(preview).toContainText('SERMON-TIED PETITION\nGod of grace')
 })
