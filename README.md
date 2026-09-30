@@ -220,7 +220,8 @@ Choose from:
   printed editions' apparatus. To rebuild them, check out LogosBible/SBLGNT and
   STEPBible/STEPBible-Data and run `node scripts/buildGreekTexts.mjs <SBLGNT> <STEPBible-Data>`.
   The NA28 and BHS as printed are copyrighted by the German Bible Society and are not included.
-- **English:** World English Bible, KJV, ASV, Young's Literal, Weymouth, Douay–Rheims and Tyndale
+- **English:** the **Lexham English Bible** (LEB, free to use with credit, with its translators' footnotes: a small number beside the text opens each note; shipped with the site, rebuilt
+  with `node scripts/buildLebText.mjs <checkout of BibleCorps/ENG-B-LEB2012-cc-USFM>`), World English Bible, KJV, ASV, Young's Literal, Weymouth, Douay–Rheims and Tyndale
   (getBible); the **ESV** (Crossway); and the **NET Bible** (bible.org's free service).
 - **YouVersion:** every Bible your YouVersion Platform key has been licensed for appears in its own
   "YouVersion" group, found when the page opens, so a translation added on the YouVersion side

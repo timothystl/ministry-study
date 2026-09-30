@@ -18,13 +18,15 @@ export interface Version {
   license: string
   // Read through this site's own server (it holds the key), not from getBible.
   viaServer?: boolean
-  // Shipped with the site as files under /data/greek, one per book.
-  bundled?: boolean
+  // Shipped with the site: the folder under /data holding one file per book.
+  bundled?: string
   // Words to show under the page when this version is on screen.
   credit?: string
 }
 const SBLGNT_CREDIT =
   'SBL Greek New Testament: Michael W. Holmes, ed., The Greek New Testament: SBL Edition (Society of Biblical Literature and Logos Bible Software, 2010), CC BY 4.0.'
+const LEB_CREDIT =
+  'Scripture quotations marked (LEB) are from the Lexham English Bible. Copyright 2012 Logos Bible Software. Lexham is a registered trademark of Logos Bible Software.'
 const STEP_CREDIT =
   'Data created by www.STEPBible.org based on work at Tyndale House, Cambridge (CC BY 4.0).'
 export const versions: Version[] = [
@@ -53,7 +55,7 @@ export const versions: Version[] = [
     language: 'Greek',
     covers: ['NT'],
     license: 'CC BY 4.0',
-    bundled: true,
+    bundled: 'greek/sblgnt',
     credit: SBLGNT_CREDIT,
   },
   {
@@ -63,7 +65,7 @@ export const versions: Version[] = [
     language: 'Greek',
     covers: ['NT'],
     license: 'CC BY 4.0',
-    bundled: true,
+    bundled: 'greek/thgnt',
     credit: STEP_CREDIT,
   },
   {
@@ -73,7 +75,7 @@ export const versions: Version[] = [
     language: 'Greek',
     covers: ['NT'],
     license: 'CC BY 4.0',
-    bundled: true,
+    bundled: 'greek/na28',
     credit: `${STEP_CREDIT} The NA28 column is the words STEPBible marks as NA28, without the printed edition’s apparatus.`,
   },
   {
@@ -107,6 +109,16 @@ export const versions: Version[] = [
     language: 'Greek',
     covers: ['OT'],
     license: 'Free for non-commercial use',
+  },
+  {
+    id: 'leb',
+    name: 'Lexham English Bible',
+    short: 'LEB',
+    language: 'English',
+    covers: ['OT', 'NT'],
+    license: 'Free to use with credit',
+    bundled: 'english/leb',
+    credit: LEB_CREDIT,
   },
   {
     id: 'esv',
@@ -197,7 +209,9 @@ export const defaultVersionIds = (testament: Testament) =>
 
 export interface Verse {
   verse: number
+  // Where the text has a marker ⟦1⟧, ⟦2⟧ …, the translators' footnote with that number.
   text: string
+  notes?: string[]
 }
 export interface Passage {
   book: string
@@ -285,22 +299,29 @@ export async function loadYvpVersions(): Promise<Version[]> {
     return []
   }
 }
-const books = new Map<string, Promise<Record<string, Record<string, string>>>>()
-async function loadBundled(id: string, book: string, chapter: number): Promise<Verse[]> {
-  const url = `/data/greek/${id}/${bookNumber(book)}.json`
+type BookFile = Record<string, Record<string, string>> & {
+  _notes?: Record<string, string[]>
+}
+const books = new Map<string, Promise<BookFile>>()
+async function loadBundled(folder: string, book: string, chapter: number): Promise<Verse[]> {
+  const url = `/data/${folder}/${bookNumber(book)}.json`
   let found = books.get(url)
   if (!found) {
     found = (async () => {
       const response = await fetch(url, { headers: { Accept: 'application/json' } })
       if (!(response.headers.get('Content-Type') || '').includes('json')) return {}
-      return (await response.json()) as Record<string, Record<string, string>>
+      return (await response.json()) as BookFile
     })()
     books.set(url, found)
     found.catch(() => books.delete(url))
   }
-  const verses = (await found)[String(chapter)] ?? {}
+  const file = await found
+  const verses = file[String(chapter)] ?? {}
   return Object.entries(verses)
-    .map(([verse, text]) => ({ verse: Number(verse), text }))
+    .map(([verse, text]) => {
+      const notes = file._notes?.[`${chapter}:${verse}`]
+      return { verse: Number(verse), text, ...(notes ? { notes } : {}) }
+    })
     .sort((a, b) => a.verse - b.verse)
 }
 export function loadChapter(id: string, book: string, chapter: number): Promise<Verse[]> {
@@ -308,7 +329,8 @@ export function loadChapter(id: string, book: string, chapter: number): Promise<
   let found = cache.get(key)
   if (!found) {
     found = (async () => {
-      if (versions.find((v) => v.id === id)?.bundled) return loadBundled(id, book, chapter)
+      const folder = versions.find((v) => v.id === id)?.bundled
+      if (folder) return loadBundled(folder, book, chapter)
       const served = loadViaServer(id, book, chapter)
       if (served) return served
       const response = await fetch(address(id, book, chapter), {
