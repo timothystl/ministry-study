@@ -124,5 +124,41 @@ Cardiphonia's blog is reachable (archive); its Retuned Hymnal database (retunedh
 cardiphonia.org were not reachable from the build environment, so hymns from there are added by
 link or by attaching downloaded lead sheets.
 
+## Latest update: music resources
+Music Resources page with the Retuned Hymn Movement workbook (artists, albums, articles, books;
+the "zac articles" sheet of bare titles was left out). Ideas: link a resource to the hymns found
+on it; an "album to hymns" import when a track list is available.
+The RUF Hymnbook and Retuned Hymn Movement lists are added on their own the first time the shared
+library loads, or at first start on a device with no shared library (fixed ids `ruf-…` / `retuned-…`, a per-device "done" flag, and each list is skipped
+if any of its records exist), so there are no import buttons.
+
 ## Latest update: people and permissions
 A second (and further) person can now use the study with a private library of their own; Andrew stays administrator and switches parts on or off per person on People (README → People and permissions). **Before deploying, set `STUDY_ADMIN_EMAIL` in Cloudflare (Settings → Variables) to Andrew's sign-in address, or the API refuses everyone.** To let someone in: add them on People and add their email to the Access policy. The first request after deploy migrates existing rows to the pastor's library. Ideas for later: an option to copy a resource between libraries, and per-person backups.
+
+## Latest update: liturgies held whole
+Liturgies are complete services and settings with per-part words, files and music; whole-service
+view, copy as text, print, and "start a new service from this". Next idea: build a liturgy from an
+existing PowerPoint (one slide per part) or Word file, reading the text from it.
+
+## Latest update: illustrations & ideas
+New page over the notes records (kinds Illustration, Idea, Quote, Story, Fact, Scrap): one-line quick add,
+photograph a handwritten scrap, source, Personal marker, use history and a used/unused filter. Its own
+part on People. Next: the Visual Collector (images with license and CVLI/reference-only markers, clips
+as links with start/end and notes); see docs/collectors-scope.md.
+
+## Latest update: bulk-storing files
+Attach files can store the files themselves (8 MB cap each, D1). Whole hymnal scans and large
+recordings do not fit; for those, or if uploads slow down on the Workers free plan, move file bytes
+to R2 (create a bucket, then add an `r2_buckets` binding; do not declare it before the bucket
+exists or deploys fail).
+
+## Latest update: original sermon files
+Sermons keep their original Word/PDF files as attachments, stored during Manuscripts import (skips
+files already stored by name and size). Same 8 MB D1 limit as hymns.
+
+## Latest update: illustrations, storage readout, images & clips
+Illustrations & Ideas (quick add, photograph a scrap, sources incl. user-added sites, use history), Library Data → Check storage
+(`GET /api/usage`), reference photos kept to about 1 MB, and Images & Clips (record kind `visual`, part `visuals`): links with
+licenses, YouTube/Vimeo player with start/end, credit line, sermon-page panel. Cloudflare account has Workers Paid, R2 Paid and
+Images/Stream: next steps are uploading clips (Stream, private with signed URLs) and moving photos to R2. Film scenes stay as
+links with timestamps; do not copy streaming video.

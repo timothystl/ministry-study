@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react'
-import { Copy, Music, Plus, Search, Upload } from 'lucide-react'
+import { Copy, Plus, Search, Upload } from 'lucide-react'
 import {
   allUsage,
   applyFilePlan,
@@ -7,7 +7,6 @@ import {
   deleteHymn,
   fileKinds,
   hymnarySearchUrl,
-  hymnsFromRuf,
   isWebLocation,
   liturgiesForHymn,
   mergeHymns,
@@ -19,10 +18,19 @@ import {
   MAX_HYMN_TEXT,
   type FilePlan,
   type Hymn,
-  type RufEntry,
 } from '../lib/hymns'
 import type { Library } from '../lib/model'
-import { removeFile } from '../lib/attachments'
+import {
+  attachmentRefs,
+  attachmentType,
+  MAX_ATTACHMENT,
+  prepareFile,
+  removeFile,
+  removeUnused,
+  sizeLabel,
+  uploadFile,
+  type Attachment,
+} from '../lib/attachments'
 import { Attachments } from './Attachments'
 import { Modal } from './Modal'
 
@@ -246,69 +254,6 @@ export function HymnEditor({
   )
 }
 
-function RufImport({
-  library,
-  onSave,
-  onClose,
-}: {
-  library: Library
-  onSave: (l: Library) => boolean
-  onClose: () => void
-}) {
-  const [entries, setEntries] = useState<RufEntry[] | null>(null)
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  async function load() {
-    setLoading(true)
-    setError('')
-    try {
-      const res = await fetch('/data/ruf-hymnbook.json')
-      if (!res.ok) throw new Error('not available')
-      setEntries((await res.json()) as RufEntry[])
-    } catch {
-      setError('The hymnbook index could not be loaded. Try again in a moment.')
-    }
-    setLoading(false)
-  }
-  const plan = entries ? hymnsFromRuf(entries, library) : null
-  return (
-    <Modal title="Add the RUF Hymnbook" onClose={onClose} wide>
-      <p>
-        The RUF Hymnbook (igracemusic.com) has about 175 hymns with lead sheets, overhead lyrics,
-        chord charts and demo recordings. This adds each hymn with its lyricist, composer and links
-        to those pages. The songs themselves stay on their site, and nothing is copied.
-      </p>
-      {!entries && (
-        <button className="primary" disabled={loading} onClick={() => void load()}>
-          {loading ? 'Loading…' : 'Look at the list'}
-        </button>
-      )}
-      {error && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
-      {plan && (
-        <section className="import-review">
-          <p>
-            {plan.hymns.length} to add; {plan.skipped} already in your catalog.
-          </p>
-          <button
-            className="primary"
-            disabled={!plan.hymns.length}
-            onClick={() => {
-              if (onSave({ ...library, hymns: [...library.hymns, ...plan.hymns] })) onClose()
-              else setError('Could not save.')
-            }}
-          >
-            Add {plan.hymns.length} hymns
-          </button>
-        </section>
-      )}
-    </Modal>
-  )
-}
-
 function ListImport({
   library,
   onSave,
@@ -409,22 +354,82 @@ export function FilesImport({
   onClose: () => void
 }) {
   const [plan, setPlan] = useState<FilePlan | null>(null)
+  const [picked, setPicked] = useState<Map<string, File>>(new Map())
+  const [store, setStore] = useState(true)
+  const [busy, setBusy] = useState('')
+  const [problems, setProblems] = useState<string[]>([])
   const [error, setError] = useState('')
   function choose(list: FileList | null) {
     setError('')
-    const files = [...(list || [])]
-      .filter((f) => !f.name.startsWith('~$') && !f.name.startsWith('.'))
-      .map((f) => ({ name: f.name, path: f.webkitRelativePath || f.name }))
-    if (!files.length) return setError('No files were found in that selection.')
+    setProblems([])
+    const chosen = [...(list || [])].filter(
+      (f) => !f.name.startsWith('~$') && !f.name.startsWith('.'),
+    )
+    if (!chosen.length) return setError('No files were found in that selection.')
+    const files = chosen.map((f) => ({ name: f.name, path: f.webkitRelativePath || f.name }))
+    setPicked(new Map(chosen.map((f) => [f.webkitRelativePath || f.name, f])))
     setPlan(planFiles(library, files))
   }
+  const planned = plan
+    ? [...plan.attach.flatMap((a) => a.files), ...plan.create.flatMap((c) => c.files)]
+    : []
   const count = plan ? plan.attach.reduce((n, a) => n + a.files.length, 0) : 0
+  const storable = planned.filter((f) => {
+    const file = picked.get(f.location)
+    return file && attachmentType(file) && file.size <= MAX_ATTACHMENT
+  })
+  async function save() {
+    if (!plan) return
+    setError('')
+    setProblems([])
+    const uploaded = new Map<string, Attachment>()
+    const failed: string[] = []
+    if (store) {
+      let next = 0
+      let done = 0
+      const worker = async () => {
+        while (next < storable.length) {
+          const item = storable[next++]
+          const file = picked.get(item.location)!
+          try {
+            const { blob, mime, name } = await prepareFile(file)
+            const id = crypto.randomUUID()
+            const problem = await uploadFile(id, blob, mime, name)
+            if (problem) failed.push(`${file.name}: ${problem}`)
+            else
+              uploaded.set(item.location, {
+                id,
+                name,
+                mime,
+                size: blob.size,
+                addedAt: new Date().toISOString(),
+              })
+          } catch (e) {
+            failed.push((e as Error).message)
+          }
+          done++
+          setBusy(`Storing files… ${done} of ${storable.length}`)
+        }
+      }
+      setBusy(`Storing files… 0 of ${storable.length}`)
+      await Promise.all([worker(), worker(), worker()])
+    }
+    setBusy('')
+    if (!onSave(applyFilePlan(library, plan, uploaded))) {
+      await Promise.all([...uploaded.values()].map((a) => removeFile(a.id)))
+      return setError('Could not save. Nothing was changed.')
+    }
+    if (failed.length) {
+      setProblems(failed)
+      setPlan(null)
+    } else onClose()
+  }
   return (
     <Modal title="Attach files from a folder" onClose={onClose} wide>
       <p>
         Choose the folder of Finale files, sheet music or slides. Each file is matched to a hymn by
         its name (a leading number is ignored). Files that match no hymn become new hymns so none is
-        lost. Only the names and folders are recorded; your files are not uploaded or changed.
+        lost. Your originals are not changed.
       </p>
       <div className="scan-typed">
         <label className="file-label">
@@ -435,6 +440,7 @@ export function FilesImport({
             // @ts-expect-error webkitdirectory is supported by every current browser
             webkitdirectory=""
             multiple
+            disabled={Boolean(busy)}
             onChange={(e) => {
               choose(e.target.files)
               e.target.value = ''
@@ -447,6 +453,7 @@ export function FilesImport({
             aria-label="Choose hymn files"
             type="file"
             multiple
+            disabled={Boolean(busy)}
             onChange={(e) => {
               choose(e.target.files)
               e.target.value = ''
@@ -459,12 +466,36 @@ export function FilesImport({
           {error}
         </p>
       )}
+      {problems.length > 0 && (
+        <section className="import-review" role="status">
+          <p>
+            Saved. {problems.length} {problems.length === 1 ? 'file was' : 'files were'} not stored;
+            their locations are recorded instead.
+          </p>
+          <ul>
+            {problems.slice(0, 30).map((p) => (
+              <li key={p}>{p}</li>
+            ))}
+          </ul>
+        </section>
+      )}
       {plan && (
         <section className="import-review" aria-label="File matches">
           <p>
             {count} files to attach to {plan.attach.length} hymns; {plan.create.length} new hymns
             from unmatched files{plan.already ? `; ${plan.already} already recorded` : ''}.
           </p>
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={store}
+              disabled={Boolean(busy)}
+              onChange={(e) => setStore(e.target.checked)}
+            />
+            Store the files themselves in the app ({storable.length} of {planned.length} can be:
+            photos, PDFs, music, slide and Finale files up to {sizeLabel(MAX_ATTACHMENT)}). The rest
+            are recorded by location.
+          </label>
           <ul className="sermon-preview">
             {plan.attach.slice(0, 60).map((a) => (
               <li key={a.hymnId}>
@@ -483,13 +514,11 @@ export function FilesImport({
               </li>
             ))}
           </ul>
+          {busy && <p role="status">{busy}</p>}
           <button
             className="primary"
-            disabled={!count && !plan.create.length}
-            onClick={() => {
-              if (onSave(applyFilePlan(library, plan))) onClose()
-              else setError('Could not save.')
-            }}
+            disabled={(!count && !plan.create.length) || Boolean(busy)}
+            onClick={() => void save()}
           >
             Save these
           </button>
@@ -516,7 +545,7 @@ export function Hymns({
   const [usage, setUsage] = useState('')
   const [hasFiles, setHasFiles] = useState(false)
   const [editing, setEditing] = useState<Hymn | null>(null)
-  const [modal, setModal] = useState<'ruf' | 'list' | 'files' | null>(null)
+  const [modal, setModal] = useState<'list' | 'files' | null>(null)
   const [confirm, setConfirm] = useState(false)
   const [limit, setLimit] = useState(60)
   const hymns = library.hymns
@@ -526,6 +555,7 @@ export function Hymns({
     [hymns, query, usage, hasFiles],
   )
   const open = hymns.find((h) => h.id === openId)
+  const refs = useMemo(() => attachmentRefs(library), [library])
   const used = open ? liturgiesForHymn(library, open.id) : []
   return (
     <section className="sermons" aria-label="Hymns">
@@ -549,7 +579,7 @@ export function Hymns({
                 <button
                   onClick={() => {
                     if (onSave(deleteHymn(library, open.id))) {
-                      open.attachments.forEach((a) => void removeFile(a.id))
+                      removeUnused(library, open.attachments)
                       setOpenId('')
                     }
                   }}
@@ -602,6 +632,7 @@ export function Hymns({
             </ul>
           </section>
           <Attachments
+            refs={refs}
             attachments={open.attachments}
             onChange={(next) => onSave(saveHymn(library, { ...open, attachments: next }))}
           />
@@ -644,9 +675,6 @@ export function Hymns({
             <div className="sermon-actions">
               <button className="primary" onClick={() => setEditing(blankHymn())}>
                 <Plus size={16} /> Add hymn
-              </button>
-              <button onClick={() => setModal('ruf')}>
-                <Music size={16} /> RUF Hymnbook
               </button>
               <button onClick={() => setModal('list')}>
                 <Upload size={16} /> Import list
@@ -695,8 +723,7 @@ export function Hymns({
           {hymns.length === 0 ? (
             <div className="empty-state">
               <p>
-                No hymns yet. Add one, import a spreadsheet, add the RUF Hymnbook, or attach a
-                folder of Finale files.
+                No hymns yet. Add one, import a spreadsheet, or attach a folder of Finale files.
               </p>
             </div>
           ) : hits.length === 0 ? (
@@ -743,9 +770,6 @@ export function Hymns({
             return false
           }}
         />
-      )}
-      {modal === 'ruf' && (
-        <RufImport library={library} onSave={onSave} onClose={() => setModal(null)} />
       )}
       {modal === 'list' && (
         <ListImport library={library} onSave={onSave} onClose={() => setModal(null)} />

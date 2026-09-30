@@ -6,11 +6,21 @@ export const SECTIONS = [
   { key: 'sermons', label: 'Sermons', detail: 'Sermon catalog, manuscripts, review' },
   { key: 'prayers', label: 'Prayers', detail: 'Prayer library, builder, saved services' },
   { key: 'notes', label: 'Devotions & Notes', detail: 'Devotions and sermon notes' },
+  {
+    key: 'visuals',
+    label: 'Images & Clips',
+    detail: 'Collected images and video clips, with licenses',
+  },
+  {
+    key: 'ideas',
+    label: 'Illustrations & Ideas',
+    detail: 'Collected stories, quotes, ideas and photographed scraps',
+  },
   { key: 'children', label: 'Children’s Messages', detail: 'Pre-K and chapel messages' },
   {
     key: 'hymns',
     label: 'Hymns & Liturgies',
-    detail: 'Hymn catalog, liturgies, attached sheet music',
+    detail: 'Hymn catalog, liturgies, music resources, attached sheet music',
   },
 ] as const
 export type SectionKey = (typeof SECTIONS)[number]['key']
@@ -21,8 +31,10 @@ const KINDS: Record<SectionKey, string[]> = {
   sermons: ['sermon'],
   prayers: ['prayer', 'prayerset'],
   notes: ['note'],
+  ideas: ['note', 'ideasource'],
+  visuals: ['visual'],
   children: ['note'],
-  hymns: ['hymn', 'liturgy'],
+  hymns: ['hymn', 'liturgy', 'resource'],
 }
 export function cleanSections(input: unknown): SectionKey[] {
   if (!Array.isArray(input)) return []

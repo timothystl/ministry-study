@@ -21,6 +21,9 @@ import {
   ScanBarcode,
   HandHeart,
   Baby,
+  Lightbulb,
+  Clapperboard,
+  Disc3,
   Music,
   ScrollText,
   NotebookPen,
@@ -42,6 +45,7 @@ import {
 import { downloadJson, loadLibrary, storageKey } from './lib/storage'
 import { can, type Me, type SectionKey } from './lib/me'
 import { kindsFor } from '../worker/sections'
+import { useBundled } from './lib/useBundled'
 import { useSync } from './lib/useSync'
 import { SyncBanner } from './components/SyncBanner'
 import { BookCards, BookDetail } from './components/BookViews'
@@ -53,9 +57,11 @@ import { SermonCatalog } from './components/SermonCatalog'
 import { ScanBook } from './components/ScanBook'
 import { Prayers } from './components/Prayers'
 import { Notes } from './components/Notes'
+import { Visuals } from './components/Visuals'
 import { People } from './components/People'
 import { Hymns } from './components/Hymns'
 import { Liturgies } from './components/Liturgies'
+import { Resources } from './components/Resources'
 import { Dashboard, type QuickScope } from './components/Dashboard'
 import { ReadingTable, LoansTable } from './components/RecordsTable'
 import { Modal } from './components/Modal'
@@ -71,10 +77,13 @@ type Page =
   | 'Sermons'
   | 'Prayers'
   | 'Notes'
+  | 'Ideas'
+  | 'Visuals'
   | 'Children'
   | 'People'
   | 'Hymns'
   | 'Liturgies'
+  | 'Resources'
 type Browse = 'Topic' | 'Author' | 'Series' | 'Physical shelf'
 // Each page belongs to one part of the study; the pastor switches parts on or off for other people.
 const navigation = [
@@ -87,9 +96,12 @@ const navigation = [
   { name: 'Sermons', label: 'Sermons', icon: Mic, part: 'sermons' },
   { name: 'Prayers', label: 'Prayers', icon: HandHeart, part: 'prayers' },
   { name: 'Notes', label: 'Devotions & Notes', icon: NotebookPen, part: 'notes' },
+  { name: 'Ideas', label: 'Illustrations & Ideas', icon: Lightbulb, part: 'ideas' },
+  { name: 'Visuals', label: 'Images & Clips', icon: Clapperboard, part: 'visuals' },
   { name: 'Children', label: 'Children’s Messages', icon: Baby, part: 'children' },
   { name: 'Hymns', label: 'Hymns', icon: Music, part: 'hymns' },
   { name: 'Liturgies', label: 'Liturgies', icon: ScrollText, part: 'hymns' },
+  { name: 'Resources', label: 'Music Resources', icon: Disc3, part: 'hymns' },
 ] as const satisfies readonly { name: Page; label: string; icon: unknown; part: SectionKey }[]
 export default function App({ me }: { me: Me }) {
   const allowed = (part: SectionKey) => can(me, part)
@@ -171,6 +183,11 @@ export default function App({ me }: { me: Me }) {
     return true
   }, [])
   const sync = useSync(library, adoptShared, kinds)
+  useBundled(
+    library,
+    commit,
+    allowed('hymns') && (sync.status === 'synced' || sync.status === 'local'),
+  )
   function navigate(next: Page) {
     setPage(next)
     setDetailId('')
@@ -589,6 +606,12 @@ export default function App({ me }: { me: Me }) {
                 setPage('Hymns')
               }}
             />
+          ) : page === 'Resources' ? (
+            <Resources library={library} onSave={commit} />
+          ) : page === 'Visuals' ? (
+            <Visuals library={library} onSave={commit} />
+          ) : page === 'Ideas' ? (
+            <Notes library={library} onSave={commit} ideasPage />
           ) : page === 'Children' ? (
             <Notes library={library} onSave={commit} kidsPage />
           ) : detail ? (

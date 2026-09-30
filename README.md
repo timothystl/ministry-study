@@ -159,8 +159,7 @@ Funerals and weddings name real families, so they are private by default: their 
 
 ## Devotions & Notes
 
-A page for council and midweek devotions, sermon-preparation notes, illustrations, ideas and study
-notes. Each note has a kind, an optional passage and date, tags, and an optional link to a sermon.
+A page for council and midweek devotions, sermon-preparation notes and study notes. Each note has a kind, an optional passage and date, tags, and an optional link to a sermon.
 Search matches words, or a passage by chapter and verse. A sermon's page lists its linked notes and
 other notes on the same passage, with "Add a note" pre-linked to that sermon. "Import" turns a
 folder of text or Word files into notes (already-imported files are skipped; anything over 30,000
@@ -171,6 +170,40 @@ characters belongs in Sermons → Manuscripts). Notes sync to the shared library
 Add Book has "Scan the barcode to fill this in" (title, author, publisher, year, ISBN, cover and
 summary; you review before saving). An open book has "Scan barcode", which saves the ISBN. The
 author, publisher, year and subtitle from the scan replace what was recorded; the cover and summary are added only if the book has none. The camera can be replaced by typing the ISBN.
+
+## Illustrations & Ideas
+
+The collector: its own page for stories, quotes, illustrations, facts, half-ideas and photographed
+scraps. Built for capture first: type an idea in one line and press Enter, or use "Photograph a
+scrap" for handwritten notes and index cards (sort them later). Each item can record where it came
+from (a book and page, a link, a person), be marked Personal (about real people), and carry photos.
+"Mark as used" keeps a history of where it was used, and the Use filter shows what is still unused.
+Search reads the words, the source, the use history and passages by chapter and verse. It uses the
+same records as Devotions & Notes, so it syncs and backs up with them; earlier notes of the
+Illustration and Idea kinds appear here instead. It is its own part on People. **Look elsewhere** opens a search of TextWeek, The Salt Project, RW360, Cardiphonia, Working Preacher, Christian Century or
+Sojourners (limited to that site, for whatever is in the search box, such as a passage) in a new tab. "Add a site" adds your own
+(kept in the shared library; remove it with the bin). **Take a photo** opens the phone's camera and saves the picture as a Scrap at
+once; add a caption afterward. **Paste links** (or paste one link into the quick-add line) saves each
+link as an item titled from the link, with an optional note after a "|"; only the link and your note are kept, not the page's
+text. Photos here are for reference, so they are made small (about 1 MB at most, 1,400 pixels on the long side); when a better
+image exists, link it under "Where it came from" instead of storing it. Planned next: the
+Visual Collector (images and clip links), see docs/collectors-scope.md.
+
+**Storage used** (Library Data → Check storage) shows what the shared library holds: documents, images, video and
+music/audio files with sizes, the text of the catalog and manuscripts, and the ten biggest files with the record each belongs
+to, so it is clear where to cut back. It counts the signed-in person's own library only.
+
+## Images & Clips
+
+Its own page for images and video clips kept for reference. Each item records a link (the better copy lives there; the study
+keeps at most a small reference photo), who made it, its **license** (Public domain, Creative Commons, CVLI, Own work,
+Reference only, or Unknown) with a ready-to-paste credit line, its passage, tags, and what it is for (sermon slide, bulletin,
+chapel, Pre-K, website, worship background). Reference-only and Unknown items are marked "Not cleared for display". A clip also
+records its start and end, what happens, and a content note. A **YouTube or Vimeo** clip plays in place from its own site (nothing
+loads from there until you press play) and opens at its start time. Paste a link into the quick-add line to start a record;
+"Look elsewhere" opens searches of Wikimedia Commons, The Met, National Gallery of Art, Library of Congress, Unsplash, Pexels and
+YouTube. A sermon's page lists the images and clips on its passage. Uploading clips to Cloudflare R2/Stream is not built yet.
+It is its own part on People and its records sync like the others.
 
 ## Children's Messages
 
@@ -187,22 +220,52 @@ copyright, and any words you type in (keep only public-domain words or ones you 
 records where the music is: Finale files, sheet music, slides, recordings (a web address, or a
 path in your files) and links to where it is found online. Every hymn has a link that searches
 Hymnary.org (Hymnary blocks automated lookups, so it opens in its own tab).
-
-- **RUF Hymnbook** adds the ~175 hymns of igracemusic.com/hymnbook with their credits and links to
-  the lead sheet, overhead lyrics, chord chart and demo. Only titles, credits and links are kept.
+- **RUF Hymnbook**: the ~175 hymns of igracemusic.com/hymnbook are added automatically, once, with
+  their credits and links to the lead sheet, overhead lyrics, chord chart and demo. Only titles,
+  credits and links are kept.
 - **Import list** reads a spreadsheet saved as CSV (Title, First line, Tune, Composer, Lyricist,
   Meter, Scripture, Year, Key, Hymnal, Usage, Themes, Finale, Sheet music, Slides, Link).
-- **Attach files** matches a folder of files (Finale, PDF, PowerPoint, audio) to hymns by name and
-  records where each one is. Files that match nothing become new hymns. Nothing is uploaded.
+- **Attach files** matches a folder of files (Finale, PDF, PowerPoint, audio) to hymns by name.
+  With "Store the files themselves" on (the default) each file under 8 MB is uploaded and attached
+  to its hymn; larger files, and any you turn it off for, are recorded by location. Files that
+  match nothing become new hymns.
 
-**Liturgies** keep a service together: the hymns, readings, prayers and liturgy texts in order,
-plus the slides (PowerPoint) or order of service. A hymn's page lists the liturgies that use it.
-Both sync to the shared library and are included in backups.
+**Liturgies** are held as one whole: every part in order, each with its own words, files and music.
+- A **Setting** is a complete rite kept to use again (Divine Service, Matins, Evening Prayer); a
+  Sunday service, season or occasion is one used on a day. "Start a new service from this" copies a
+  liturgy with every part, its words, hymns, files and music, and leaves the date blank.
+- Each **part** (hymn, reading, prayer, liturgy text, music, rubric, note) has a name, its words in
+  full, files (Finale, slides) and photos or PDFs of its music. The whole service can also have
+  slides, an order of service and photos or PDFs.
+- The liturgy page shows the **whole service** as one continuous page, with each part's words and
+  music together and a hymn's own attached music. "Copy the whole service as text" puts it all on
+  the clipboard, and "Print" prints just the service.
+- Photos and PDFs stay in the shared library once, however many liturgies use them; a file is
+  deleted only when the last record using it is removed.
+A hymn's page lists the liturgies that use it. Everything syncs and is included in backups.
 
 ### Photos and PDFs on a hymn
 
 Open a hymn and choose "Attach photos or PDFs" (or "Take a photo" on a phone) to keep sheet music,
-a scanned hymnal page or a lead sheet with it. Photos over 1 MB are shrunk in the browser; a PDF can
-be up to 6 MB. Files are stored in the shared library's database, so they need the shared library
+a scanned hymnal page or a lead sheet with it. Photos over 1.5 MB are shrunk in the browser. PDFs,
+Finale (.musx, .mus), PowerPoint, Word and audio files can be attached too, up to 8 MB each. Files are stored in the shared library's database, so they need the shared library
 (they are not in the JSON backup download; Cloudflare's own database backups cover them). Only
-photos and PDFs are accepted, and the file's contents are checked, not just its name.
+those kinds are accepted, and the file's contents are checked, not just its name. Finale and
+PowerPoint files are kept as downloads.
+
+## Music Resources
+A page for the artists, albums, articles, books, songbooks and websites where hymns and songs are
+found. Each has a kind, creator, year, place, link, tags and notes, plus copies kept in your own
+files and photos or PDFs attached to it. The 466 artists, albums, articles and books from your
+Retuned Hymn Movement workbook are added automatically, once, with their links (anything you
+enter yourself is untouched, and anything you remove stays removed). "Add resource" is for anything new you start using, such as an
+album you downloaded or a songbook you bought. Search covers every field; filter by kind or tag.
+
+### Storing the original sermon files
+Sermons → Manuscripts now also stores the original files. Choose the folder of Word files as before;
+each file is matched to its sermon, its text is saved for search, and (with "Also store the original
+files" on, the default) the file itself is stored and attached to the sermon, where it appears under
+"Sermon files". Running it again skips files already stored with the same name and size, and a
+changed file replaces its older copy. A sermon's page also has "Attach photos or files" for adding
+one by hand. Files up to 8 MB (Word, PDF, text, photos); funeral and wedding sermons are kept out of
+search as before, but their original files are stored like the rest.

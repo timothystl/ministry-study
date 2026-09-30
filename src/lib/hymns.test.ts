@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   applyFilePlan,
+  copyLiturgy,
+  liturgyToText,
   blankHymn,
   blankItem,
   blankLiturgy,
@@ -21,6 +23,7 @@ import {
   type Hymn,
   type RufEntry,
 } from './hymns'
+import { attachmentRefs } from './attachments'
 import type { Library } from './model'
 import rufIndex from '../../public/data/ruf-hymnbook.json?raw'
 
@@ -35,6 +38,9 @@ const empty = (): Library => ({
   notes: [],
   hymns: [],
   liturgies: [],
+  resources: [],
+  ideaSources: [],
+  visuals: [],
   sample: false,
 })
 const hymn = (over: Partial<Hymn>): Hymn => ({ ...blankHymn(), title: 'Untitled', ...over })
@@ -139,6 +145,7 @@ describe('imports', () => {
     expect(fortress.links.map((l) => l.label)).toContain('Lead sheet')
     expect(hymnsFromRuf(entries, { ...empty(), hymns }).skipped).toBe(entries.length)
     expect(hymns.every((h) => h.text === '')).toBe(true)
+    expect(hymns[0].id).toBe(`ruf-${entries[0].id}`) // fixed ids: two devices cannot duplicate them
   })
 })
 
@@ -177,5 +184,64 @@ describe('liturgies', () => {
     const saved = saveLiturgy(lib, { ...blankLiturgy(), title: 'S', items: [item('h1', '')] })
     const after = deleteHymn(saved, 'h1')
     expect(after.liturgies[0].items[0]).toMatchObject({ hymnId: '', label: 'Abide With Me' })
+  })
+})
+
+describe('a liturgy held whole', () => {
+  const setup = () => {
+    let lib = saveHymn(
+      empty(),
+      hymn({ id: 'h1', title: 'Abide With Me', composer: 'W. H. Monk', hymnal: 'LSB 878' }),
+    )
+    const kyrie = {
+      ...blankItem('Liturgy text'),
+      label: 'Kyrie',
+      text: 'In peace let us pray to the Lord.\nLord, have mercy.',
+      files: [{ kind: 'Finale' as const, location: 'Music/kyrie.musx' }],
+      attachments: [
+        { id: 'att-kyrie-1', name: 'kyrie.png', mime: 'image/png', size: 10, addedAt: '' },
+      ],
+    }
+    const opening = { ...blankItem('Hymn'), label: 'Opening hymn', hymnId: 'h1' }
+    lib = saveLiturgy(lib, {
+      ...blankLiturgy(),
+      id: 'set1',
+      title: 'Divine Service, Setting 3',
+      kind: 'Setting',
+      items: [opening, kyrie],
+    })
+    return lib
+  }
+  it('reads as one text with every part in order', () => {
+    const lib = setup()
+    const text = liturgyToText(lib, lib.liturgies[0])
+    expect(text.split('\n')[0]).toBe('DIVINE SERVICE, SETTING 3')
+    expect(text.indexOf('OPENING HYMN')).toBeLessThan(text.indexOf('KYRIE'))
+    expect(text).toContain('Abide With Me (LSB 878)')
+    expect(text).toContain('Music: W. H. Monk')
+    expect(text).toContain('Lord, have mercy.')
+  })
+  it('starts a new service from a setting, keeping every part and its music', () => {
+    const lib = setup()
+    const made = copyLiturgy(lib, 'set1')!
+    const copy = made.liturgy
+    expect(copy).toMatchObject({
+      title: 'Divine Service, Setting 3 (copy)',
+      kind: 'Sunday service',
+      date: '',
+    })
+    expect(copy.items.map((i) => i.label)).toEqual(['Opening hymn', 'Kyrie'])
+    expect(copy.items[0].hymnId).toBe('h1')
+    expect(copy.items[1].files).toHaveLength(1)
+    expect(copy.items[1].attachments[0].id).toBe('att-kyrie-1')
+    // its parts are its own: new ids, so editing one does not touch the original
+    expect(copy.id).not.toBe('set1')
+    expect(copy.items[1].id).not.toBe(lib.liturgies[0].items[1].id)
+    expect(made.library.liturgies).toHaveLength(2)
+    expect(copyLiturgy(lib, 'missing')).toBeNull()
+  })
+  it('counts how many records use each stored file, so shared music is not deleted', () => {
+    const lib = copyLiturgy(setup(), 'set1')!.library
+    expect(attachmentRefs(lib).get('att-kyrie-1')).toBe(2)
   })
 })

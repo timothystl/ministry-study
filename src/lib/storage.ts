@@ -10,6 +10,8 @@ import {
 } from './model'
 import { fileKinds, itemKinds, liturgyKinds } from './hymns'
 import { noteKinds } from './notes'
+import { licenses, visualKinds } from './visuals'
+import { resourceKinds } from './resources'
 import { prayerTypes } from './prayers'
 import { sampleLibrary } from './seed'
 const location = z.object({
@@ -75,6 +77,14 @@ const book = z.object({
   sourceMetadata: z.record(z.string(), z.string()).optional(),
   updatedAt: z.string(),
 })
+const attachmentSchema = z.object({
+  id: z.string().min(8),
+  name: z.string(),
+  mime: z.string(),
+  size: z.number(),
+  addedAt: z.string(),
+})
+const attachment = attachmentSchema
 const sermon = z.object({
   id: z.string().min(1),
   title: z.string().trim().min(1),
@@ -104,6 +114,7 @@ const sermon = z.object({
   closing: z.string().default(''),
   reviewNote: z.string().default(''),
   formerTitles: z.array(z.string()).default([]),
+  attachments: z.array(attachment).default([]),
   source: z.string(),
   updatedAt: z.string(),
 })
@@ -146,6 +157,35 @@ const note = z.object({
   sermonId: z.string(),
   tags: z.array(z.string()),
   source: z.string(),
+  attachments: z.array(attachmentSchema).default([]),
+  uses: z.array(z.string()).default([]),
+  personal: z.boolean().default(false),
+  updatedAt: z.string(),
+})
+const ideaSource = z.object({
+  id: z.string().min(1),
+  name: z.string().trim().min(1),
+  site: z.string().trim().min(3),
+})
+const visual = z.object({
+  id: z.string().min(1),
+  title: z.string(),
+  kind: z.enum(visualKinds),
+  link: z.string(),
+  creator: z.string(),
+  license: z.enum(licenses),
+  credit: z.string(),
+  scripture: z.string(),
+  tags: z.array(z.string()),
+  useFor: z.array(z.string()),
+  notes: z.string(),
+  start: z.string(),
+  end: z.string(),
+  happens: z.string(),
+  contentNote: z.string(),
+  noteId: z.string(),
+  attachments: z.array(attachmentSchema).default([]),
+  personal: z.boolean().default(false),
   updatedAt: z.string(),
 })
 const hymnFile = z.object({ kind: z.enum(fileKinds), location: z.string() })
@@ -198,11 +238,40 @@ const liturgy = z.object({
       hymnId: z.string(),
       scripture: z.string(),
       text: z.string(),
+      files: z.array(hymnFile).default([]),
+      attachments: z.array(attachment).default([]),
     }),
   ),
   files: z.array(hymnFile).default([]),
+  attachments: z.array(attachment).default([]),
   notes: z.string().default(''),
   source: z.string().default(''),
+  updatedAt: z.string(),
+})
+const resource = z.object({
+  id: z.string().min(1),
+  title: z.string().trim().min(1),
+  kind: z.enum(resourceKinds),
+  creator: z.string().default(''),
+  year: z.string().default(''),
+  place: z.string().default(''),
+  link: z.string().default(''),
+  notes: z.string().default(''),
+  tags: z.array(z.string()).default([]),
+  files: z.array(hymnFile).default([]),
+  attachments: z
+    .array(
+      z.object({
+        id: z.string().min(8),
+        name: z.string(),
+        mime: z.string(),
+        size: z.number(),
+        addedAt: z.string(),
+      }),
+    )
+    .default([]),
+  source: z.string().default(''),
+  sourceId: z.string().default(''),
   updatedAt: z.string(),
 })
 const schema = z.object({
@@ -227,6 +296,9 @@ const schema = z.object({
   notes: z.array(note).default([]),
   hymns: z.array(hymn).default([]),
   liturgies: z.array(liturgy).default([]),
+  resources: z.array(resource).default([]),
+  ideaSources: z.array(ideaSource).default([]),
+  visuals: z.array(visual).default([]),
   sample: z.boolean(),
 })
 const LIBRARY_KEY = 'ministry-study.library.v1'
@@ -250,6 +322,9 @@ export function parseBackup(input: unknown): Library {
     data.notes,
     data.hymns,
     data.liturgies,
+    data.resources,
+    data.ideaSources,
+    data.visuals,
   ])
     if (new Set(items.map((x) => x.id)).size !== items.length)
       throw new Error('Duplicate record IDs in backup.')
@@ -283,6 +358,9 @@ const emptyLibrary = (): Library => ({
   notes: [],
   hymns: [],
   liturgies: [],
+  resources: [],
+  ideaSources: [],
+  visuals: [],
   sample: false,
 })
 export function loadLibrary(): { library: Library; error: string } {
@@ -303,6 +381,9 @@ export function loadLibrary(): { library: Library; error: string } {
         prayerSets: [],
         hymns: [],
         liturgies: [],
+        resources: [],
+        ideaSources: [],
+        visuals: [],
         notes: [],
         sample: false,
       },

@@ -94,3 +94,27 @@ A hymn's `attachments` list holds `{id, name, mime, size, addedAt}`. The bytes a
 `attachment` and `attachment_piece` (base64 in 600,000-character rows), served at
 `/api/attachments/:id` (PUT to store, GET to read, DELETE to remove). Limits: JPEG, PNG, WebP, GIF
 and PDF only, 6 MB each. Served with `nosniff` and `sandbox` headers.
+
+## Music resources
+`resources` (kind `resource`): title, kind (Artist, Album, Article, Book, Songbook, Website,
+Other), creator, year, place, link, notes, tags[], files[{kind,location}], attachments[]. The
+Retuned Hymn Movement list is bundled at `public/data/retuned-resources.json` (source
+"Retuned Hymn Movement list", one sourceId per row). Older backups without `resources` restore
+without erasing them.
+
+## Liturgies held whole
+A liturgy item now also has `files[]` and `attachments[]` (its music); a liturgy has `attachments[]`
+for the whole. Kinds: Setting (a rite kept for reuse), Sunday service, Season, Occasion, Other. Item
+kinds add Music and Rubric. Attachments are reference-counted across hymns, resources, liturgies
+and their parts, so files shared by a copied service are deleted only when unused.
+
+## Stored files
+Attachments accept JPEG, PNG, WebP, GIF, PDF (served inline) and music/slide/Finale/Word/audio files
+(`.musx .mus .etf .mxl .mscz .sib .pptx .ppt .key .docx .doc .mp3 .m4a .wav .mid`; stored with type
+`application/octet-stream`, served as downloads). 8 MB each. Zip-based formats and mp3 must start
+like their type. "Attach files" on Hymns uploads a chosen folder's files (three at a time) and
+attaches them; the rest keep their location only.
+
+A sermon's `attachments` list holds its stored original files (same shape as a hymn's). Text files
+(`.txt .md .rtf`) are accepted as downloads too. The attachment routes are open to anyone with the
+Hymns or Sermons part turned on.

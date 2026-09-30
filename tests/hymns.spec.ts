@@ -1,7 +1,18 @@
 import { test, expect } from '@playwright/test'
 import { nav } from './helpers'
 
-test('add the RUF hymnbook, attach files, and keep a service together', async ({ page }) => {
+test('add a hymn, attach files, and keep a service together', async ({ page }) => {
+  // A stand-in for the shared library's file storage.
+  const stored = new Map<string, string>()
+  await page.route('**/api/attachments/*', async (route) => {
+    const request = route.request()
+    const id = request.url().split('/').pop()!
+    if (request.method() === 'PUT') {
+      stored.set(id, decodeURIComponent(request.headers()['x-file-name']))
+      return route.fulfill({ json: { ok: true } })
+    }
+    return route.fulfill({ json: { ok: true } })
+  })
   await page.goto('/')
   await nav(page, 'Hymns')
   await expect(page.getByText('No hymns yet')).toBeVisible()
@@ -24,14 +35,6 @@ test('add the RUF hymnbook, attach files, and keep a service together', async ({
   )
   await page.getByRole('button', { name: 'All hymns' }).click()
 
-  await page.getByRole('button', { name: 'RUF Hymnbook' }).click()
-  const ruf = page.getByRole('dialog')
-  await ruf.getByRole('button', { name: 'Look at the list' }).click()
-  await expect(ruf.getByText(/to add; 0 already/)).toBeVisible()
-  await ruf.getByRole('button', { name: /^Add \d+ hymns$/ }).click()
-  await page.getByLabel('Search hymns').fill('luther')
-  await expect(page.getByText('A Mighty Fortress Is Our God')).toBeVisible()
-
   await page.getByLabel('Search hymns').fill('')
   await page.getByRole('button', { name: 'Attach files' }).click()
   await page.getByLabel('Choose hymn files').setInputFiles([
@@ -48,10 +51,23 @@ test('add the RUF hymnbook, attach files, and keep a service together', async ({
     },
   ])
   const files = page.getByRole('dialog')
-  await expect(files.getByText(/2 files to attach to 2 hymns; 1 new hymns/)).toBeVisible()
+  await expect(files.getByText(/1 files to attach to 1 hymns; 2 new hymns/)).toBeVisible()
+  await expect(
+    files.getByText(/Store the files themselves in the app \(3 of 3 can be/),
+  ).toBeVisible()
   await files.getByRole('button', { name: 'Save these' }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  // the files themselves were stored, not just their names
+  expect([...stored.values()].sort()).toEqual([
+    '012 Abide With Me.pdf',
+    'Be Thou My Vision.pptx',
+    'Zeal Unknown Hymn.musx',
+  ])
   await page.getByLabel('Search hymns').fill('vision')
   await expect(page.getByText('Be Thou My Vision')).toBeVisible()
+  await page.getByRole('button', { name: /Be Thou My Vision/ }).click()
+  await expect(page.getByText('Be Thou My Vision.pptx')).toBeVisible()
+  await page.getByRole('button', { name: 'All hymns' }).click()
 
   await nav(page, 'Liturgies')
   await page.getByRole('button', { name: 'Add liturgy' }).click()
@@ -65,7 +81,7 @@ test('add the RUF hymnbook, attach files, and keep a service together', async ({
   await l.getByLabel('Item 2 name').fill('Closing hymn')
   await l.getByLabel('Item 2 hymn').selectOption({ label: 'Be Thou My Vision' })
   await l.getByRole('button', { name: 'Move item 2 up' }).click()
-  await l.getByRole('button', { name: 'Add a file' }).click()
+  await l.getByRole('button', { name: 'Add a file', exact: true }).click()
   await l.getByLabel('File 1 location').fill('Liturgy/advent.pptx')
   await l.getByRole('button', { name: 'Save liturgy' }).click()
   await expect(page.getByRole('heading', { name: 'Advent evening prayer' })).toBeVisible()
@@ -74,7 +90,7 @@ test('add the RUF hymnbook, attach files, and keep a service together', async ({
   await expect(order.nth(0)).toContainText('Be Thou My Vision')
   await expect(page.getByText('Liturgy/advent.pptx')).toBeVisible()
 
-  await page.getByRole('button', { name: 'Be Thou My Vision' }).click()
+  await page.getByRole('button', { name: 'Be Thou My Vision', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Be Thou My Vision' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Advent evening prayer' })).toBeVisible()
 })

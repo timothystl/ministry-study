@@ -11,6 +11,9 @@ const empty = (): Library => ({
   prayerSets: [],
   hymns: [],
   liturgies: [],
+  resources: [],
+  ideaSources: [],
+  visuals: [],
   notes: [],
   sample: false,
 })

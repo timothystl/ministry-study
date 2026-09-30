@@ -1,11 +1,15 @@
 import { useState } from 'react'
 import { Camera, FileText, Paperclip, Trash2 } from 'lucide-react'
 import {
+  ACCEPTED_FILES,
   attachFiles,
+  NORMAL_IMAGES,
+  REFERENCE_IMAGES,
   attachmentUrl,
   isImageAttachment,
   removeFile,
   sizeLabel,
+  usedElsewhere,
   type Attachment,
 } from '../lib/attachments'
 
@@ -14,11 +18,19 @@ import {
 export function Attachments({
   attachments,
   onChange,
-  heading = 'Photos and PDFs',
+  heading = 'Photos and files',
+  refs,
+  compact = false,
+  reference = false,
 }: {
   attachments: Attachment[]
   onChange: (next: Attachment[]) => boolean
   heading?: string
+  // How many records use each file, so a file another record also uses is not deleted.
+  refs?: Map<string, number>
+  compact?: boolean
+  // Photos are kept small, for reference; the better image is linked instead of stored.
+  reference?: boolean
 }) {
   const [busy, setBusy] = useState(false)
   const [errors, setErrors] = useState<string[]>([])
@@ -28,7 +40,10 @@ export function Attachments({
     if (!files.length) return
     setBusy(true)
     setErrors([])
-    const { added, errors: problems } = await attachFiles(files)
+    const { added, errors: problems } = await attachFiles(
+      files,
+      reference ? REFERENCE_IMAGES : NORMAL_IMAGES,
+    )
     if (added.length && !onChange([...attachments, ...added])) {
       problems.push('The record could not be saved, so the files were not kept.')
       await Promise.all(added.map((a) => removeFile(a.id)))
@@ -37,13 +52,14 @@ export function Attachments({
     setBusy(false)
   }
   function remove(a: Attachment) {
-    if (onChange(attachments.filter((x) => x.id !== a.id))) void removeFile(a.id)
+    if (onChange(attachments.filter((x) => x.id !== a.id)) && !(refs && usedElsewhere(refs, a.id)))
+      void removeFile(a.id)
     setConfirm('')
   }
   return (
     <section className="detail-section" aria-label={heading}>
-      <h3>{heading}</h3>
-      {attachments.length === 0 && (
+      {!compact && <h3>{heading}</h3>}
+      {attachments.length === 0 && !compact && (
         <p className="muted">Nothing attached yet. Add a photo of a page, or a PDF.</p>
       )}
       {attachments.length > 0 && (
@@ -82,12 +98,12 @@ export function Attachments({
       )}
       <div className="scan-typed">
         <label className="file-label">
-          <Paperclip size={16} /> Attach photos or PDFs
+          <Paperclip size={16} /> Attach photos or files
           <input
-            aria-label="Attach photos or PDFs"
+            aria-label="Attach photos or files"
             type="file"
             multiple
-            accept="image/*,application/pdf,.pdf"
+            accept={ACCEPTED_FILES}
             disabled={busy}
             onChange={(e) => {
               void add(e.target.files)
@@ -116,9 +132,18 @@ export function Attachments({
           {e}
         </p>
       ))}
-      <p className="muted">
-        Kept in your shared library. Photos over 1 MB are made smaller; a PDF can be up to 6 MB.
-      </p>
+      {!compact && reference && (
+        <p className="muted">
+          Photos are made small (about 1 MB at most) because they are for reference. If a better
+          image exists, link it under “Where it came from” instead of storing it.
+        </p>
+      )}
+      {!compact && !reference && (
+        <p className="muted">
+          Kept in your shared library. Photos over 1.5 MB are made smaller. PDFs, music, slide and
+          Finale files can be up to 8 MB.
+        </p>
+      )}
     </section>
   )
 }

@@ -3,6 +3,7 @@ import { Download, Upload } from 'lucide-react'
 import { type Library } from '../lib/model'
 import { downloadJson, importLogos, parseBackup } from '../lib/storage'
 import { Modal } from './Modal'
+import { StorageUsage } from './StorageUsage'
 export function LibraryData({
   library,
   onSave,
@@ -40,6 +41,12 @@ export function LibraryData({
         if (!Array.isArray((input as { hymns?: unknown }).hymns)) parsed.hymns = library.hymns
         if (!Array.isArray((input as { liturgies?: unknown }).liturgies))
           parsed.liturgies = library.liturgies
+        if (!Array.isArray((input as { resources?: unknown }).resources))
+          parsed.resources = library.resources
+        if (!Array.isArray((input as { visuals?: unknown }).visuals))
+          parsed.visuals = library.visuals
+        if (!Array.isArray((input as { ideaSources?: unknown }).ideaSources))
+          parsed.ideaSources = library.ideaSources
         const hasPrayers = Array.isArray((input as { prayers?: unknown }).prayers)
         if (!hasPrayers) {
           parsed.prayers = library.prayers
@@ -67,6 +74,7 @@ export function LibraryData({
       <button onClick={() => downloadJson(library, 'ministry-study.backup.json')}>
         <Download size={16} /> Export backup
       </button>
+      <StorageUsage library={library} />
       <section className="detail-section">
         <h3>Import Logos catalog</h3>
         <p>
@@ -144,6 +152,9 @@ export function LibraryData({
               notes: library.notes,
               hymns: library.hymns,
               liturgies: library.liturgies,
+              resources: library.resources,
+              ideaSources: library.ideaSources,
+              visuals: library.visuals,
               sample: false,
             })
             setMessage('Remove all illustrative samples and start an empty library.')

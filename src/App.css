@@ -2693,3 +2693,87 @@ mark {
   color: inherit;
   text-decoration: none;
 }
+.liturgy-part {
+  break-inside: avoid;
+  padding-bottom: 6px;
+}
+.liturgy-part h3 {
+  margin-bottom: 4px;
+}
+.liturgy-words {
+  white-space: pre-wrap;
+}
+.liturgy-passage {
+  font-weight: 600;
+}
+.liturgy-part-edit {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  margin: 8px 0;
+  border: 1px solid #d5dde2;
+  border-radius: 8px;
+}
+.attachment-strip {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.attachment-strip img {
+  height: 90px;
+  border: 1px solid #d5dde2;
+  border-radius: 4px;
+}
+.print-only {
+  display: none;
+}
+@media print {
+  .sidebar,
+  .sidebar-scrim,
+  .mobile-header,
+  .mobile-bottom,
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: inline;
+  }
+  ul.print-only {
+    display: flex;
+  }
+  .main-shell {
+    margin-left: 0;
+  }
+  main {
+    padding: 0;
+    max-width: none;
+  }
+}
+.check-row {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+.idea-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.usage-rows {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0;
+}
+.usage-rows li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid var(--line, #e2e2e2);
+}

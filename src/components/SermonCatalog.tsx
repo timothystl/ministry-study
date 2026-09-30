@@ -36,8 +36,11 @@ import { searchSermonText } from '../lib/sermonText'
 import { ManuscriptSection, SermonTextManager } from './SermonText'
 import { SermonReview } from './SermonReview'
 import { Modal } from './Modal'
+import { Attachments } from './Attachments'
+import { attachmentRefs, removeUnused } from '../lib/attachments'
 import { NoteEditor } from './Notes'
 import { blankNote, notesForSermon, type Note } from '../lib/notes'
+import { isCleared, visualsForSermon } from '../lib/visuals'
 
 const dateLabel = (date: string) =>
   date
@@ -511,9 +514,11 @@ function SermonDetail({
   onDelete: () => void
 }) {
   const related = samePassage(library, sermon)
+  const refs = useMemo(() => attachmentRefs(library), [library])
   const [confirming, setConfirming] = useState(false)
   const [note, setNote] = useState<Note | null>(null)
   const { linked, onPassage } = notesForSermon(library, sermon)
+  const pictures = visualsForSermon(library, sermon)
   return (
     <article className="sermon-detail">
       <button onClick={onBack}>
@@ -653,6 +658,12 @@ function SermonDetail({
         )}
       </section>
       <ManuscriptSection sermon={sermon} />
+      <Attachments
+        heading="Sermon files"
+        refs={refs}
+        attachments={sermon.attachments}
+        onChange={(next) => onSave(saveSermon(library, { ...sermon, attachments: next }))}
+      />
       {sermon.notes && (
         <section className="detail-section">
           <h3>Personal notes</h3>
@@ -689,6 +700,29 @@ function SermonDetail({
           Add a note
         </button>
       </section>
+      {pictures.length > 0 && (
+        <section className="detail-section" aria-label="Images and clips for this passage">
+          <h3>Images and clips for this passage</h3>
+          <ul className="sermon-related">
+            {pictures.map((v) => (
+              <li key={v.id}>
+                {v.link ? (
+                  <a href={v.link} target="_blank" rel="noreferrer">
+                    {v.title}
+                  </a>
+                ) : (
+                  <span>{v.title}</span>
+                )}
+                <span className="muted">
+                  {[v.kind, v.license, isCleared(v.license) ? '' : 'Not cleared for display']
+                    .filter(Boolean)
+                    .join(' · ')}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       {note && (
         <NoteEditor
           note={note}
@@ -834,7 +868,10 @@ export function SermonCatalog({
           onEdit={() => setEditing(open)}
           onOpen={setOpenId}
           onDelete={() => {
-            if (onSave(deleteSermon(library, open.id))) setOpenId('')
+            if (onSave(deleteSermon(library, open.id))) {
+              removeUnused(library, open.attachments)
+              setOpenId('')
+            }
           }}
         />
       ) : (
