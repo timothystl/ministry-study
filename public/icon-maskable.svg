@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Ministry Study">
+  <rect width="512" height="512" fill="#203641"/>
+  <path d="M138 262 L226 142 L256 184 L294 124 L378 262 Z" fill="#2fa58f"/>
+  <path d="M256 384 Q188 344 96 352 L96 240 Q188 230 256 268 Z" fill="#f6f0e2"/>
+  <path d="M256 384 Q324 344 416 352 L416 240 Q324 230 256 268 Z" fill="#e6dcc6"/>
+  <path d="M256 268 V384" stroke="#203641" stroke-width="6"/>
+</svg>
