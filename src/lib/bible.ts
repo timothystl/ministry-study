@@ -272,7 +272,51 @@ function loadViaServer(id: string, book: string, chapter: number): Promise<Verse
       `/api/yvp/passage?bible=${encodeURIComponent(id.slice(4))}&${chapterQuery(book, chapter)}`,
       'YouVersion',
     )
+  if (id.startsWith('biblia:'))
+    return loadFromServer(
+      `/api/biblia/passage?bible=${encodeURIComponent(id.slice(7))}&${chapterQuery(book, chapter)}`,
+      'Biblia',
+    )
   return null
+}
+// The Bibles Faithlife's Biblia makes available to this study's key (the pastor's Logos material). Only
+// Hebrew, Greek and English ones are offered. Nothing (not an error) when it is not set up.
+export async function loadBibliaVersions(): Promise<Version[]> {
+  try {
+    const response = await fetch('/api/biblia/bibles', {
+      headers: { Accept: 'application/json' },
+      credentials: 'same-origin',
+    })
+    if (!response.ok || !(response.headers.get('Content-Type') || '').includes('json')) return []
+    const body = (await response.json()) as {
+      bibles?: {
+        id: string
+        title: string
+        short: string
+        language: Language | 'Other'
+        copyright: string
+      }[]
+    }
+    return (body.bibles ?? []).flatMap((b) =>
+      b.language === 'Other'
+        ? []
+        : [
+            {
+              id: `biblia:${b.id}`,
+              name: b.title,
+              short: b.short,
+              language: b.language,
+              covers: ['OT', 'NT'] as Testament[],
+              rtl: b.language === 'Hebrew',
+              license: 'Through Biblia',
+              viaServer: true,
+              credit: b.copyright || undefined,
+            },
+          ],
+    )
+  } catch {
+    return []
+  }
 }
 // The Bibles YouVersion has enabled for this study's key. Nothing (not an error) when it is not set
 // up or the site is running without a server.

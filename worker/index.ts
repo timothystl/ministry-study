@@ -1,3 +1,4 @@
+import { fetchBibliaChapter, listBibliaBibles, validBibliaId } from './biblia'
 import {
   fetchNetChapter,
   fetchYvpChapter,
@@ -48,6 +49,8 @@ interface Env extends AccessEnv {
   ESV_API_KEY?: string
   // YouVersion Platform app key (a secret): lets the Bible Study page offer the Bibles it is licensed for.
   YVP_APP_KEY?: string
+  // Faithlife Biblia key (a secret): lets the Bible Study page offer the Bibles Biblia makes available to it.
+  BIBLIA_API_KEY?: string
   DB: D1Database
   ASSETS: Fetcher
 }
@@ -129,7 +132,9 @@ export async function handleApi(
     if (
       (pathname === '/api/net' ||
         pathname === '/api/yvp/bibles' ||
-        pathname === '/api/yvp/passage') &&
+        pathname === '/api/yvp/passage' ||
+        pathname === '/api/biblia/bibles' ||
+        pathname === '/api/biblia/passage') &&
       request.method === 'GET'
     ) {
       if (!may('bible')) return denied()
@@ -137,6 +142,19 @@ export async function handleApi(
       const book = params.get('book') || '',
         chapter = params.get('chapter') || ''
       try {
+        if (pathname === '/api/biblia/bibles')
+          return env.BIBLIA_API_KEY
+            ? reply({ bibles: await listBibliaBibles(env.BIBLIA_API_KEY) })
+            : reply({ bibles: [], configured: false })
+        if (pathname === '/api/biblia/passage') {
+          const bible = params.get('bible') || ''
+          if (!validChapter(book, chapter) || !validBibliaId(bible))
+            return reply({ error: 'Ask for one chapter of one Bible.' }, 400)
+          if (!env.BIBLIA_API_KEY) return reply({ error: 'Biblia is not set up yet.' }, 503)
+          return reply({
+            verses: await fetchBibliaChapter(env.BIBLIA_API_KEY, bible, book, chapter),
+          })
+        }
         if (pathname === '/api/yvp/bibles')
           return env.YVP_APP_KEY
             ? reply({ bibles: await listYvpBibles(env.YVP_APP_KEY), notice: YVP_NOTICE })

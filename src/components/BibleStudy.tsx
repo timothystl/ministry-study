@@ -4,6 +4,7 @@ import {
   ESV_COPYRIGHT,
   languages,
   versions,
+  loadBibliaVersions,
   loadYvpVersions,
   NET_COPYRIGHT,
   YVP_NOTICE,
@@ -172,7 +173,9 @@ export function BibleStudy() {
   const [extra, setExtra] = useState<Version[]>([])
   useEffect(() => {
     let live = true
-    void loadYvpVersions().then((found) => live && setExtra(found))
+    void Promise.all([loadYvpVersions(), loadBibliaVersions()]).then(
+      (found) => live && setExtra(found.flat()),
+    )
     return () => {
       live = false
     }
@@ -219,27 +222,39 @@ export function BibleStudy() {
       </form>
       <fieldset className="bible-versions">
         <legend>Versions for the {testament === 'OT' ? 'Old' : 'New'} Testament</legend>
-        {[...languages, 'YouVersion'].map((group) => {
+        {[...languages, 'YouVersion', 'Biblia'].map((group) => {
           const list = versionsFor(testament, extra).filter((v) =>
             group === 'YouVersion'
               ? v.id.startsWith('yvp:')
-              : !v.id.startsWith('yvp:') && v.language === group,
+              : group === 'Biblia'
+                ? v.id.startsWith('biblia:')
+                : !v.id.includes(':') && v.language === group,
           )
-          return list.length ? (
+          if (!list.length) return null
+          const boxes = list.map((v) => (
+            <label key={v.id} title={`${v.name} · ${v.license}`}>
+              <input type="checkbox" checked={ids.includes(v.id)} onChange={() => toggle(v.id)} />
+              {v.short}
+            </label>
+          ))
+          // A long list (a large Logos library) folds away so the page stays easy to read.
+          return list.length > 12 ? (
+            <details
+              key={group}
+              className="bible-group"
+              open={list.some((v) => ids.includes(v.id))}
+            >
+              <summary>
+                <strong>{group}</strong> ({list.length} Bibles)
+              </summary>
+              <div className="bible-group">{boxes}</div>
+            </details>
+          ) : (
             <div key={group} className="bible-group">
               <strong>{group}</strong>
-              {list.map((v) => (
-                <label key={v.id} title={`${v.name} · ${v.license}`}>
-                  <input
-                    type="checkbox"
-                    checked={ids.includes(v.id)}
-                    onChange={() => toggle(v.id)}
-                  />
-                  {v.short}
-                </label>
-              ))}
+              {boxes}
             </div>
-          ) : null
+          )
         })}
       </fieldset>
       {error && (

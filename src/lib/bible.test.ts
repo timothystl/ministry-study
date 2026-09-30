@@ -4,6 +4,7 @@ import {
   clearBibleCache,
   defaultVersionIds,
   loadChapter,
+  loadBibliaVersions,
   loadYvpVersions,
   passagesFor,
   testamentOf,
@@ -114,6 +115,49 @@ describe('versions read through the server', () => {
       vi.fn(async () => json({}, 500)),
     )
     expect(await loadYvpVersions()).toEqual([])
+  })
+})
+describe('Biblia', () => {
+  const json = (body: unknown, status = 200) => ({
+    ok: status < 400,
+    status,
+    headers: { get: () => 'application/json' },
+    json: async () => body,
+  })
+  it('offers the Hebrew, Greek and English Bibles the key can read, and reads a chapter', async () => {
+    const fetcher = vi.fn(async (url: string) =>
+      url.startsWith('/api/biblia/bibles')
+        ? json({
+            bibles: [
+              {
+                id: 'LEB',
+                title: 'Lexham',
+                short: 'LEB',
+                language: 'English',
+                copyright: '© Logos',
+              },
+              { id: 'WLC', title: 'Leningrad', short: 'WLC', language: 'Hebrew', copyright: '' },
+              { id: 'DE', title: 'Luther', short: 'LUT', language: 'Other', copyright: '' },
+            ],
+          })
+        : json({ verses: [{ verse: 1, text: 'x' }] }),
+    )
+    vi.stubGlobal('fetch', fetcher)
+    const found = await loadBibliaVersions()
+    expect(found.map((v) => [v.id, v.language, v.rtl ?? false])).toEqual([
+      ['biblia:LEB', 'English', false],
+      ['biblia:WLC', 'Hebrew', true],
+    ])
+    expect(found[0].credit).toBe('© Logos')
+    await loadChapter('biblia:LEB', 'John', 3)
+    expect(fetcher.mock.calls[1][0]).toBe('/api/biblia/passage?bible=LEB&book=John&chapter=3')
+  })
+  it('gives none when Biblia is not set up', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => json({}, 500)),
+    )
+    expect(await loadBibliaVersions()).toEqual([])
   })
 })
 describe('bundled Greek editions', () => {
