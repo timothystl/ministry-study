@@ -1,3 +1,12 @@
+import {
+  fetchNetChapter,
+  fetchYvpChapter,
+  listYvpBibles,
+  NET_COPYRIGHT,
+  validBibleId,
+  validChapter,
+  YVP_NOTICE,
+} from './bibleSources'
 import { ESV_COPYRIGHT, fetchEsvChapter, validEsvReference } from './esv'
 import { findPrayers, seriesPages, type Series } from './lcms'
 import { verifyAccess, type AccessEnv } from './access'
@@ -37,6 +46,8 @@ interface Env extends AccessEnv {
   STUDY_ADMIN_EMAIL?: string
   // Crossway's ESV API key (a secret in the Cloudflare dashboard). Without it the ESV is left out.
   ESV_API_KEY?: string
+  // YouVersion Platform app key (a secret): lets the Bible Study page offer the Bibles it is licensed for.
+  YVP_APP_KEY?: string
   DB: D1Database
   ASSETS: Fetcher
 }
@@ -113,6 +124,37 @@ export async function handleApi(
         })
       } catch {
         return reply({ error: 'The ESV could not be read right now.' }, 502)
+      }
+    }
+    if (
+      (pathname === '/api/net' ||
+        pathname === '/api/yvp/bibles' ||
+        pathname === '/api/yvp/passage') &&
+      request.method === 'GET'
+    ) {
+      if (!may('bible')) return denied()
+      const params = new URL(request.url).searchParams
+      const book = params.get('book') || '',
+        chapter = params.get('chapter') || ''
+      try {
+        if (pathname === '/api/yvp/bibles')
+          return env.YVP_APP_KEY
+            ? reply({ bibles: await listYvpBibles(env.YVP_APP_KEY), notice: YVP_NOTICE })
+            : reply({ bibles: [], configured: false })
+        if (pathname === '/api/net') {
+          if (!validChapter(book, chapter)) return reply({ error: 'Ask for one chapter.' }, 400)
+          return reply({ verses: await fetchNetChapter(book, chapter), copyright: NET_COPYRIGHT })
+        }
+        const bible = params.get('bible') || ''
+        if (!validChapter(book, chapter) || !validBibleId(bible))
+          return reply({ error: 'Ask for one chapter of one Bible.' }, 400)
+        if (!env.YVP_APP_KEY) return reply({ error: 'YouVersion is not set up yet.' }, 503)
+        return reply({ verses: await fetchYvpChapter(env.YVP_APP_KEY, bible, book, chapter) })
+      } catch (e) {
+        return reply(
+          { error: (e as Error).message || 'That text could not be read right now.' },
+          502,
+        )
       }
     }
     if (pathname === '/api/me' && request.method === 'GET')

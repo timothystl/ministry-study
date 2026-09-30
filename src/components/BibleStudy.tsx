@@ -3,13 +3,18 @@ import { Search } from 'lucide-react'
 import {
   ESV_COPYRIGHT,
   languages,
+  versions,
+  loadYvpVersions,
+  NET_COPYRIGHT,
+  YVP_NOTICE,
+  defaultVersionIds,
+  type Version,
   loadChapter,
   passagesFor,
   saveVersionIds,
   savedVersionIds,
   testamentOf,
   versionsFor,
-  versions,
   type Passage,
   type Testament,
   type Verse,
@@ -23,17 +28,19 @@ const label = (p: Passage) => `${p.book} ${p.chapter}`
 function PassageTable({
   passage,
   ids,
+  all,
   reload,
 }: {
   passage: Passage
   ids: string[]
+  all: Version[]
   reload: number
 }) {
-  const shown = versions.filter((v) => ids.includes(v.id))
+  const shown = all.filter((v) => ids.includes(v.id))
   const [loaded, setLoaded] = useState<Loaded>({})
   useEffect(() => {
     let live = true
-    for (const v of versions.filter((x) => ids.includes(x.id)))
+    for (const v of all.filter((x) => ids.includes(x.id)))
       loadChapter(v.id, passage.book, passage.chapter).then(
         (verses) => live && setLoaded((l) => ({ ...l, [v.id]: verses })),
         (e: Error) => live && setLoaded((l) => ({ ...l, [v.id]: { error: e.message } })),
@@ -41,7 +48,7 @@ function PassageTable({
     return () => {
       live = false
     }
-  }, [passage.book, passage.chapter, ids, reload])
+  }, [passage.book, passage.chapter, ids, all, reload])
   const numbers = new Set<number>()
   for (const verses of Object.values(loaded))
     if (Array.isArray(verses))
@@ -127,7 +134,21 @@ export function BibleStudy() {
     OT: savedVersionIds('OT'),
     NT: savedVersionIds('NT'),
   }))
-  const ids = chosen[testament]
+  const [extra, setExtra] = useState<Version[]>([])
+  useEffect(() => {
+    let live = true
+    void loadYvpVersions().then((found) => live && setExtra(found))
+    return () => {
+      live = false
+    }
+  }, [])
+  const all = useMemo(() => [...versions, ...extra], [extra])
+  // What was ticked, limited to versions actually on offer for this testament.
+  const ids = useMemo(() => {
+    const offered = versionsFor(testament, extra)
+    const kept = chosen[testament].filter((id) => offered.some((v) => v.id === id))
+    return kept.length ? kept : defaultVersionIds(testament)
+  }, [chosen, testament, extra])
   function toggle(id: string) {
     const next = ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]
     if (!next.length) return
@@ -163,11 +184,15 @@ export function BibleStudy() {
       </form>
       <fieldset className="bible-versions">
         <legend>Versions for the {testament === 'OT' ? 'Old' : 'New'} Testament</legend>
-        {languages.map((language) => {
-          const list = versionsFor(testament).filter((v) => v.language === language)
+        {[...languages, 'YouVersion'].map((group) => {
+          const list = versionsFor(testament, extra).filter((v) =>
+            group === 'YouVersion'
+              ? v.id.startsWith('yvp:')
+              : !v.id.startsWith('yvp:') && v.language === group,
+          )
           return list.length ? (
-            <div key={language} className="bible-group">
-              <strong>{language}</strong>
+            <div key={group} className="bible-group">
+              <strong>{group}</strong>
               {list.map((v) => (
                 <label key={v.id} title={`${v.name} · ${v.license}`}>
                   <input
@@ -192,15 +217,18 @@ export function BibleStudy() {
           key={`${p.book}${p.chapter}${p.first}${p.last}|${ids.join(',')}|${reload}`}
           passage={p}
           ids={ids}
+          all={all}
           reload={reload}
         />
       ))}
       {ids.includes('esv') && <p className="muted bible-note">{ESV_COPYRIGHT}</p>}
+      {ids.includes('net') && <p className="muted bible-note">{NET_COPYRIGHT}</p>}
+      {ids.some((id) => id.startsWith('yvp:')) && <p className="muted bible-note">{YVP_NOTICE}</p>}
       <p className="muted bible-note">
-        Texts come from getBible.net, except the ESV, which comes from Crossway. Hebrew follows the
-        Hebrew verse numbering, which differs from English in places (most Psalm titles are verse
-        1), so a verse can sit in a different row. The NIV, NRSV and other copyrighted translations
-        are not included.
+        Texts come from getBible.net, except the ESV (Crossway), the NET Bible (bible.org) and
+        YouVersion. Hebrew follows the Hebrew verse numbering, which differs from English in places
+        (most Psalm titles are verse 1), so a verse can sit in a different row. The NIV, NRSV and
+        other copyrighted translations are not included.
       </p>
     </section>
   )

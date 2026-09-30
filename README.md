@@ -207,16 +207,33 @@ It is its own part on People and its records sync like the others.
 
 ## Bible Study
 
-A first Bible Study page: type a passage (John 3:16–21, Psalm 23, Luke 15:30–16:2) and read it in
-columns, verse by verse. Choose from Hebrew (Westminster Leningrad Codex, Aleppo Codex), Greek
-(Tischendorf, Westcott–Hort, Textus Receptus for the New Testament; the Septuagint for the Old)
-and English (ESV, World English Bible, KJV, ASV, Young's Literal, Weymouth, Douay–Rheims, Tyndale). The
-original language of the testament and the WEB and KJV are on by default; your choices are
-remembered on this device. Texts are read from the free getBible service, one chapter at a time,
-so nothing is stored in the catalog. The ESV is read through the Worker from Crossway's service using the study's API key: add it as
-the secret `ESV_API_KEY` in the Cloudflare project (Settings → Variables and Secrets); until then
-the ESV column says it isn't set up. The key never reaches the browser, and the ESV copyright line
-shows whenever the ESV is on screen. The NIV and NRSV are not included. It is its own part ("Bible Study") that can be turned on or off for other people.
+Type a passage (John 3:16–21, Psalm 23, Luke 15:30–16:2) and read it in columns, verse by verse.
+Choose from:
+
+- **Hebrew** (Westminster Leningrad Codex, Aleppo Codex) and **Greek** (Tischendorf, Westcott–Hort,
+  Textus Receptus for the New Testament; the Septuagint for the Old), read from the free getBible
+  service.
+- **English:** World English Bible, KJV, ASV, Young's Literal, Weymouth, Douay–Rheims and Tyndale
+  (getBible); the **ESV** (Crossway); and the **NET Bible** (bible.org's free service).
+- **YouVersion:** every Bible your YouVersion Platform key has been licensed for appears in its own
+  "YouVersion" group, found when the page opens, so a translation added on the YouVersion side
+  shows up without a code change.
+
+The original language of the testament plus the WEB and KJV are on by default; your choices are
+remembered on this device. Nothing is stored in the catalog: chapters are read as needed.
+
+Keys are Worker secrets (Cloudflare → the project → Settings → Variables and Secrets) and never
+reach the browser:
+
+- `ESV_API_KEY`: the same free Crossway key the Connect app uses (api.esv.org). Without it the ESV
+  column says it isn't set up.
+- `YVP_APP_KEY`: the YouVersion Platform App Key. Without it there is simply no YouVersion group.
+  YouVersion lists only the Bibles the key is enabled for; turn more on under Bible Licenses on the
+  YouVersion Platform site.
+
+The ESV, NET and YouVersion copyright lines show whenever those versions are on screen. The NIV
+and NRSV are not included unless YouVersion licenses them to your key. It is its own part ("Bible
+Study") that can be turned on or off for other people.
 
 ## Children's Messages
 

@@ -1,3 +1,4 @@
+import { NET_COPYRIGHT, YVP_NOTICE } from '../../worker/bibleSources'
 import { ESV_COPYRIGHT } from '../../worker/esv'
 import { bookNames, parseReferences, type Reference } from './scripture'
 
@@ -79,6 +80,15 @@ export const versions: Version[] = [
     viaServer: true,
   },
   {
+    id: 'net',
+    name: 'NET Bible',
+    short: 'NET',
+    language: 'English',
+    covers: ['OT', 'NT'],
+    license: 'Biblical Studies Press, by permission',
+    viaServer: true,
+  },
+  {
     id: 'web',
     name: 'World English Bible',
     short: 'WEB',
@@ -135,13 +145,14 @@ export const versions: Version[] = [
     license: 'Public domain',
   },
 ]
-export { ESV_COPYRIGHT }
+export { ESV_COPYRIGHT, NET_COPYRIGHT, YVP_NOTICE }
 export const languages: Language[] = ['Hebrew', 'Greek', 'English']
 
 export const testamentOf = (book: string): Testament => (bookNames.indexOf(book) < 39 ? 'OT' : 'NT')
 export const bookNumber = (book: string) => bookNames.indexOf(book) + 1
-export const versionsFor = (testament: Testament) =>
-  versions.filter((v) => v.covers.includes(testament))
+// `extra` is the YouVersion Bibles this study's key is licensed for, found when the page opens.
+export const versionsFor = (testament: Testament, extra: Version[] = []) =>
+  [...versions, ...extra].filter((v) => v.covers.includes(testament))
 // The original language of the testament comes first, then an English translation to read beside it.
 export const defaultVersionIds = (testament: Testament) =>
   testament === 'OT' ? ['codex', 'web', 'kjv'] : ['tischendorf', 'web', 'kjv']
@@ -186,23 +197,63 @@ const address = (id: string, book: string, chapter: number) =>
   `https://api.getbible.net/v2/${id}/${bookNumber(book)}/${chapter}.json`
 // One chapter of one version. A version that lacks the chapter (a different numbering, or a New
 // Testament–only text) resolves to an empty list so the other versions still show.
-async function loadEsv(book: string, chapter: number): Promise<Verse[]> {
-  const response = await fetch(`/api/esv?q=${encodeURIComponent(`${book} ${chapter}`)}`, {
+async function loadFromServer(path: string, name: string): Promise<Verse[]> {
+  const response = await fetch(path, {
     headers: { Accept: 'application/json' },
     credentials: 'same-origin',
   })
   if (!(response.headers.get('Content-Type') || '').includes('json'))
-    throw new Error('The ESV is only available on the shared study site.')
+    throw new Error(`${name} is only available on the shared study site.`)
   const body = (await response.json()) as { verses?: Verse[]; error?: string }
-  if (!response.ok) throw new Error(body.error || `The ESV service answered ${response.status}.`)
+  if (!response.ok) throw new Error(body.error || `${name} answered ${response.status}.`)
   return body.verses ?? []
+}
+const chapterQuery = (book: string, chapter: number) =>
+  `book=${encodeURIComponent(book)}&chapter=${chapter}`
+function loadViaServer(id: string, book: string, chapter: number): Promise<Verse[]> | null {
+  if (id === 'esv')
+    return loadFromServer(`/api/esv?q=${encodeURIComponent(`${book} ${chapter}`)}`, 'The ESV')
+  if (id === 'net')
+    return loadFromServer(`/api/net?${chapterQuery(book, chapter)}`, 'The NET Bible')
+  if (id.startsWith('yvp:'))
+    return loadFromServer(
+      `/api/yvp/passage?bible=${encodeURIComponent(id.slice(4))}&${chapterQuery(book, chapter)}`,
+      'YouVersion',
+    )
+  return null
+}
+// The Bibles YouVersion has enabled for this study's key. Nothing (not an error) when it is not set
+// up or the site is running without a server.
+export async function loadYvpVersions(): Promise<Version[]> {
+  try {
+    const response = await fetch('/api/yvp/bibles', {
+      headers: { Accept: 'application/json' },
+      credentials: 'same-origin',
+    })
+    if (!response.ok || !(response.headers.get('Content-Type') || '').includes('json')) return []
+    const body = (await response.json()) as {
+      bibles?: { id: string; abbreviation: string; title: string }[]
+    }
+    return (body.bibles ?? []).map((b) => ({
+      id: `yvp:${b.id}`,
+      name: b.title,
+      short: b.abbreviation,
+      language: 'English' as const,
+      covers: ['OT', 'NT'] as Testament[],
+      license: 'Through YouVersion',
+      viaServer: true,
+    }))
+  } catch {
+    return []
+  }
 }
 export function loadChapter(id: string, book: string, chapter: number): Promise<Verse[]> {
   const key = `${id}/${book}/${chapter}`
   let found = cache.get(key)
   if (!found) {
     found = (async () => {
-      if (id === 'esv') return loadEsv(book, chapter)
+      const served = loadViaServer(id, book, chapter)
+      if (served) return served
       const response = await fetch(address(id, book, chapter), {
         headers: { Accept: 'application/json' },
       })
@@ -220,13 +271,13 @@ export function loadChapter(id: string, book: string, chapter: number): Promise<
 export const clearBibleCache = () => cache.clear()
 
 const CHOICE_KEY = 'ministry-study.bible-versions.v1'
+// What was ticked last time, or the defaults. It is not checked against the versions on offer here,
+// because the YouVersion ones arrive a moment after the page opens.
 export function savedVersionIds(testament: Testament): string[] {
   try {
     const all = JSON.parse(localStorage.getItem(CHOICE_KEY) || '{}') as Record<string, string[]>
-    const ok = (all[testament] ?? []).filter((id) =>
-      versionsFor(testament).some((v) => v.id === id),
-    )
-    return ok.length ? ok : defaultVersionIds(testament)
+    const ids = (all[testament] ?? []).filter((id) => typeof id === 'string')
+    return ids.length ? ids : defaultVersionIds(testament)
   } catch {
     return defaultVersionIds(testament)
   }

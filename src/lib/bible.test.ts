@@ -4,6 +4,7 @@ import {
   clearBibleCache,
   defaultVersionIds,
   loadChapter,
+  loadYvpVersions,
   passagesFor,
   testamentOf,
   versions,
@@ -74,5 +75,44 @@ describe('loading a chapter', () => {
     await expect(loadChapter('web', 'Genesis', 2)).rejects.toThrow()
     await expect(loadChapter('web', 'Genesis', 2)).rejects.toThrow()
     expect(fetcher).toHaveBeenCalledTimes(2)
+  })
+})
+describe('versions read through the server', () => {
+  const json = (body: unknown, status = 200) => ({
+    ok: status < 400,
+    status,
+    headers: { get: () => 'application/json' },
+    json: async () => body,
+  })
+  it('asks the server for the NET Bible and YouVersion chapters', async () => {
+    const fetcher = vi.fn(async (_url: string) => json({ verses: [{ verse: 1, text: 'x' }] }))
+    vi.stubGlobal('fetch', fetcher)
+    await loadChapter('net', '1 John', 4)
+    await loadChapter('yvp:111', 'John', 3)
+    expect(fetcher.mock.calls[0][0]).toBe('/api/net?book=1%20John&chapter=4')
+    expect(fetcher.mock.calls[1][0]).toBe('/api/yvp/passage?bible=111&book=John&chapter=3')
+  })
+  it('shows the server’s reason when a version is not available', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => json({ error: 'The ESV is not set up yet.' }, 503)),
+    )
+    await expect(loadChapter('esv', 'John', 3)).rejects.toThrow('not set up')
+  })
+  it('turns YouVersion’s list into versions, and gives none when it is unavailable', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        json({ bibles: [{ id: '111', abbreviation: 'NIV', title: 'New International Version' }] }),
+      ),
+    )
+    expect(await loadYvpVersions()).toMatchObject([
+      { id: 'yvp:111', short: 'NIV', language: 'English' },
+    ])
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => json({}, 500)),
+    )
+    expect(await loadYvpVersions()).toEqual([])
   })
 })
