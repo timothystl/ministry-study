@@ -235,6 +235,10 @@ reach the browser:
 
 - `ESV_API_KEY`: the same free Crossway key the Connect app uses (api.esv.org). Without it the ESV
   column says it isn't set up.
+- `BIBLIA_API_KEY`: a free Faithlife Biblia key. Every Hebrew, Greek and English Bible Biblia makes
+  available to it (your Logos material) appears in a "Biblia" group, found when the page opens; a
+  long list folds away. Each Bible's own copyright text shows under the page. Without the key there
+  is simply no Biblia group.
 - `YVP_APP_KEY`: the YouVersion Platform App Key. Without it there is simply no YouVersion group.
   YouVersion lists only the Bibles the key is enabled for; turn more on under Bible Licenses on the
   YouVersion Platform site.
