@@ -124,5 +124,13 @@ Cardiphonia's blog is reachable (archive); its Retuned Hymnal database (retunedh
 cardiphonia.org were not reachable from the build environment, so hymns from there are added by
 link or by attaching downloaded lead sheets.
 
+## Latest update: music resources
+Music Resources page with the Retuned Hymn Movement workbook (artists, albums, articles, books;
+the "zac articles" sheet of bare titles was left out). Ideas: link a resource to the hymns found
+on it; an "album to hymns" import when a track list is available.
+The RUF Hymnbook and Retuned Hymn Movement lists are added on their own the first time the shared
+library loads, or at first start on a device with no shared library (fixed ids `ruf-…` / `retuned-…`, a per-device "done" flag, and each list is skipped
+if any of its records exist), so there are no import buttons.
+
 ## Latest update: people and permissions
 A second (and further) person can now use the study with a private library of their own; Andrew stays administrator and switches parts on or off per person on People (README → People and permissions). **Before deploying, set `STUDY_ADMIN_EMAIL` in Cloudflare (Settings → Variables) to Andrew's sign-in address, or the API refuses everyone.** To let someone in: add them on People and add their email to the Access policy. The first request after deploy migrates existing rows to the pastor's library. Ideas for later: an option to copy a resource between libraries, and per-person backups.

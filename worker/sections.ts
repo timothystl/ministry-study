@@ -10,7 +10,7 @@ export const SECTIONS = [
   {
     key: 'hymns',
     label: 'Hymns & Liturgies',
-    detail: 'Hymn catalog, liturgies, attached sheet music',
+    detail: 'Hymn catalog, liturgies, music resources, attached sheet music',
   },
 ] as const
 export type SectionKey = (typeof SECTIONS)[number]['key']
@@ -22,7 +22,7 @@ const KINDS: Record<SectionKey, string[]> = {
   prayers: ['prayer', 'prayerset'],
   notes: ['note'],
   children: ['note'],
-  hymns: ['hymn', 'liturgy'],
+  hymns: ['hymn', 'liturgy', 'resource'],
 }
 export function cleanSections(input: unknown): SectionKey[] {
   if (!Array.isArray(input)) return []

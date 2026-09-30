@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { nav } from './helpers'
 
-test('add the RUF hymnbook, attach files, and keep a service together', async ({ page }) => {
+test('add a hymn, attach files, and keep a service together', async ({ page }) => {
   await page.goto('/')
   await nav(page, 'Hymns')
   await expect(page.getByText('No hymns yet')).toBeVisible()
@@ -24,14 +24,6 @@ test('add the RUF hymnbook, attach files, and keep a service together', async ({
   )
   await page.getByRole('button', { name: 'All hymns' }).click()
 
-  await page.getByRole('button', { name: 'RUF Hymnbook' }).click()
-  const ruf = page.getByRole('dialog')
-  await ruf.getByRole('button', { name: 'Look at the list' }).click()
-  await expect(ruf.getByText(/to add; 0 already/)).toBeVisible()
-  await ruf.getByRole('button', { name: /^Add \d+ hymns$/ }).click()
-  await page.getByLabel('Search hymns').fill('luther')
-  await expect(page.getByText('A Mighty Fortress Is Our God')).toBeVisible()
-
   await page.getByLabel('Search hymns').fill('')
   await page.getByRole('button', { name: 'Attach files' }).click()
   await page.getByLabel('Choose hymn files').setInputFiles([
@@ -48,7 +40,7 @@ test('add the RUF hymnbook, attach files, and keep a service together', async ({
     },
   ])
   const files = page.getByRole('dialog')
-  await expect(files.getByText(/2 files to attach to 2 hymns; 1 new hymns/)).toBeVisible()
+  await expect(files.getByText(/1 files to attach to 1 hymns; 2 new hymns/)).toBeVisible()
   await files.getByRole('button', { name: 'Save these' }).click()
   await page.getByLabel('Search hymns').fill('vision')
   await expect(page.getByText('Be Thou My Vision')).toBeVisible()

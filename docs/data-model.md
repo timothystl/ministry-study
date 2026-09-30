@@ -94,3 +94,10 @@ A hymn's `attachments` list holds `{id, name, mime, size, addedAt}`. The bytes a
 `attachment` and `attachment_piece` (base64 in 600,000-character rows), served at
 `/api/attachments/:id` (PUT to store, GET to read, DELETE to remove). Limits: JPEG, PNG, WebP, GIF
 and PDF only, 6 MB each. Served with `nosniff` and `sandbox` headers.
+
+## Music resources
+`resources` (kind `resource`): title, kind (Artist, Album, Article, Book, Songbook, Website,
+Other), creator, year, place, link, notes, tags[], files[{kind,location}], attachments[]. The
+Retuned Hymn Movement list is bundled at `public/data/retuned-resources.json` (source
+"Retuned Hymn Movement list", one sourceId per row). Older backups without `resources` restore
+without erasing them.

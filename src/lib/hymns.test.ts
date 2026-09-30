@@ -35,6 +35,7 @@ const empty = (): Library => ({
   notes: [],
   hymns: [],
   liturgies: [],
+  resources: [],
   sample: false,
 })
 const hymn = (over: Partial<Hymn>): Hymn => ({ ...blankHymn(), title: 'Untitled', ...over })
@@ -139,6 +140,7 @@ describe('imports', () => {
     expect(fortress.links.map((l) => l.label)).toContain('Lead sheet')
     expect(hymnsFromRuf(entries, { ...empty(), hymns }).skipped).toBe(entries.length)
     expect(hymns.every((h) => h.text === '')).toBe(true)
+    expect(hymns[0].id).toBe(`ruf-${entries[0].id}`) // fixed ids: two devices cannot duplicate them
   })
 })
 

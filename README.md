@@ -186,8 +186,9 @@ copyright, and any words you type in (keep only public-domain words or ones you 
 records where the music is: Finale files, sheet music, slides, recordings (a web address, or a
 path in your files) and links to where it is found online. Every hymn has a link that searches
 Hymnary.org (Hymnary blocks automated lookups, so it opens in its own tab).
-- **RUF Hymnbook** adds the ~175 hymns of igracemusic.com/hymnbook with their credits and links to
-  the lead sheet, overhead lyrics, chord chart and demo. Only titles, credits and links are kept.
+- **RUF Hymnbook**: the ~175 hymns of igracemusic.com/hymnbook are added automatically, once, with
+  their credits and links to the lead sheet, overhead lyrics, chord chart and demo. Only titles,
+  credits and links are kept.
 - **Import list** reads a spreadsheet saved as CSV (Title, First line, Tune, Composer, Lyricist,
   Meter, Scripture, Year, Key, Hymnal, Usage, Themes, Finale, Sheet music, Slides, Link).
 - **Attach files** matches a folder of files (Finale, PDF, PowerPoint, audio) to hymns by name and
@@ -203,3 +204,11 @@ a scanned hymnal page or a lead sheet with it. Photos over 1 MB are shrunk in th
 be up to 6 MB. Files are stored in the shared library's database, so they need the shared library
 (they are not in the JSON backup download; Cloudflare's own database backups cover them). Only
 photos and PDFs are accepted, and the file's contents are checked, not just its name.
+
+## Music Resources
+A page for the artists, albums, articles, books, songbooks and websites where hymns and songs are
+found. Each has a kind, creator, year, place, link, tags and notes, plus copies kept in your own
+files and photos or PDFs attached to it. The 466 artists, albums, articles and books from your
+Retuned Hymn Movement workbook are added automatically, once, with their links (anything you
+enter yourself is untouched, and anything you remove stays removed). "Add resource" is for anything new you start using, such as an
+album you downloaded or a songbook you bought. Search covers every field; filter by kind or tag.
