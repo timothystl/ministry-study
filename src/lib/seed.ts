@@ -99,6 +99,7 @@ export function sampleLibrary(): Library {
     liturgies: [],
     resources: [],
     ideaSources: [],
+    visuals: [],
     notes: [],
     sample: true,
     recentIds: books.map((b) => b.id),

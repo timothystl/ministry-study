@@ -47,7 +47,7 @@ export function linkTitle(url: string): { title: string; site: string } {
   const u = new URL(url.trim())
   const site = u.hostname.replace(/^www\./, '')
   const slug = decodeURIComponent(u.pathname.split('/').filter(Boolean).pop() || '')
-    .replace(/\.(html?|php|aspx?)$/i, '')
+    .replace(/\.(html?|php|aspx?|jpe?g|png|gif|webp|svg|mp4|mov)$/i, '')
     .replace(/[-_+]+/g, ' ')
     .trim()
   const title = slug ? slug.charAt(0).toUpperCase() + slug.slice(1) : site

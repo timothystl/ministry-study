@@ -184,8 +184,25 @@ Sojourners (limited to that site, for whatever is in the search box, such as a p
 (kept in the shared library; remove it with the bin). **Take a photo** opens the phone's camera and saves the picture as a Scrap at
 once; add a caption afterward. **Paste links** (or paste one link into the quick-add line) saves each
 link as an item titled from the link, with an optional note after a "|"; only the link and your note are kept, not the page's
-text. Planned next: the
+text. Photos here are for reference, so they are made small (about 1 MB at most, 1,400 pixels on the long side); when a better
+image exists, link it under "Where it came from" instead of storing it. Planned next: the
 Visual Collector (images and clip links), see docs/collectors-scope.md.
+
+**Storage used** (Library Data → Check storage) shows what the shared library holds: documents, images, video and
+music/audio files with sizes, the text of the catalog and manuscripts, and the ten biggest files with the record each belongs
+to, so it is clear where to cut back. It counts the signed-in person's own library only.
+
+## Images & Clips
+
+Its own page for images and video clips kept for reference. Each item records a link (the better copy lives there; the study
+keeps at most a small reference photo), who made it, its **license** (Public domain, Creative Commons, CVLI, Own work,
+Reference only, or Unknown) with a ready-to-paste credit line, its passage, tags, and what it is for (sermon slide, bulletin,
+chapel, Pre-K, website, worship background). Reference-only and Unknown items are marked "Not cleared for display". A clip also
+records its start and end, what happens, and a content note. A **YouTube or Vimeo** clip plays in place from its own site (nothing
+loads from there until you press play) and opens at its start time. Paste a link into the quick-add line to start a record;
+"Look elsewhere" opens searches of Wikimedia Commons, The Met, National Gallery of Art, Library of Congress, Unsplash, Pexels and
+YouTube. A sermon's page lists the images and clips on its passage. Uploading clips to Cloudflare R2/Stream is not built yet.
+It is its own part on People and its records sync like the others.
 
 ## Children's Messages
 

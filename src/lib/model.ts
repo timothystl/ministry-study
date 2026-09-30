@@ -2,6 +2,7 @@ import type { Hymn, Liturgy } from './hymns'
 import type { Resource } from './resources'
 import type { IdeaSource } from './ideas'
 import type { Note } from './notes'
+import type { Visual } from './visuals'
 import type { Prayer, PrayerSet } from './prayers'
 import type { Sermon } from './sermons'
 export const ownerships = ['Owned', 'Not owned', 'Previously owned'] as const
@@ -108,6 +109,7 @@ export interface Library {
   liturgies: Liturgy[]
   resources: Resource[]
   ideaSources: IdeaSource[]
+  visuals: Visual[]
   sample: boolean
 }
 export const blankLocation = (): Location => ({ room: '', bookcase: '', shelf: '', position: '' })
