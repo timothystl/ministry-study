@@ -1,6 +1,6 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { Plus, Search } from 'lucide-react'
-import { removeFile } from '../lib/attachments'
+import { attachmentRefs, removeUnused } from '../lib/attachments'
 import { fileKinds } from '../lib/hymns'
 import type { Library } from '../lib/model'
 import {
@@ -183,6 +183,7 @@ export function Resources({
     [items, query, kind, tag],
   )
   const open = items.find((r) => r.id === openId)
+  const refs = useMemo(() => attachmentRefs(library), [library])
   return (
     <section className="sermons" aria-label="Music resources">
       {open ? (
@@ -205,7 +206,7 @@ export function Resources({
                 <button
                   onClick={() => {
                     if (onSave(deleteResource(library, open.id))) {
-                      open.attachments.forEach((a) => void removeFile(a.id))
+                      removeUnused(library, open.attachments)
                       setOpenId('')
                     }
                   }}
@@ -246,6 +247,7 @@ export function Resources({
             </section>
           )}
           <Attachments
+            refs={refs}
             attachments={open.attachments}
             onChange={(next) => onSave(saveResource(library, { ...open, attachments: next }))}
           />

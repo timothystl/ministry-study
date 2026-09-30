@@ -404,15 +404,28 @@ export function mergeHymns(
 }
 
 // ---- Liturgies -------------------------------------------------------------------------------
-export const liturgyKinds = ['Sunday service', 'Season', 'Occasion', 'Other'] as const
-export const itemKinds = ['Hymn', 'Reading', 'Prayer', 'Liturgy text', 'Note'] as const
+// A liturgy is held as one whole: every part in order, each with its words, its music and its
+// files. A "Setting" is a complete rite kept to be used again (Divine Service, Matins, Evening
+// Prayer); a "Sunday service" or "Occasion" is one used on a day, often started from a setting.
+export const liturgyKinds = ['Setting', 'Sunday service', 'Season', 'Occasion', 'Other'] as const
+export const itemKinds = [
+  'Hymn',
+  'Reading',
+  'Prayer',
+  'Liturgy text',
+  'Music',
+  'Rubric',
+  'Note',
+] as const
 export interface LiturgyItem {
   id: string
   kind: (typeof itemKinds)[number]
   label: string // what it is called in the service ("Gathering hymn", "Kyrie")
   hymnId: string // for a Hymn
   scripture: string
-  text: string
+  text: string // the words of this part, in full
+  files: HymnFile[] // Finale files, slides for this part
+  attachments: Attachment[] // photos and PDFs of its music
 }
 export interface Liturgy {
   id: string
@@ -421,11 +434,13 @@ export interface Liturgy {
   season: string
   date: string
   items: LiturgyItem[]
-  files: HymnFile[]
+  files: HymnFile[] // slides or the order of service for the whole
+  attachments: Attachment[] // photos and PDFs of the whole
   notes: string
   source: string
   updatedAt: string
 }
+export const MAX_PART_TEXT = 30_000
 export const blankItem = (kind: LiturgyItem['kind'] = 'Hymn'): LiturgyItem => ({
   id: crypto.randomUUID(),
   kind,
@@ -433,6 +448,8 @@ export const blankItem = (kind: LiturgyItem['kind'] = 'Hymn'): LiturgyItem => ({
   hymnId: '',
   scripture: '',
   text: '',
+  files: [],
+  attachments: [],
 })
 export const blankLiturgy = (): Liturgy => ({
   id: crypto.randomUUID(),
@@ -442,6 +459,7 @@ export const blankLiturgy = (): Liturgy => ({
   date: '',
   items: [],
   files: [],
+  attachments: [],
   notes: '',
   source: '',
   updatedAt: '',
@@ -451,12 +469,15 @@ export function saveLiturgy(library: Library, liturgy: Liturgy): Library {
   if (!title) throw new Error('A liturgy needs a title.')
   if (liturgy.date && !/^\d{4}-\d{2}-\d{2}$/.test(liturgy.date))
     throw new Error('Use a valid date.')
+  const cleanFiles = (files: HymnFile[]) =>
+    files.filter((f) => f.location.trim()).map((f) => ({ ...f, location: f.location.trim() }))
+  if (liturgy.items.some((i) => i.text.length > MAX_PART_TEXT))
+    throw new Error(`A part is longer than ${MAX_PART_TEXT.toLocaleString()} characters.`)
   const saved: Liturgy = {
     ...liturgy,
     title,
-    files: liturgy.files
-      .filter((f) => f.location.trim())
-      .map((f) => ({ ...f, location: f.location.trim() })),
+    files: cleanFiles(liturgy.files),
+    items: liturgy.items.map((i) => ({ ...i, files: cleanFiles(i.files) })),
     updatedAt: new Date().toISOString(),
   }
   const exists = library.liturgies.some((l) => l.id === liturgy.id)
@@ -502,4 +523,54 @@ export function searchLiturgies(liturgies: Liturgy[], hymns: Hymn[], query: stri
     )
     return words.every((w) => text.includes(w))
   })
+}
+
+// A new liturgy started from an existing one (usually a setting): the same parts in the same
+// order, with their words, hymns, files and music. The date is left blank. Stored photos and PDFs
+// are shared with the original, not copied.
+export function copyLiturgy(
+  library: Library,
+  id: string,
+  kind: Liturgy['kind'] = 'Sunday service',
+): { library: Library; liturgy: Liturgy } | null {
+  const from = library.liturgies.find((l) => l.id === id)
+  if (!from) return null
+  const liturgy: Liturgy = {
+    ...structuredClone(from),
+    id: crypto.randomUUID(),
+    title: `${from.title} (copy)`,
+    kind,
+    date: '',
+    source: '',
+    items: from.items.map((i) => ({ ...structuredClone(i), id: crypto.randomUUID() })),
+    updatedAt: new Date().toISOString(),
+  }
+  return { library: { ...library, liturgies: [...library.liturgies, liturgy] }, liturgy }
+}
+// The whole liturgy as plain text, every part in order, for copying into a bulletin or a document.
+export function liturgyToText(library: Library, liturgy: Liturgy): string {
+  const out: string[] = [liturgy.title.toUpperCase()]
+  const meta = [liturgy.kind, liturgy.season, liturgy.date].filter(Boolean).join(' · ')
+  if (meta) out.push(meta)
+  for (const item of liturgy.items) {
+    out.push('', (item.label || item.kind).toUpperCase())
+    if (item.kind === 'Hymn') {
+      const hymn = library.hymns.find((h) => h.id === item.hymnId)
+      if (hymn) {
+        const credit = [
+          hymn.lyricist && `Words: ${hymn.lyricist}`,
+          hymn.composer && `Music: ${hymn.composer}`,
+        ]
+        out.push(
+          [hymn.title, hymn.hymnal && `(${hymn.hymnal})`].filter(Boolean).join(' '),
+          ...credit.filter((c): c is string => Boolean(c)),
+        )
+        if (hymn.text && !item.text) out.push('', hymn.text)
+      }
+    }
+    if (item.scripture) out.push(item.scripture)
+    if (item.text) out.push(item.text)
+  }
+  if (liturgy.notes) out.push('', 'NOTES', liturgy.notes)
+  return out.join('\n')
 }

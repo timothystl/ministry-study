@@ -134,3 +134,8 @@ if any of its records exist), so there are no import buttons.
 
 ## Latest update: people and permissions
 A second (and further) person can now use the study with a private library of their own; Andrew stays administrator and switches parts on or off per person on People (README → People and permissions). **Before deploying, set `STUDY_ADMIN_EMAIL` in Cloudflare (Settings → Variables) to Andrew's sign-in address, or the API refuses everyone.** To let someone in: add them on People and add their email to the Access policy. The first request after deploy migrates existing rows to the pastor's library. Ideas for later: an option to copy a resource between libraries, and per-person backups.
+
+## Latest update: liturgies held whole
+Liturgies are complete services and settings with per-part words, files and music; whole-service
+view, copy as text, print, and "start a new service from this". Next idea: build a liturgy from an
+existing PowerPoint (one slide per part) or Word file, reading the text from it.

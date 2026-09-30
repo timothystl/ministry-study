@@ -101,3 +101,9 @@ Other), creator, year, place, link, notes, tags[], files[{kind,location}], attac
 Retuned Hymn Movement list is bundled at `public/data/retuned-resources.json` (source
 "Retuned Hymn Movement list", one sourceId per row). Older backups without `resources` restore
 without erasing them.
+
+## Liturgies held whole
+A liturgy item now also has `files[]` and `attachments[]` (its music); a liturgy has `attachments[]`
+for the whole. Kinds: Setting (a rite kept for reuse), Sunday service, Season, Occasion, Other. Item
+kinds add Music and Rubric. Attachments are reference-counted across hymns, resources, liturgies
+and their parts, so files shared by a copied service are deleted only when unused.

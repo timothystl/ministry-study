@@ -6,6 +6,7 @@ import {
   isImageAttachment,
   removeFile,
   sizeLabel,
+  usedElsewhere,
   type Attachment,
 } from '../lib/attachments'
 
@@ -15,10 +16,15 @@ export function Attachments({
   attachments,
   onChange,
   heading = 'Photos and PDFs',
+  refs,
+  compact = false,
 }: {
   attachments: Attachment[]
   onChange: (next: Attachment[]) => boolean
   heading?: string
+  // How many records use each file, so a file another record also uses is not deleted.
+  refs?: Map<string, number>
+  compact?: boolean
 }) {
   const [busy, setBusy] = useState(false)
   const [errors, setErrors] = useState<string[]>([])
@@ -37,13 +43,14 @@ export function Attachments({
     setBusy(false)
   }
   function remove(a: Attachment) {
-    if (onChange(attachments.filter((x) => x.id !== a.id))) void removeFile(a.id)
+    if (onChange(attachments.filter((x) => x.id !== a.id)) && !(refs && usedElsewhere(refs, a.id)))
+      void removeFile(a.id)
     setConfirm('')
   }
   return (
     <section className="detail-section" aria-label={heading}>
-      <h3>{heading}</h3>
-      {attachments.length === 0 && (
+      {!compact && <h3>{heading}</h3>}
+      {attachments.length === 0 && !compact && (
         <p className="muted">Nothing attached yet. Add a photo of a page, or a PDF.</p>
       )}
       {attachments.length > 0 && (
@@ -116,9 +123,11 @@ export function Attachments({
           {e}
         </p>
       ))}
-      <p className="muted">
-        Kept in your shared library. Photos over 1 MB are made smaller; a PDF can be up to 6 MB.
-      </p>
+      {!compact && (
+        <p className="muted">
+          Kept in your shared library. Photos over 1 MB are made smaller; a PDF can be up to 6 MB.
+        </p>
+      )}
     </section>
   )
 }

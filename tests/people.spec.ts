@@ -25,6 +25,11 @@ test('a person with only Prayers and Children’s Messages sees only those parts
   })(page)
   await page.goto('/')
   const opener = page.getByRole('button', { name: 'Open navigation', exact: true })
+  // Wait for the page to finish starting: the menu button on a phone, the menu itself on a desktop.
+  await opener
+    .or(page.getByRole('navigation', { name: 'Main navigation', exact: true }))
+    .first()
+    .waitFor()
   if (await opener.isVisible()) await opener.click()
   const menu = page.getByRole('navigation', { name: 'Main navigation' })
   await expect(menu.getByRole('button', { name: 'Prayers' })).toHaveCount(1)

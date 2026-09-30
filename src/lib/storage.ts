@@ -150,6 +150,13 @@ const note = z.object({
   updatedAt: z.string(),
 })
 const hymnFile = z.object({ kind: z.enum(fileKinds), location: z.string() })
+const attachment = z.object({
+  id: z.string().min(8),
+  name: z.string(),
+  mime: z.string(),
+  size: z.number(),
+  addedAt: z.string(),
+})
 const hymn = z.object({
   id: z.string().min(1),
   title: z.string().trim().min(1),
@@ -199,9 +206,12 @@ const liturgy = z.object({
       hymnId: z.string(),
       scripture: z.string(),
       text: z.string(),
+      files: z.array(hymnFile).default([]),
+      attachments: z.array(attachment).default([]),
     }),
   ),
   files: z.array(hymnFile).default([]),
+  attachments: z.array(attachment).default([]),
   notes: z.string().default(''),
   source: z.string().default(''),
   updatedAt: z.string(),

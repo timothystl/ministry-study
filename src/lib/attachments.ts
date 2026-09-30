@@ -1,3 +1,5 @@
+import type { Library } from './model'
+
 // Photos and PDFs kept with a record, such as sheet music for a hymn or a scanned hymnal page.
 // The files live in the shared library; the record keeps only their names and sizes.
 export interface Attachment {
@@ -112,4 +114,26 @@ export async function attachFiles(
     }
   }
   return { added, errors }
+}
+// How many records point at each stored file. A liturgy started from another shares its files,
+// so a file is deleted only when the last record using it lets go.
+export function attachmentRefs(library: Library): Map<string, number> {
+  const counts = new Map<string, number>()
+  const add = (list: Attachment[]) =>
+    list.forEach((a) => counts.set(a.id, (counts.get(a.id) || 0) + 1))
+  library.hymns.forEach((h) => add(h.attachments))
+  library.resources.forEach((r) => add(r.attachments))
+  library.liturgies.forEach((l) => {
+    add(l.attachments)
+    l.items.forEach((i) => add(i.attachments))
+  })
+  return counts
+}
+export const usedElsewhere = (refs: Map<string, number>, id: string) => (refs.get(id) || 0) > 1
+// Deletes the stored files of a record that is being removed, unless another record still uses them.
+export function removeUnused(library: Library, removed: Attachment[]) {
+  const refs = attachmentRefs(library)
+  removed.forEach((a) => {
+    if (!usedElsewhere(refs, a.id)) void removeFile(a.id)
+  })
 }
