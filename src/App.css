@@ -2754,3 +2754,15 @@ mark {
   padding: 0;
   margin: 0;
 }
+.usage-rows {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0;
+}
+.usage-rows li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid var(--line, #e2e2e2);
+}

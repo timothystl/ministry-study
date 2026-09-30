@@ -184,8 +184,13 @@ Sojourners (limited to that site, for whatever is in the search box, such as a p
 (kept in the shared library; remove it with the bin). **Take a photo** opens the phone's camera and saves the picture as a Scrap at
 once; add a caption afterward. **Paste links** (or paste one link into the quick-add line) saves each
 link as an item titled from the link, with an optional note after a "|"; only the link and your note are kept, not the page's
-text. Planned next: the
+text. Photos here are for reference, so they are made small (about 1 MB at most, 1,400 pixels on the long side); when a better
+image exists, link it under "Where it came from" instead of storing it. Planned next: the
 Visual Collector (images and clip links), see docs/collectors-scope.md.
+
+**Storage used** (Library Data → Check storage) shows what the shared library holds: documents, images, video and
+music/audio files with sizes, the text of the catalog and manuscripts, and the ten biggest files with the record each belongs
+to, so it is clear where to cut back. It counts the signed-in person's own library only.
 
 ## Children's Messages
 

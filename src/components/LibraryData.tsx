@@ -3,6 +3,7 @@ import { Download, Upload } from 'lucide-react'
 import { type Library } from '../lib/model'
 import { downloadJson, importLogos, parseBackup } from '../lib/storage'
 import { Modal } from './Modal'
+import { StorageUsage } from './StorageUsage'
 export function LibraryData({
   library,
   onSave,
@@ -69,6 +70,7 @@ export function LibraryData({
       <button onClick={() => downloadJson(library, 'ministry-study.backup.json')}>
         <Download size={16} /> Export backup
       </button>
+      <StorageUsage library={library} />
       <section className="detail-section">
         <h3>Import Logos catalog</h3>
         <p>

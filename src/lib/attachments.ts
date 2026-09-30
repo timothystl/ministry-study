@@ -12,6 +12,25 @@ export interface Attachment {
 export const MAX_ATTACHMENT = 8_000_000
 const KEEP_AS_IS = 1_500_000 // photos smaller than this are kept exactly as taken
 const LONGEST_SIDE = 2200
+// Reference photos (illustrations and scraps) are kept small: the better image is linked, not stored.
+export interface ImageSize {
+  keepAsIs: number
+  longestSide: number
+  qualities: number[]
+  cap: number
+}
+export const NORMAL_IMAGES: ImageSize = {
+  keepAsIs: KEEP_AS_IS,
+  longestSide: LONGEST_SIDE,
+  qualities: [0.85, 0.75, 0.65],
+  cap: MAX_ATTACHMENT,
+}
+export const REFERENCE_IMAGES: ImageSize = {
+  keepAsIs: 400_000,
+  longestSide: 1400,
+  qualities: [0.75, 0.65, 0.55, 0.45],
+  cap: 1_000_000,
+}
 export const attachmentUrl = (id: string) => `/api/attachments/${id}`
 export const isImageAttachment = (a: Pick<Attachment, 'mime'>) => a.mime.startsWith('image/')
 export const sizeLabel = (bytes: number) =>
@@ -58,26 +77,29 @@ export const DOWNLOAD_EXTENSIONS = [
   'rtf',
 ]
 export const ACCEPTED_FILES = `image/*,application/pdf,${DOWNLOAD_EXTENSIONS.map((e) => `.${e}`).join(',')}`
-async function shrink(file: File): Promise<Blob> {
+async function shrink(file: File, size: ImageSize): Promise<Blob> {
   const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
   try {
-    const scale = Math.min(1, LONGEST_SIDE / Math.max(bitmap.width, bitmap.height))
+    const scale = Math.min(1, size.longestSide / Math.max(bitmap.width, bitmap.height))
     const canvas = document.createElement('canvas')
     canvas.width = Math.max(1, Math.round(bitmap.width * scale))
     canvas.height = Math.max(1, Math.round(bitmap.height * scale))
     canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
-    for (const quality of [0.85, 0.75, 0.65]) {
+    for (const quality of size.qualities) {
       const blob = await new Promise<Blob | null>((done) =>
         canvas.toBlob(done, 'image/jpeg', quality),
       )
-      if (blob && blob.size <= MAX_ATTACHMENT) return blob
+      if (blob && blob.size <= size.cap) return blob
     }
     throw new Error('Could not make that photo small enough.')
   } finally {
     bitmap.close()
   }
 }
-export async function prepareFile(file: File): Promise<{ blob: Blob; mime: string; name: string }> {
+export async function prepareFile(
+  file: File,
+  size: ImageSize = NORMAL_IMAGES,
+): Promise<{ blob: Blob; mime: string; name: string }> {
   const type = attachmentType(file)
   if (!type)
     throw new Error(
@@ -88,13 +110,13 @@ export async function prepareFile(file: File): Promise<{ blob: Blob; mime: strin
     return { blob: file, mime: type, name: file.name }
   }
   if (file.size > 40_000_000) throw new Error(`${file.name}: that photo is too large.`)
-  if (type !== 'image/other' && type !== 'image/gif' && file.size <= KEEP_AS_IS)
+  if (type !== 'image/other' && type !== 'image/gif' && file.size <= size.keepAsIs)
     return { blob: file, mime: type, name: file.name }
   if (type === 'image/gif') {
     if (file.size > MAX_ATTACHMENT) throw new Error(`${file.name}: too large (8 MB at most).`)
     return { blob: file, mime: type, name: file.name }
   }
-  const blob = await shrink(file)
+  const blob = await shrink(file, size)
   return { blob, mime: 'image/jpeg', name: file.name.replace(/\.[a-z0-9]+$/i, '') + '.jpg' }
 }
 export async function uploadFile(
@@ -127,12 +149,13 @@ export async function removeFile(id: string): Promise<void> {
 // Adds files to a list: each is prepared, uploaded, and described. Files that fail are reported.
 export async function attachFiles(
   files: File[],
+  size: ImageSize = NORMAL_IMAGES,
 ): Promise<{ added: Attachment[]; errors: string[] }> {
   const added: Attachment[] = []
   const errors: string[] = []
   for (const file of files) {
     try {
-      const { blob, mime, name } = await prepareFile(file)
+      const { blob, mime, name } = await prepareFile(file, size)
       const id = crypto.randomUUID()
       const problem = await uploadFile(id, blob, mime, name)
       if (problem) errors.push(`${file.name}: ${problem}`)

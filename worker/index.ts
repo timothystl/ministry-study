@@ -8,6 +8,7 @@ import {
   putAttachment,
   validAttachmentId,
 } from './attachments'
+import { usageFor } from './usage'
 import { applyChanges, forbiddenKinds, readAll, validateChange } from './store'
 import {
   listPeople,
@@ -194,9 +195,11 @@ export async function handleApi(
         return reply({ ok: true, chars: input.text.length })
       }
     }
+    if (pathname === '/api/usage' && request.method === 'GET')
+      return reply(await usageFor(env.DB, who.owner))
     const fileRoute = /^\/api\/attachments\/([^/]+)$/.exec(pathname)
     if (fileRoute) {
-      if (!may('hymns') && !may('sermons')) return denied()
+      if (!may('hymns') && !may('sermons') && !may('ideas')) return denied()
       const id = decodeURIComponent(fileRoute[1])
       if (!validAttachmentId(id)) return reply({ error: 'Invalid file.' }, 400)
       if (request.method === 'GET') {
