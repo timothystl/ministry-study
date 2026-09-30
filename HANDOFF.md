@@ -129,5 +129,5 @@ Music Resources page with the Retuned Hymn Movement workbook (artists, albums, a
 the "zac articles" sheet of bare titles was left out). Ideas: link a resource to the hymns found
 on it; an "album to hymns" import when a track list is available.
 The RUF Hymnbook and Retuned Hymn Movement lists are added on their own the first time the shared
-library loads (fixed ids `ruf-…` / `retuned-…`, a per-device "done" flag, and each list is skipped
+library loads, or at first start on a device with no shared library (fixed ids `ruf-…` / `retuned-…`, a per-device "done" flag, and each list is skipped
 if any of its records exist), so there are no import buttons.

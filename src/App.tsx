@@ -165,7 +165,7 @@ export default function App() {
     return true
   }, [])
   const sync = useSync(library, adoptShared)
-  useBundled(library, commit, sync.status === 'synced')
+  useBundled(library, commit, sync.status === 'synced' || sync.status === 'local')
   function navigate(next: Page) {
     setPage(next)
     setDetailId('')

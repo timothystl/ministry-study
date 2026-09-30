@@ -7,7 +7,7 @@ test('the hymnbook and the Retuned Hymn Movement list are added by themselves, o
 }) => {
   let revision = 0
   const rows = new Map<string, { kind: string; id: string; data: string }>()
-  const context = await browser.newContext()
+  const context = await browser.newContext({ storageState: { cookies: [], origins: [] } })
   await context.route('**/api/library', (route) =>
     route.fulfill({ json: { revision, records: [...rows.values()] } }),
   )
@@ -43,5 +43,17 @@ test('the hymnbook and the Retuned Hymn Movement list are added by themselves, o
   await expect(page.getByText(/hymns in your catalog/)).toBeVisible()
   await page.waitForTimeout(1500)
   expect(rows.size).toBe(before)
+  await context.close()
+})
+
+test('they are added without the shared library too', async ({ browser }) => {
+  const context = await browser.newContext({ storageState: { cookies: [], origins: [] } })
+  await context.route('**/api/library', (route) => route.fulfill({ status: 503, json: {} }))
+  const page = await context.newPage()
+  await page.goto('/')
+  await nav(page, 'Hymns')
+  await expect(page.getByText(/hymns in your catalog/)).toBeVisible()
+  await nav(page, 'Music Resources')
+  await expect(page.getByText(/resources$/).first()).toBeVisible()
   await context.close()
 })
