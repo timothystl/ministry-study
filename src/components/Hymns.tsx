@@ -284,7 +284,9 @@ function ListImport({
       <p>
         Paste a spreadsheet saved as CSV, or choose the file. The first row names the columns:{' '}
         <code>{HYMN_CSV_HEADERS}</code>. Only Title is required. Where a Finale file, sheet music or
-        slides are kept goes in the Finale, Sheet music and Slides columns.
+        slides are kept goes in the Finale, Sheet music and Slides columns. A hymnal's index works
+        the same way: put the hymnal (LSB) in Hymnal and the hymn's number in Number. A hymn you
+        already have gets the new hymnal number added; nothing you wrote is overwritten.
       </p>
       <label className="file-label">
         <Upload size={16} /> Choose a CSV file
@@ -316,7 +318,8 @@ function ListImport({
       {preview && (
         <section className="import-review">
           <p>
-            {preview.added} to add; {preview.skipped} already in your catalog.
+            {preview.added} to add; {preview.updated} already in your catalog and getting new hymnal
+            numbers or details; {preview.skipped} already complete.
           </p>
           {warnings.length > 0 && (
             <details>
@@ -330,13 +333,13 @@ function ListImport({
           )}
           <button
             className="primary"
-            disabled={!preview.added}
+            disabled={!preview.added && !preview.updated}
             onClick={() => {
               if (onSave(preview.library)) onClose()
               else setError('Could not save.')
             }}
           >
-            Import {preview.added} hymns
+            Import {preview.added + preview.updated} hymns
           </button>
         </section>
       )}

@@ -346,7 +346,7 @@ export function hymnsFromRuf(
 }
 
 export const HYMN_CSV_HEADERS =
-  'Title,First line,Tune,Composer,Lyricist,Meter,Scripture,Year,Key,Hymnal,Usage,Themes,Finale,Sheet music,Slides,Link'
+  'Title,First line,Tune,Composer,Lyricist,Meter,Scripture,Year,Key,Hymnal,Number,Usage,Themes,Finale,Sheet music,Slides,Link'
 // A spreadsheet of hymns. Recognized columns: Title, First line, Tune, Composer, Lyricist (or
 // Author), Meter, Scripture, Year, Key, Hymnal, Usage, Themes, Finale, Sheet music, Slides, Link.
 // Usage and Themes are separated by semicolons.
@@ -384,7 +384,7 @@ export function parseHymnList(text: string): { hymns: Hymn[]; warnings: string[]
       scripture: parsed?.complete ? formatReferences(parsed.refs) : '',
       year: v('year'),
       key: v('key'),
-      hymnal: v('hymnal'),
+      hymnal: [v('hymnal'), v('number') || v('no') || v('hymn number')].filter(Boolean).join(' '),
       usage: list(v('usage').split(';')),
       themes: list(v('themes').split(';')),
       files,
@@ -396,29 +396,69 @@ export function parseHymnList(text: string): { hymns: Hymn[]; warnings: string[]
   if (hymns.some((h) => !h.title)) throw new Error('Every row needs a title.')
   return { hymns, warnings }
 }
-// Adds hymns whose title (and composer) are not already in the library.
+// "LSB 878; TLH 262": each hymnal and number is one entry, kept once.
+export function addHymnalRef(existing: string, refs: string): string {
+  const parts = existing
+    .split(';')
+    .map((p) => p.trim())
+    .filter(Boolean)
+  for (const ref of refs
+    .split(';')
+    .map((r) => r.trim())
+    .filter(Boolean))
+    if (!parts.some((p) => normalize(p) === normalize(ref))) parts.push(ref)
+  return parts.join('; ')
+}
+const agree = (a: string, b: string) => !a.trim() || !b.trim() || normalize(a) === normalize(b)
+// Brings hymns in from a list or a hymnal's index. A hymn already in the catalog (same title, and a
+// tune that does not disagree; composers are spelled too many ways to compare) is not added again: the new hymnal number is added to it,
+// and only blanks are filled in, so nothing you wrote is overwritten.
 export function mergeHymns(
   library: Library,
   incoming: Hymn[],
-): { library: Library; added: number; skipped: number } {
-  const key = (h: Hymn) => `${normalize(h.title)}|${normalize(h.composer)}`
-  const seen = new Set(library.hymns.map(key))
-  const add: Hymn[] = []
+): { library: Library; added: number; updated: number; skipped: number } {
+  const hymns = [...library.hymns]
+  const fresh = new Set<string>()
+  let added = 0
+  let updated = 0
+  let skipped = 0
+  const now = new Date().toISOString()
   for (const h of incoming) {
-    if (seen.has(key(h))) continue
-    seen.add(key(h))
-    add.push({
-      ...h,
-      usage: list(h.usage),
-      themes: list(h.themes),
-      updatedAt: new Date().toISOString(),
-    })
+    const at = hymns.findIndex(
+      (x) => normalize(x.title) === normalize(h.title) && agree(x.tune, h.tune),
+    )
+    if (at < 0) {
+      hymns.push({ ...h, usage: list(h.usage), themes: list(h.themes), updatedAt: now })
+      fresh.add(h.id)
+      added++
+      continue
+    }
+    const x = hymns[at]
+    const fill = (a: string, b: string) => (a.trim() ? a : b)
+    const merged: Hymn = {
+      ...x,
+      hymnal: addHymnalRef(x.hymnal, h.hymnal),
+      firstLine: fill(x.firstLine, h.firstLine),
+      tune: fill(x.tune, h.tune),
+      composer: fill(x.composer, h.composer),
+      lyricist: fill(x.lyricist, h.lyricist),
+      arranger: fill(x.arranger, h.arranger),
+      meter: fill(x.meter, h.meter),
+      scripture: fill(x.scripture, h.scripture),
+      year: fill(x.year, h.year),
+      key: fill(x.key, h.key),
+      usage: [...new Set([...x.usage, ...list(h.usage)])],
+      themes: [...new Set([...x.themes, ...list(h.themes)])],
+    }
+    const same =
+      JSON.stringify({ ...merged, updatedAt: '' }) === JSON.stringify({ ...x, updatedAt: '' })
+    if (same) skipped++
+    else {
+      hymns[at] = { ...merged, updatedAt: now }
+      updated++
+    }
   }
-  return {
-    library: { ...library, hymns: [...library.hymns, ...add] },
-    added: add.length,
-    skipped: incoming.length - add.length,
-  }
+  return { library: { ...library, hymns }, added, updated, skipped }
 }
 
 // ---- Liturgies -------------------------------------------------------------------------------

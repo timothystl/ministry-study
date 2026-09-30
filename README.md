@@ -315,3 +315,12 @@ files" on, the default) the file itself is stored and attached to the sermon, wh
 changed file replaces its older copy. A sermon's page also has "Attach photos or files" for adding
 one by hand. Files up to 8 MB (Word, PDF, text, photos); funeral and wedding sermons are kept out of
 search as before, but their original files are stored like the rest.
+
+### Adding a hymnal's index
+A hymnal's index (the Lutheran Service Book, Psalms for All Seasons, Lift Up Your Hearts and so on)
+is imported as a hymn list with Hymnal and Number columns (plus Title, and Tune, Meter, Composer,
+Lyricist, Usage where the page gives them). A hymn already in the catalog (same title, and no
+disagreement about the tune) gets the new number added to its Hymnal entry ("RUF Hymnbook; LSB 878")
+and only its blanks filled; new titles are added. Running the same index again changes nothing.
+Search finds a hymn by its number ("LSB 878").
+
