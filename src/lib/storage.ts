@@ -10,6 +10,7 @@ import {
 } from './model'
 import { fileKinds, itemKinds, liturgyKinds } from './hymns'
 import { noteKinds } from './notes'
+import { licenses, visualKinds } from './visuals'
 import { resourceKinds } from './resources'
 import { prayerTypes } from './prayers'
 import { sampleLibrary } from './seed'
@@ -166,6 +167,27 @@ const ideaSource = z.object({
   name: z.string().trim().min(1),
   site: z.string().trim().min(3),
 })
+const visual = z.object({
+  id: z.string().min(1),
+  title: z.string(),
+  kind: z.enum(visualKinds),
+  link: z.string(),
+  creator: z.string(),
+  license: z.enum(licenses),
+  credit: z.string(),
+  scripture: z.string(),
+  tags: z.array(z.string()),
+  useFor: z.array(z.string()),
+  notes: z.string(),
+  start: z.string(),
+  end: z.string(),
+  happens: z.string(),
+  contentNote: z.string(),
+  noteId: z.string(),
+  attachments: z.array(attachmentSchema).default([]),
+  personal: z.boolean().default(false),
+  updatedAt: z.string(),
+})
 const hymnFile = z.object({ kind: z.enum(fileKinds), location: z.string() })
 const hymn = z.object({
   id: z.string().min(1),
@@ -276,6 +298,7 @@ const schema = z.object({
   liturgies: z.array(liturgy).default([]),
   resources: z.array(resource).default([]),
   ideaSources: z.array(ideaSource).default([]),
+  visuals: z.array(visual).default([]),
   sample: z.boolean(),
 })
 const LIBRARY_KEY = 'ministry-study.library.v1'
@@ -301,6 +324,7 @@ export function parseBackup(input: unknown): Library {
     data.liturgies,
     data.resources,
     data.ideaSources,
+    data.visuals,
   ])
     if (new Set(items.map((x) => x.id)).size !== items.length)
       throw new Error('Duplicate record IDs in backup.')
@@ -336,6 +360,7 @@ const emptyLibrary = (): Library => ({
   liturgies: [],
   resources: [],
   ideaSources: [],
+  visuals: [],
   sample: false,
 })
 export function loadLibrary(): { library: Library; error: string } {
@@ -358,6 +383,7 @@ export function loadLibrary(): { library: Library; error: string } {
         liturgies: [],
         resources: [],
         ideaSources: [],
+        visuals: [],
         notes: [],
         sample: false,
       },

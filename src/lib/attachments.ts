@@ -175,6 +175,7 @@ export function attachmentRefs(library: Library): Map<string, number> {
   library.hymns.forEach((h) => add(h.attachments))
   library.sermons.forEach((s) => add(s.attachments))
   library.notes.forEach((n) => add(n.attachments))
+  library.visuals.forEach((v) => add(v.attachments))
   library.resources.forEach((r) => add(r.attachments))
   library.liturgies.forEach((l) => {
     add(l.attachments)

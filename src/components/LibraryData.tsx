@@ -43,6 +43,10 @@ export function LibraryData({
           parsed.liturgies = library.liturgies
         if (!Array.isArray((input as { resources?: unknown }).resources))
           parsed.resources = library.resources
+        if (!Array.isArray((input as { visuals?: unknown }).visuals))
+          parsed.visuals = library.visuals
+        if (!Array.isArray((input as { ideaSources?: unknown }).ideaSources))
+          parsed.ideaSources = library.ideaSources
         const hasPrayers = Array.isArray((input as { prayers?: unknown }).prayers)
         if (!hasPrayers) {
           parsed.prayers = library.prayers
@@ -150,6 +154,7 @@ export function LibraryData({
               liturgies: library.liturgies,
               resources: library.resources,
               ideaSources: library.ideaSources,
+              visuals: library.visuals,
               sample: false,
             })
             setMessage('Remove all illustrative samples and start an empty library.')

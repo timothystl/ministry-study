@@ -199,7 +199,7 @@ export async function handleApi(
       return reply(await usageFor(env.DB, who.owner))
     const fileRoute = /^\/api\/attachments\/([^/]+)$/.exec(pathname)
     if (fileRoute) {
-      if (!may('hymns') && !may('sermons') && !may('ideas')) return denied()
+      if (!may('hymns') && !may('sermons') && !may('ideas') && !may('visuals')) return denied()
       const id = decodeURIComponent(fileRoute[1])
       if (!validAttachmentId(id)) return reply({ error: 'Invalid file.' }, 400)
       if (request.method === 'GET') {

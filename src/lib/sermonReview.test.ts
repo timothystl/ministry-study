@@ -17,6 +17,7 @@ const library = (sermons: Sermon[]): Library => ({
   liturgies: [],
   resources: [],
   ideaSources: [],
+  visuals: [],
   notes: [],
   sample: false,
 })

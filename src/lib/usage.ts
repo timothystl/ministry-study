@@ -42,6 +42,7 @@ export function ownerOf(library: Library, id: string): string {
   for (const h of library.hymns) if (has(h.attachments)) return `Hymn: ${h.title}`
   for (const s of library.sermons) if (has(s.attachments)) return `Sermon: ${s.title}`
   for (const n of library.notes) if (has(n.attachments)) return `${n.kind}: ${n.title}`
+  for (const v of library.visuals) if (has(v.attachments)) return `Image or clip: ${v.title}`
   for (const r of library.resources) if (has(r.attachments)) return `Resource: ${r.title}`
   for (const l of library.liturgies)
     if (has(l.attachments) || l.items.some((i) => has(i.attachments))) return `Liturgy: ${l.title}`

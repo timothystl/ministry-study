@@ -40,6 +40,7 @@ const empty = (): Library => ({
   liturgies: [],
   resources: [],
   ideaSources: [],
+  visuals: [],
   sample: false,
 })
 const hymn = (over: Partial<Hymn>): Hymn => ({ ...blankHymn(), title: 'Untitled', ...over })

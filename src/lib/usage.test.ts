@@ -17,6 +17,7 @@ const emptyLibrary = (): Library => ({
   liturgies: [],
   resources: [],
   ideaSources: [],
+  visuals: [],
   sample: false,
 })
 const file = (id: string, name: string, mime: string, size: number) => ({ id, name, mime, size })
