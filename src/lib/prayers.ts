@@ -226,7 +226,9 @@ export function parsePrayerFile(source: string): PrayerImport {
         starters[m[1]] = JSON.parse(m[2])
     }
   }
-  if (!Array.isArray(library) || !library.length) throw new Error('The prayer library is empty.')
+  // A file may hold only sermon-theme starters, such as one saved from the Prayer Writer page.
+  if (!Array.isArray(library) || (!library.length && !Object.keys(starters).length))
+    throw new Error('The prayer library is empty.')
   const prayers: Prayer[] = []
   for (const cat of library as Record<string, unknown>[]) {
     if (typeof cat?.name !== 'string' || !Array.isArray(cat.prayers))

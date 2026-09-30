@@ -258,3 +258,19 @@ describe("Timothy's shipped prayer library", () => {
     expect(new Set(keys).size).toBe(keys.length)
   })
 })
+
+describe('a file saved from the Prayer Writer page', () => {
+  it('can hold only sermon petitions', () => {
+    const found = parsePrayerFile(
+      JSON.stringify({
+        library: [],
+        starters: { drafted_lost_sheep: 'God of the lost. Lord, in your mercy,' },
+      }),
+    )
+    expect(found.prayers).toHaveLength(1)
+    expect(found.prayers[0]).toMatchObject({ type: 'Sermon starter', text: 'God of the lost.' })
+  })
+  it('still rejects an empty file', () => {
+    expect(() => parsePrayerFile('{"library":[],"starters":{}}')).toThrow('empty')
+  })
+})

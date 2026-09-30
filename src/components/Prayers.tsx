@@ -278,6 +278,14 @@ function LibraryTab({ library, onSave }: { library: Library; onSave: (l: Library
           <Upload size={16} /> Import prayers
         </button>
         <LoadTimothy library={library} onSave={onSave} />
+        <a
+          className="button-link"
+          href="https://claude.ai/artifact/RtpqpPoXsERRCdD8Wd2DxE"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <ExternalLink size={16} /> Prayer Writer (drafts new prayers)
+        </a>
       </div>
       <div className="search-bar">
         <Search size={20} />
