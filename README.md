@@ -102,7 +102,7 @@ The first device to open the app after that is offered **Save this library to th
 
 The pastor (`STUDY_ADMIN_EMAIL`) is the administrator and always has every part of the study. **People** (in the menu, administrator only) adds other people, each with a **library of their own**: the same catalog kinds, kept as separate rows in the shared database (`records` and the manuscript tables carry an `owner`; the pastor's is `admin`). The administrator does not see their library and they do not see the administrator's.
 
-- **Parts to turn on or off:** Library (books, series, loans, wishlist, scanning), Sermons (catalog, manuscripts, review), Prayers, Devotions & Notes, Children's Messages, Hymns & Liturgies (the hymn catalog, liturgies and attached files). The choice is saved as soon as a box is ticked. Each part owns certain record kinds (`worker/sections.ts`), and the server checks that on every read and write, so hiding a menu item is never the only lock. Turning a part off hides what the person saved there and blocks saving more; it does not delete it, and turning it back on brings it back.
+- **Parts to turn on or off:** Library (books, series, loans, wishlist, scanning), Sermons (catalog, manuscripts, review), Prayers, Devotions & Notes, Bible Study, Children's Messages, Hymns & Liturgies (the hymn catalog, liturgies and attached files). The choice is saved as soon as a box is ticked. Each part owns certain record kinds (`worker/sections.ts`), and the server checks that on every read and write, so hiding a menu item is never the only lock. Turning a part off hides what the person saved there and blocks saving more; it does not delete it, and turning it back on brings it back.
 - **Pause access** stops someone signing in to the study while keeping their library; **Restore access** undoes it. There is no delete-a-person button, so nothing can be lost by a misclick.
 - A new person starts with an empty library (no illustrative samples). Their browser keeps its own local copy under separate keys, so two people sharing one browser never see each other's.
 - **Two steps to let someone in:** add them on the People page, and add their email to the Access policy for study.timothystl.org in Cloudflare. Someone signed in but not added (or paused) sees a short message asking them to contact Andrew.
@@ -186,6 +186,17 @@ once; add a caption afterward. **Paste links** (or paste one link into the quick
 link as an item titled from the link, with an optional note after a "|"; only the link and your note are kept, not the page's
 text. Planned next: the
 Visual Collector (images and clip links), see docs/collectors-scope.md.
+
+## Bible Study
+
+A first Bible Study page: type a passage (John 3:16–21, Psalm 23, Luke 15:30–16:2) and read it in
+columns, verse by verse. Choose from Hebrew (Westminster Leningrad Codex, Aleppo Codex), Greek
+(Tischendorf, Westcott–Hort, Textus Receptus for the New Testament; the Septuagint for the Old)
+and English (World English Bible, KJV, ASV, Young's Literal, Weymouth, Douay–Rheims, Tyndale). The
+original language of the testament and the WEB and KJV are on by default; your choices are
+remembered on this device. Texts are read from the free getBible service, one chapter at a time,
+so nothing is stored in the catalog. Copyrighted modern translations (ESV, NIV, NRSV) are not
+included. It is its own part ("Bible Study") that can be turned on or off for other people.
 
 ## Children's Messages
 

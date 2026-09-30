@@ -11,6 +11,11 @@ export const SECTIONS = [
     label: 'Illustrations & Ideas',
     detail: 'Collected stories, quotes, ideas and photographed scraps',
   },
+  {
+    key: 'bible',
+    label: 'Bible Study',
+    detail: 'Hebrew, Greek and English Bible texts side by side',
+  },
   { key: 'children', label: 'Children’s Messages', detail: 'Pre-K and chapel messages' },
   {
     key: 'hymns',
@@ -27,6 +32,7 @@ const KINDS: Record<SectionKey, string[]> = {
   prayers: ['prayer', 'prayerset'],
   notes: ['note'],
   ideas: ['note', 'ideasource'],
+  bible: [],
   children: ['note'],
   hymns: ['hymn', 'liturgy', 'resource'],
 }
