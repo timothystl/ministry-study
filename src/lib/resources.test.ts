@@ -24,6 +24,7 @@ const empty = (): Library => ({
   liturgies: [],
   resources: [],
   ideaSources: [],
+  visuals: [],
   sample: false,
 })
 const res = (over = {}) => ({ ...blankResource(), title: 'Untitled', ...over })

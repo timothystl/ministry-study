@@ -155,3 +155,10 @@ exists or deploys fail).
 ## Latest update: original sermon files
 Sermons keep their original Word/PDF files as attachments, stored during Manuscripts import (skips
 files already stored by name and size). Same 8 MB D1 limit as hymns.
+
+## Latest update: illustrations, storage readout, images & clips
+Illustrations & Ideas (quick add, photograph a scrap, sources incl. user-added sites, use history), Library Data → Check storage
+(`GET /api/usage`), reference photos kept to about 1 MB, and Images & Clips (record kind `visual`, part `visuals`): links with
+licenses, YouTube/Vimeo player with start/end, credit line, sermon-page panel. Cloudflare account has Workers Paid, R2 Paid and
+Images/Stream: next steps are uploading clips (Stream, private with signed URLs) and moving photos to R2. Film scenes stay as
+links with timestamps; do not copy streaming video.

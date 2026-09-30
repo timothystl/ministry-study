@@ -22,6 +22,7 @@ import {
   HandHeart,
   Baby,
   Lightbulb,
+  Clapperboard,
   Disc3,
   Music,
   ScrollText,
@@ -58,6 +59,7 @@ import { ScanBook } from './components/ScanBook'
 import { Prayers } from './components/Prayers'
 import { Notes } from './components/Notes'
 import { BibleStudy } from './components/BibleStudy'
+import { Visuals } from './components/Visuals'
 import { People } from './components/People'
 import { Hymns } from './components/Hymns'
 import { Liturgies } from './components/Liturgies'
@@ -79,6 +81,7 @@ type Page =
   | 'Prayers'
   | 'Notes'
   | 'Ideas'
+  | 'Visuals'
   | 'Children'
   | 'People'
   | 'Hymns'
@@ -98,6 +101,7 @@ const navigation = [
   { name: 'Prayers', label: 'Prayers', icon: HandHeart, part: 'prayers' },
   { name: 'Notes', label: 'Devotions & Notes', icon: NotebookPen, part: 'notes' },
   { name: 'Ideas', label: 'Illustrations & Ideas', icon: Lightbulb, part: 'ideas' },
+  { name: 'Visuals', label: 'Images & Clips', icon: Clapperboard, part: 'visuals' },
   { name: 'Children', label: 'Children’s Messages', icon: Baby, part: 'children' },
   { name: 'Hymns', label: 'Hymns', icon: Music, part: 'hymns' },
   { name: 'Liturgies', label: 'Liturgies', icon: ScrollText, part: 'hymns' },
@@ -610,6 +614,8 @@ export default function App({ me }: { me: Me }) {
             />
           ) : page === 'Resources' ? (
             <Resources library={library} onSave={commit} />
+          ) : page === 'Visuals' ? (
+            <Visuals library={library} onSave={commit} />
           ) : page === 'Ideas' ? (
             <Notes library={library} onSave={commit} ideasPage />
           ) : page === 'Children' ? (

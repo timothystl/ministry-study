@@ -17,7 +17,13 @@ import {
   searchNotes,
   type Note,
 } from '../lib/notes'
-import { attachFiles, attachmentRefs, removeFile, removeUnused } from '../lib/attachments'
+import {
+  attachFiles,
+  attachmentRefs,
+  REFERENCE_IMAGES,
+  removeFile,
+  removeUnused,
+} from '../lib/attachments'
 import { readManuscript } from '../lib/sermonText'
 import { Attachments } from './Attachments'
 import { isWebLink, noteFromLink } from '../lib/ideas'
@@ -160,6 +166,7 @@ export function NoteEditor({
             </label>
             <div className="wide-field">
               <Attachments
+                reference
                 heading="Photos of handwritten notes or pages"
                 attachments={draft.attachments}
                 refs={new Map(note.attachments.map((a) => [a.id, 2]))}
@@ -389,7 +396,7 @@ export function Notes({
     if (!files.length) return
     setShooting(true)
     setPhotoError('')
-    const { added, errors } = await attachFiles(files)
+    const { added, errors } = await attachFiles(files, REFERENCE_IMAGES)
     if (added.length) {
       const scrap = { ...blankNote('Scrap'), attachments: added }
       if (onSave(saveNote(library, scrap))) setOpenId(scrap.id)
@@ -479,6 +486,7 @@ export function Notes({
           {isIdeaKind(open.kind) && (
             <>
               <Attachments
+                reference
                 heading="Photos and pages"
                 attachments={open.attachments}
                 refs={refs}

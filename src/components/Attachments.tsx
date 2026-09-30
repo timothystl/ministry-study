@@ -3,6 +3,8 @@ import { Camera, FileText, Paperclip, Trash2 } from 'lucide-react'
 import {
   ACCEPTED_FILES,
   attachFiles,
+  NORMAL_IMAGES,
+  REFERENCE_IMAGES,
   attachmentUrl,
   isImageAttachment,
   removeFile,
@@ -19,6 +21,7 @@ export function Attachments({
   heading = 'Photos and files',
   refs,
   compact = false,
+  reference = false,
 }: {
   attachments: Attachment[]
   onChange: (next: Attachment[]) => boolean
@@ -26,6 +29,8 @@ export function Attachments({
   // How many records use each file, so a file another record also uses is not deleted.
   refs?: Map<string, number>
   compact?: boolean
+  // Photos are kept small, for reference; the better image is linked instead of stored.
+  reference?: boolean
 }) {
   const [busy, setBusy] = useState(false)
   const [errors, setErrors] = useState<string[]>([])
@@ -35,7 +40,10 @@ export function Attachments({
     if (!files.length) return
     setBusy(true)
     setErrors([])
-    const { added, errors: problems } = await attachFiles(files)
+    const { added, errors: problems } = await attachFiles(
+      files,
+      reference ? REFERENCE_IMAGES : NORMAL_IMAGES,
+    )
     if (added.length && !onChange([...attachments, ...added])) {
       problems.push('The record could not be saved, so the files were not kept.')
       await Promise.all(added.map((a) => removeFile(a.id)))
@@ -124,7 +132,13 @@ export function Attachments({
           {e}
         </p>
       ))}
-      {!compact && (
+      {!compact && reference && (
+        <p className="muted">
+          Photos are made small (about 1 MB at most) because they are for reference. If a better
+          image exists, link it under “Where it came from” instead of storing it.
+        </p>
+      )}
+      {!compact && !reference && (
         <p className="muted">
           Kept in your shared library. Photos over 1.5 MB are made smaller. PDFs, music, slide and
           Finale files can be up to 8 MB.
