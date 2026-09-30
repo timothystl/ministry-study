@@ -1,9 +1,13 @@
 import { useMemo, useState, type FormEvent } from 'react'
-import { ArrowDown, ArrowUp, Plus, Search, Upload } from 'lucide-react'
+import { ArrowDown, ArrowUp, Copy, Plus, Printer, Search, Upload } from 'lucide-react'
+import { attachmentRefs, attachmentUrl, isImageAttachment, removeUnused } from '../lib/attachments'
 import {
   blankItem,
   blankLiturgy,
+  copyLiturgy,
   deleteLiturgy,
+  liturgyToText,
+  MAX_PART_TEXT,
   fileKindFor,
   fileKinds,
   itemKinds,
@@ -15,6 +19,7 @@ import {
   type Liturgy,
 } from '../lib/hymns'
 import type { Library } from '../lib/model'
+import { Attachments } from './Attachments'
 import { Location } from './Hymns'
 import { Modal } from './Modal'
 
@@ -104,26 +109,54 @@ function LiturgyEditor({
         <fieldset className="wide-field">
           <legend>The service, in order</legend>
           {draft.items.length === 0 && (
-            <p className="muted">Add the hymns, readings, prayers and liturgy texts in order.</p>
+            <p className="muted">
+              Add every part in order: hymns, readings, prayers, the liturgy’s own texts and music.
+              Photos and PDFs of each part’s music are attached once the liturgy is saved.
+            </p>
           )}
           {draft.items.map((item, i) => (
-            <div className="scan-typed" key={item.id}>
-              <select
-                aria-label={`Item ${i + 1} kind`}
-                value={item.kind}
-                onChange={(e) => setItem(i, { kind: e.target.value as typeof item.kind })}
-              >
-                {itemKinds.map((k) => (
-                  <option key={k}>{k}</option>
-                ))}
-              </select>
-              <input
-                aria-label={`Item ${i + 1} name`}
-                placeholder="Gathering hymn, Kyrie, Old Testament…"
-                value={item.label}
-                onChange={(e) => setItem(i, { label: e.target.value })}
-              />
-              {item.kind === 'Hymn' ? (
+            <div className="liturgy-part-edit" key={item.id}>
+              <div className="scan-typed">
+                <select
+                  aria-label={`Item ${i + 1} kind`}
+                  value={item.kind}
+                  onChange={(e) => setItem(i, { kind: e.target.value as typeof item.kind })}
+                >
+                  {itemKinds.map((k) => (
+                    <option key={k}>{k}</option>
+                  ))}
+                </select>
+                <input
+                  aria-label={`Item ${i + 1} name`}
+                  placeholder="Gathering hymn, Kyrie, Old Testament…"
+                  value={item.label}
+                  onChange={(e) => setItem(i, { label: e.target.value })}
+                />
+                <button
+                  type="button"
+                  aria-label={`Move item ${i + 1} up`}
+                  disabled={i === 0}
+                  onClick={() => set({ items: moveItem(draft.items, i, -1) })}
+                >
+                  <ArrowUp size={14} />
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Move item ${i + 1} down`}
+                  disabled={i === draft.items.length - 1}
+                  onClick={() => set({ items: moveItem(draft.items, i, 1) })}
+                >
+                  <ArrowDown size={14} />
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Remove item ${i + 1}`}
+                  onClick={() => set({ items: draft.items.filter((_, j) => j !== i) })}
+                >
+                  Remove
+                </button>
+              </div>
+              {item.kind === 'Hymn' && (
                 <select
                   aria-label={`Item ${i + 1} hymn`}
                   value={item.hymnId}
@@ -136,43 +169,74 @@ function LiturgyEditor({
                     </option>
                   ))}
                 </select>
-              ) : item.kind === 'Reading' ? (
+              )}
+              {item.kind === 'Reading' && (
                 <input
                   aria-label={`Item ${i + 1} passage`}
                   placeholder="Passage"
                   value={item.scripture}
                   onChange={(e) => setItem(i, { scripture: e.target.value })}
                 />
-              ) : (
-                <input
-                  aria-label={`Item ${i + 1} text`}
-                  placeholder="Text or note"
-                  value={item.text}
-                  onChange={(e) => setItem(i, { text: e.target.value })}
-                />
               )}
+              <textarea
+                aria-label={`Item ${i + 1} text`}
+                rows={item.kind === 'Hymn' ? 2 : 4}
+                placeholder={
+                  item.kind === 'Hymn'
+                    ? 'Notes for this hymn (verses to sing, key)'
+                    : 'The words of this part, in full'
+                }
+                value={item.text}
+                onChange={(e) => setItem(i, { text: e.target.value })}
+              />
+              {item.text.length > MAX_PART_TEXT && (
+                <p className="error" role="alert">
+                  This part is too long.
+                </p>
+              )}
+              {item.files.map((f, j) => (
+                <div className="scan-typed" key={j}>
+                  <select
+                    aria-label={`Item ${i + 1} file ${j + 1} kind`}
+                    value={f.kind}
+                    onChange={(e) =>
+                      setItem(i, {
+                        files: item.files.map((x, k) =>
+                          k === j ? { ...x, kind: e.target.value as typeof f.kind } : x,
+                        ),
+                      })
+                    }
+                  >
+                    {fileKinds.map((k) => (
+                      <option key={k}>{k}</option>
+                    ))}
+                  </select>
+                  <input
+                    aria-label={`Item ${i + 1} file ${j + 1} location`}
+                    value={f.location}
+                    onChange={(e) =>
+                      setItem(i, {
+                        files: item.files.map((x, k) =>
+                          k === j ? { ...x, location: e.target.value } : x,
+                        ),
+                      })
+                    }
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setItem(i, { files: item.files.filter((_, k) => k !== j) })}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
               <button
                 type="button"
-                aria-label={`Move item ${i + 1} up`}
-                disabled={i === 0}
-                onClick={() => set({ items: moveItem(draft.items, i, -1) })}
+                onClick={() =>
+                  setItem(i, { files: [...item.files, { kind: 'Finale', location: '' }] })
+                }
               >
-                <ArrowUp size={14} />
-              </button>
-              <button
-                type="button"
-                aria-label={`Move item ${i + 1} down`}
-                disabled={i === draft.items.length - 1}
-                onClick={() => set({ items: moveItem(draft.items, i, 1) })}
-              >
-                <ArrowDown size={14} />
-              </button>
-              <button
-                type="button"
-                aria-label={`Remove item ${i + 1}`}
-                onClick={() => set({ items: draft.items.filter((_, j) => j !== i) })}
-              >
-                Remove
+                <Plus size={14} /> Add a file for this part
               </button>
             </div>
           ))}
@@ -276,17 +340,19 @@ export function Liturgies({
   const [query, setQuery] = useState('')
   const [editing, setEditing] = useState<Liturgy | null>(null)
   const [confirm, setConfirm] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const refs = useMemo(() => attachmentRefs(library), [library])
   const list = useMemo(
     () => searchLiturgies(library.liturgies, library.hymns, query),
     [library.liturgies, library.hymns, query],
   )
   const open = library.liturgies.find((l) => l.id === openId)
-  const hymnTitle = (id: string) => library.hymns.find((h) => h.id === id)?.title || ''
   return (
     <section className="sermons" aria-label="Liturgies">
       {open ? (
-        <article className="sermon-detail">
+        <article className="sermon-detail liturgy-whole">
           <button
+            className="no-print"
             onClick={() => {
               setOpenId('')
               setConfirm(false)
@@ -296,14 +362,40 @@ export function Liturgies({
           </button>
           <h1>{open.title}</h1>
           <p className="muted">{summary(open)}</p>
-          <div className="sermon-actions">
+          <div className="sermon-actions no-print">
             <button onClick={() => setEditing(open)}>Edit</button>
+            <button
+              onClick={() =>
+                void navigator.clipboard
+                  ?.writeText(liturgyToText(library, open))
+                  .then(() => setCopied(true))
+              }
+            >
+              <Copy size={14} /> {copied ? 'Copied' : 'Copy the whole service as text'}
+            </button>
+            <button onClick={() => window.print()}>
+              <Printer size={14} /> Print
+            </button>
+            <button
+              onClick={() => {
+                const made = copyLiturgy(library, open.id)
+                if (made && onSave(made.library)) setOpenId(made.liturgy.id)
+              }}
+            >
+              Start a new service from this
+            </button>
             {confirm ? (
               <>
                 <span>Remove this liturgy? Your hymns and files are not touched.</span>
                 <button
                   onClick={() => {
-                    if (onSave(deleteLiturgy(library, open.id))) setOpenId('')
+                    if (onSave(deleteLiturgy(library, open.id))) {
+                      removeUnused(library, [
+                        ...open.attachments,
+                        ...open.items.flatMap((i) => i.attachments),
+                      ])
+                      setOpenId('')
+                    }
                   }}
                 >
                   Yes, remove
@@ -314,33 +406,101 @@ export function Liturgies({
               <button onClick={() => setConfirm(true)}>Remove</button>
             )}
           </div>
-          <section className="detail-section">
-            <h3>The service</h3>
-            {open.items.length === 0 ? (
-              <p className="muted">Nothing listed yet. Edit this liturgy to add items.</p>
-            ) : (
-              <ol className="liturgy-order">
-                {open.items.map((item) => (
-                  <li key={item.id}>
-                    <strong>{item.label || item.kind}</strong>{' '}
-                    {item.kind === 'Hymn' ? (
-                      item.hymnId && hymnTitle(item.hymnId) ? (
-                        <button onClick={() => onOpenHymn(item.hymnId)}>
-                          {hymnTitle(item.hymnId)}
-                        </button>
+          {open.items.length === 0 ? (
+            <p className="muted">Nothing listed yet. Edit this liturgy to add its parts.</p>
+          ) : (
+            <ol className="liturgy-order">
+              {open.items.map((item) => {
+                const hymn = library.hymns.find((h) => h.id === item.hymnId)
+                return (
+                  <li key={item.id} className="liturgy-part">
+                    <h3>{item.label || item.kind}</h3>
+                    {item.kind === 'Hymn' &&
+                      (hymn ? (
+                        <>
+                          <p>
+                            <button className="no-print" onClick={() => onOpenHymn(hymn.id)}>
+                              {hymn.title}
+                            </button>
+                            <span className="print-only">{hymn.title}</span>{' '}
+                            <span className="muted">
+                              {[hymn.hymnal, hymn.composer && `Music: ${hymn.composer}`]
+                                .filter(Boolean)
+                                .join(' · ')}
+                            </span>
+                          </p>
+                          {(hymn.attachments.length > 0 || hymn.files.length > 0) && (
+                            <ul className="attachment-strip">
+                              {hymn.attachments.map((a) => (
+                                <li key={a.id}>
+                                  <a href={attachmentUrl(a.id)} target="_blank" rel="noreferrer">
+                                    {isImageAttachment(a) ? (
+                                      <img src={attachmentUrl(a.id)} alt={a.name} loading="lazy" />
+                                    ) : (
+                                      a.name
+                                    )}
+                                  </a>
+                                </li>
+                              ))}
+                              {hymn.files.map((f, i) => (
+                                <li key={i}>
+                                  <strong>{f.kind}</strong> <Location value={f.location} />
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </>
                       ) : (
-                        <span className="muted">No hymn chosen</span>
-                      )
-                    ) : (
-                      <span>{item.kind === 'Reading' ? item.scripture : item.text}</span>
+                        <p className="muted">No hymn chosen</p>
+                      ))}
+                    {item.scripture && <p className="liturgy-passage">{item.scripture}</p>}
+                    {item.text && <p className="liturgy-words">{item.text}</p>}
+                    {item.kind === 'Hymn' && hymn?.text && !item.text && (
+                      <p className="liturgy-words">{hymn.text}</p>
+                    )}
+                    {item.files.length > 0 && (
+                      <ul className="sermon-related">
+                        {item.files.map((f, i) => (
+                          <li key={i}>
+                            <strong>{f.kind}</strong> <Location value={f.location} />
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <div className="no-print">
+                      <Attachments
+                        compact
+                        heading="Music for this part"
+                        refs={refs}
+                        attachments={item.attachments}
+                        onChange={(next) =>
+                          onSave(
+                            saveLiturgy(library, {
+                              ...open,
+                              items: open.items.map((x) =>
+                                x.id === item.id ? { ...x, attachments: next } : x,
+                              ),
+                            }),
+                          )
+                        }
+                      />
+                    </div>
+                    {item.attachments.length > 0 && (
+                      <ul className="attachment-strip print-only">
+                        {item.attachments.filter(isImageAttachment).map((a) => (
+                          <li key={a.id}>
+                            <img src={attachmentUrl(a.id)} alt={a.name} />
+                          </li>
+                        ))}
+                      </ul>
                     )}
                   </li>
-                ))}
-              </ol>
-            )}
-          </section>
-          <section className="detail-section">
-            <h3>Files</h3>
+                )
+              })}
+            </ol>
+          )}
+          <section className="detail-section no-print">
+            <h3>Files for the whole service</h3>
             {open.files.length === 0 ? (
               <p className="muted">No slides or order of service recorded yet.</p>
             ) : (
@@ -353,6 +513,14 @@ export function Liturgies({
               </ul>
             )}
           </section>
+          <div className="no-print">
+            <Attachments
+              heading="Photos and PDFs of the whole service"
+              refs={refs}
+              attachments={open.attachments}
+              onChange={(next) => onSave(saveLiturgy(library, { ...open, attachments: next }))}
+            />
+          </div>
           {open.notes && (
             <section className="detail-section">
               <h3>Notes</h3>
@@ -368,7 +536,7 @@ export function Liturgies({
               <p className="muted">
                 {library.liturgies.length
                   ? `${library.liturgies.length.toLocaleString()} liturgies`
-                  : 'Services and settings kept together: the hymns in order, and the slides.'}
+                  : 'Complete services and settings, kept whole: every part in order with its words, music and slides.'}
               </p>
             </div>
             <div className="sermon-actions">
@@ -389,7 +557,8 @@ export function Liturgies({
           {library.liturgies.length === 0 ? (
             <div className="empty-state">
               <p>
-                No liturgies yet. Add one to keep a service’s hymns, texts and PowerPoint together.
+                No liturgies yet. Add one to keep a whole service together: every part with its
+                words, its music and its slides.
               </p>
             </div>
           ) : list.length === 0 ? (

@@ -194,9 +194,19 @@ Hymnary.org (Hymnary blocks automated lookups, so it opens in its own tab).
 - **Attach files** matches a folder of files (Finale, PDF, PowerPoint, audio) to hymns by name and
   records where each one is. Files that match nothing become new hymns. Nothing is uploaded.
 
-**Liturgies** keep a service together: the hymns, readings, prayers and liturgy texts in order,
-plus the slides (PowerPoint) or order of service. A hymn's page lists the liturgies that use it.
-Both sync to the shared library and are included in backups.
+**Liturgies** are held as one whole: every part in order, each with its own words, files and music.
+- A **Setting** is a complete rite kept to use again (Divine Service, Matins, Evening Prayer); a
+  Sunday service, season or occasion is one used on a day. "Start a new service from this" copies a
+  liturgy with every part, its words, hymns, files and music, and leaves the date blank.
+- Each **part** (hymn, reading, prayer, liturgy text, music, rubric, note) has a name, its words in
+  full, files (Finale, slides) and photos or PDFs of its music. The whole service can also have
+  slides, an order of service and photos or PDFs.
+- The liturgy page shows the **whole service** as one continuous page, with each part's words and
+  music together and a hymn's own attached music. "Copy the whole service as text" puts it all on
+  the clipboard, and "Print" prints just the service.
+- Photos and PDFs stay in the shared library once, however many liturgies use them; a file is
+  deleted only when the last record using it is removed.
+A hymn's page lists the liturgies that use it. Everything syncs and is included in backups.
 
 ### Photos and PDFs on a hymn
 Open a hymn and choose "Attach photos or PDFs" (or "Take a photo" on a phone) to keep sheet music,

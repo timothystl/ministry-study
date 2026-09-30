@@ -57,7 +57,7 @@ test('add a hymn, attach files, and keep a service together', async ({ page }) =
   await l.getByLabel('Item 2 name').fill('Closing hymn')
   await l.getByLabel('Item 2 hymn').selectOption({ label: 'Be Thou My Vision' })
   await l.getByRole('button', { name: 'Move item 2 up' }).click()
-  await l.getByRole('button', { name: 'Add a file' }).click()
+  await l.getByRole('button', { name: 'Add a file', exact: true }).click()
   await l.getByLabel('File 1 location').fill('Liturgy/advent.pptx')
   await l.getByRole('button', { name: 'Save liturgy' }).click()
   await expect(page.getByRole('heading', { name: 'Advent evening prayer' })).toBeVisible()
@@ -66,7 +66,7 @@ test('add a hymn, attach files, and keep a service together', async ({ page }) =
   await expect(order.nth(0)).toContainText('Be Thou My Vision')
   await expect(page.getByText('Liturgy/advent.pptx')).toBeVisible()
 
-  await page.getByRole('button', { name: 'Be Thou My Vision' }).click()
+  await page.getByRole('button', { name: 'Be Thou My Vision', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Be Thou My Vision' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Advent evening prayer' })).toBeVisible()
 })

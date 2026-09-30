@@ -20,7 +20,7 @@ import {
   type Hymn,
 } from '../lib/hymns'
 import type { Library } from '../lib/model'
-import { removeFile } from '../lib/attachments'
+import { attachmentRefs, removeUnused } from '../lib/attachments'
 import { Attachments } from './Attachments'
 import { Modal } from './Modal'
 
@@ -461,6 +461,7 @@ export function Hymns({
     [hymns, query, usage, hasFiles],
   )
   const open = hymns.find((h) => h.id === openId)
+  const refs = useMemo(() => attachmentRefs(library), [library])
   const used = open ? liturgiesForHymn(library, open.id) : []
   return (
     <section className="sermons" aria-label="Hymns">
@@ -484,7 +485,7 @@ export function Hymns({
                 <button
                   onClick={() => {
                     if (onSave(deleteHymn(library, open.id))) {
-                      open.attachments.forEach((a) => void removeFile(a.id))
+                      removeUnused(library, open.attachments)
                       setOpenId('')
                     }
                   }}
@@ -537,6 +538,7 @@ export function Hymns({
             </ul>
           </section>
           <Attachments
+            refs={refs}
             attachments={open.attachments}
             onChange={(next) => onSave(saveHymn(library, { ...open, attachments: next }))}
           />
