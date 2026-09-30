@@ -40,3 +40,29 @@ test('collect an idea and an illustration, mark it used, and keep it apart from 
   await nav(page, 'Devotions & Notes')
   await expect(page.getByText('Small mercy')).toHaveCount(0)
 })
+
+test('look for illustrations on other sites and save their links', async ({ page }) => {
+  await page.goto('/')
+  await nav(page, 'Illustrations & Ideas')
+  await page.getByLabel('Search notes').fill('Luke 15')
+  const link = page.getByRole('link', { name: 'Search TextWeek' })
+  await expect(link).toHaveAttribute(
+    'href',
+    /duckduckgo\.com\/\?q=site%3Atextweek\.com%20Luke%2015/,
+  )
+
+  await page.getByRole('button', { name: 'Paste links' }).click()
+  const dialog = page.getByRole('dialog')
+  await dialog
+    .getByLabel('Links')
+    .fill('https://rw360.org/blog/the-lost-son-again/ | good for Lent 3\nnot a link')
+  await expect(dialog.getByText('1 to add; 1 skipped.')).toBeVisible()
+  await dialog.getByRole('button', { name: 'Save 1 link' }).click()
+
+  await page.getByLabel('Search notes').fill('')
+  await page.getByRole('button', { name: /The lost son again/ }).click()
+  await expect(
+    page.getByRole('link', { name: 'https://rw360.org/blog/the-lost-son-again/' }),
+  ).toBeVisible()
+  await expect(page.getByText('good for Lent 3')).toBeVisible()
+})

@@ -179,7 +179,10 @@ from (a book and page, a link, a person), be marked Personal (about real people)
 "Mark as used" keeps a history of where it was used, and the Use filter shows what is still unused.
 Search reads the words, the source, the use history and passages by chapter and verse. It uses the
 same records as Devotions & Notes, so it syncs and backs up with them; earlier notes of the
-Illustration and Idea kinds appear here instead. It is its own part on People. Planned next: the
+Illustration and Idea kinds appear here instead. It is its own part on People. **Look elsewhere** opens a search of TextWeek, The Salt Project, RW360 or Cardiphonia (limited to that site, for whatever
+is in the search box, such as a passage) in a new tab. **Paste links** (or paste one link into the quick-add line) saves each
+link as an item titled from the link, with an optional note after a "|"; only the link and your note are kept, not the page's
+text. Planned next: the
 Visual Collector (images and clip links), see docs/collectors-scope.md.
 
 ## Children's Messages
