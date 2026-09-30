@@ -209,7 +209,9 @@ export const defaultVersionIds = (testament: Testament) =>
 
 export interface Verse {
   verse: number
+  // Where the text has a marker ⟦1⟧, ⟦2⟧ …, the translators' footnote with that number.
   text: string
+  notes?: string[]
 }
 export interface Passage {
   book: string
@@ -297,7 +299,10 @@ export async function loadYvpVersions(): Promise<Version[]> {
     return []
   }
 }
-const books = new Map<string, Promise<Record<string, Record<string, string>>>>()
+type BookFile = Record<string, Record<string, string>> & {
+  _notes?: Record<string, string[]>
+}
+const books = new Map<string, Promise<BookFile>>()
 async function loadBundled(folder: string, book: string, chapter: number): Promise<Verse[]> {
   const url = `/data/${folder}/${bookNumber(book)}.json`
   let found = books.get(url)
@@ -305,14 +310,18 @@ async function loadBundled(folder: string, book: string, chapter: number): Promi
     found = (async () => {
       const response = await fetch(url, { headers: { Accept: 'application/json' } })
       if (!(response.headers.get('Content-Type') || '').includes('json')) return {}
-      return (await response.json()) as Record<string, Record<string, string>>
+      return (await response.json()) as BookFile
     })()
     books.set(url, found)
     found.catch(() => books.delete(url))
   }
-  const verses = (await found)[String(chapter)] ?? {}
+  const file = await found
+  const verses = file[String(chapter)] ?? {}
   return Object.entries(verses)
-    .map(([verse, text]) => ({ verse: Number(verse), text }))
+    .map(([verse, text]) => {
+      const notes = file._notes?.[`${chapter}:${verse}`]
+      return { verse: Number(verse), text, ...(notes ? { notes } : {}) }
+    })
     .sort((a, b) => a.verse - b.verse)
 }
 export function loadChapter(id: string, book: string, chapter: number): Promise<Verse[]> {

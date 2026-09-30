@@ -22,6 +22,37 @@ import {
 
 type Failed = { error: string }
 type Loaded = Record<string, Verse[] | Failed>
+// Text with footnote markers ⟦1⟧ shows a small number that opens the note beneath the verse.
+function VerseText({ text, notes }: { text: string; notes?: string[] }) {
+  const [open, setOpen] = useState<number | null>(null)
+  if (!notes) return <>{text}</>
+  return (
+    <>
+      {text.split(/⟦(\d+)⟧/).map((part, i) =>
+        i % 2 === 0 ? (
+          part
+        ) : (
+          <sup key={i}>
+            <button
+              type="button"
+              className="bible-fn"
+              aria-expanded={open === Number(part)}
+              aria-label={`Footnote ${part}`}
+              onClick={() => setOpen(open === Number(part) ? null : Number(part))}
+            >
+              {part}
+            </button>
+          </sup>
+        ),
+      )}
+      {open !== null && notes[open - 1] && (
+        <span className="bible-fn-body" role="note">
+          <b>{open}.</b> {notes[open - 1]}
+        </span>
+      )}
+    </>
+  )
+}
 const isFailed = (x: Verse[] | Failed | undefined): x is Failed => !!x && !Array.isArray(x)
 const label = (p: Passage) => `${p.book} ${p.chapter}`
 
@@ -86,9 +117,9 @@ function PassageTable({
                 </th>
                 {shown.map((v) => {
                   const chapter = loaded[v.id]
-                  const text = Array.isArray(chapter)
-                    ? chapter.find((x) => x.verse === n)?.text
-                    : ''
+                  const found = Array.isArray(chapter)
+                    ? chapter.find((x) => x.verse === n)
+                    : undefined
                   return (
                     <td
                       key={v.id}
@@ -96,7 +127,11 @@ function PassageTable({
                       dir={v.rtl ? 'rtl' : undefined}
                       className={`bible-text ${v.language.toLowerCase()}`}
                     >
-                      {text || <span className="muted">—</span>}
+                      {found?.text ? (
+                        <VerseText text={found.text} notes={found.notes} />
+                      ) : (
+                        <span className="muted">—</span>
+                      )}
                     </td>
                   )
                 })}

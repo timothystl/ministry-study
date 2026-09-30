@@ -138,11 +138,14 @@ describe('bundled Greek editions', () => {
       ok: true,
       status: 200,
       headers: { get: () => 'application/json' },
-      json: async () => ({ '23': { '1': 'Yahweh is my shepherd' } }),
+      json: async () => ({
+        '23': { '1': 'Yahweh⟦1⟧ is my shepherd' },
+        _notes: { '23:1': ['Or “the LORD”'] },
+      }),
     }))
     vi.stubGlobal('fetch', fetcher)
     expect(await loadChapter('leb', 'Psalms', 23)).toEqual([
-      { verse: 1, text: 'Yahweh is my shepherd' },
+      { verse: 1, text: 'Yahweh⟦1⟧ is my shepherd', notes: ['Or “the LORD”'] },
     ])
     expect(fetcher.mock.calls[0][0]).toBe('/data/english/leb/19.json')
     expect(versionsFor('OT').some((v) => v.id === 'leb')).toBe(true)

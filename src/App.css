@@ -2851,3 +2851,24 @@ mark {
   padding: 0.25rem 0;
   border-bottom: 1px solid var(--line, #e2e2e2);
 }
+.bible-fn {
+  min-width: 0;
+  padding: 0 4px;
+  margin: 0 1px;
+  border: 0;
+  background: none;
+  color: var(--accent, #0b6b5b);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.bible-fn-body {
+  display: block;
+  margin-top: 6px;
+  padding: 6px 8px;
+  border-left: 3px solid var(--accent, #0b6b5b);
+  background: rgba(0, 0, 0, 0.04);
+  font-size: 13px;
+  line-height: 1.5;
+}
