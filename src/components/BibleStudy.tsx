@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Search } from 'lucide-react'
+import { HebrewVerse, WordStudy } from './HebrewStudy'
+import type { HebrewWord } from '../lib/hebrewWords'
 import {
   ESV_COPYRIGHT,
   languages,
@@ -62,11 +64,15 @@ function PassageTable({
   ids,
   all,
   reload,
+  picked,
+  onPick,
 }: {
   passage: Passage
   ids: string[]
   all: Version[]
   reload: number
+  picked: string
+  onPick: (key: string, word: HebrewWord, reference: string) => void
 }) {
   const shown = all.filter((v) => ids.includes(v.id))
   const [loaded, setLoaded] = useState<Loaded>({})
@@ -128,7 +134,16 @@ function PassageTable({
                       dir={v.rtl ? 'rtl' : undefined}
                       className={`bible-text ${v.language.toLowerCase()}`}
                     >
-                      {found?.text ? (
+                      {found?.words ? (
+                        <HebrewVerse
+                          words={found.words}
+                          keyPrefix={`${passage.book} ${passage.chapter}:${n}`}
+                          picked={picked}
+                          onPick={(key, word) =>
+                            onPick(key, word, `${passage.book} ${passage.chapter}:${n}`)
+                          }
+                        />
+                      ) : found?.text ? (
                         <VerseText text={found.text} notes={found.notes} />
                       ) : (
                         <span className="muted">—</span>
@@ -163,7 +178,10 @@ function PassageTable({
 export function BibleStudy() {
   const [input, setInput] = useState('John 3:16–21'),
     [asked, setAsked] = useState('John 3:16–21'),
-    [reload, setReload] = useState(0)
+    [reload, setReload] = useState(0),
+    [picked, setPicked] = useState<{ key: string; word: HebrewWord; reference: string } | null>(
+      null,
+    )
   const { passages, error } = useMemo(() => passagesFor(asked), [asked])
   const testament: Testament = passages.length ? testamentOf(passages[0].book) : 'NT'
   const [chosen, setChosen] = useState<Record<Testament, string[]>>(() => ({
@@ -196,6 +214,7 @@ export function BibleStudy() {
   function submit(e: FormEvent) {
     e.preventDefault()
     setAsked(input)
+    setPicked(null)
     setReload((n) => n + 1)
   }
   return (
@@ -268,9 +287,18 @@ export function BibleStudy() {
           passage={p}
           ids={ids}
           all={all}
+          picked={picked?.key ?? ''}
+          onPick={(key, word, reference) => setPicked({ key, word, reference })}
           reload={reload}
         />
       ))}
+      {picked && (
+        <WordStudy
+          word={picked.word}
+          reference={picked.reference}
+          onClose={() => setPicked(null)}
+        />
+      )}
       {[...new Set(all.filter((v) => ids.includes(v.id) && v.credit).map((v) => v.credit))].map(
         (c) => (
           <p key={c} className="muted bible-note">

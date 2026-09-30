@@ -213,6 +213,12 @@ Choose from:
 - **Hebrew** (Westminster Leningrad Codex, Aleppo Codex) and **Greek** (Tischendorf, Westcott–Hort,
   Textus Receptus for the New Testament; the Septuagint for the Old), read from the free getBible
   service.
+- **Hebrew word study** (the default Old Testament column): every word is tappable and opens its prefix, root
+  and ending with the lexical form, Strong's number and a plain-language reading of the grammar. It is
+  STEPBible's tagged Hebrew Old Testament (TAHOT, CC BY 4.0, from the Leningrad Codex, following the Qere),
+  shipped with the site (about 23 MB, loaded one book at a time). Rebuild with
+  `node scripts/buildHebrewWords.mjs <STEPBible-Data checkout>`. The lexicon keeps Tyndale House's glosses;
+  STEPBible's abridged-BDB "Meaning" text needs the Online Bible's permission and is left out.
 - **Modern critical Greek New Testaments,** shipped with the site (no service needed): the **SBL Greek
   New Testament** (SBLGNT, CC BY 4.0), the **Tyndale House GNT** and **NA28** readings. The last two
   are rebuilt from STEPBible's tagged Greek New Testament (CC BY 4.0), which marks every word with
