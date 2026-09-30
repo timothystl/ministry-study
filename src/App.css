@@ -2682,3 +2682,62 @@ mark {
   font-size: 13px;
   overflow-wrap: anywhere;
 }
+.liturgy-part {
+  break-inside: avoid;
+  padding-bottom: 6px;
+}
+.liturgy-part h3 {
+  margin-bottom: 4px;
+}
+.liturgy-words {
+  white-space: pre-wrap;
+}
+.liturgy-passage {
+  font-weight: 600;
+}
+.liturgy-part-edit {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  margin: 8px 0;
+  border: 1px solid #d5dde2;
+  border-radius: 8px;
+}
+.attachment-strip {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.attachment-strip img {
+  height: 90px;
+  border: 1px solid #d5dde2;
+  border-radius: 4px;
+}
+.print-only {
+  display: none;
+}
+@media print {
+  .sidebar,
+  .sidebar-scrim,
+  .mobile-header,
+  .mobile-bottom,
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: inline;
+  }
+  ul.print-only {
+    display: flex;
+  }
+  .main-shell {
+    margin-left: 0;
+  }
+  main {
+    padding: 0;
+    max-width: none;
+  }
+}

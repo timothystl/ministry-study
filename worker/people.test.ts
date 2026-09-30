@@ -8,7 +8,7 @@ describe('parts of the app', () => {
   it('maps parts to the record kinds they own', () => {
     expect(kindsFor(['library'])).toEqual(['book', 'series', 'loan'])
     expect(kindsFor(['notes', 'children'])).toEqual(['note'])
-    expect(kindsFor(['hymns'])).toEqual(['hymn', 'liturgy'])
+    expect(kindsFor(['hymns'])).toEqual(['hymn', 'liturgy', 'resource'])
     expect(kindsFor([])).toEqual([])
     expect(cleanSections(['sermons', 'nonsense', 'library'])).toEqual(['library', 'sermons'])
   })

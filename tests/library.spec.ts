@@ -1,6 +1,11 @@
 import { test, expect, type Page } from '@playwright/test'
 async function nav(page: Page, name: string) {
   const opener = page.getByRole('button', { name: 'Open navigation', exact: true })
+  // Wait for the page to finish starting: the menu button on a phone, the menu itself on a desktop.
+  await opener
+    .or(page.getByRole('navigation', { name: 'Main navigation', exact: true }))
+    .first()
+    .waitFor()
   if (await opener.isVisible()) await opener.click()
   await page
     .getByRole('navigation', { name: 'Main navigation', exact: true })

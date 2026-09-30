@@ -94,3 +94,16 @@ A hymn's `attachments` list holds `{id, name, mime, size, addedAt}`. The bytes a
 `attachment` and `attachment_piece` (base64 in 600,000-character rows), served at
 `/api/attachments/:id` (PUT to store, GET to read, DELETE to remove). Limits: JPEG, PNG, WebP, GIF
 and PDF only, 6 MB each. Served with `nosniff` and `sandbox` headers.
+
+## Music resources
+`resources` (kind `resource`): title, kind (Artist, Album, Article, Book, Songbook, Website,
+Other), creator, year, place, link, notes, tags[], files[{kind,location}], attachments[]. The
+Retuned Hymn Movement list is bundled at `public/data/retuned-resources.json` (source
+"Retuned Hymn Movement list", one sourceId per row). Older backups without `resources` restore
+without erasing them.
+
+## Liturgies held whole
+A liturgy item now also has `files[]` and `attachments[]` (its music); a liturgy has `attachments[]`
+for the whole. Kinds: Setting (a rite kept for reuse), Sunday service, Season, Occasion, Other. Item
+kinds add Music and Rubric. Attachments are reference-counted across hymns, resources, liturgies
+and their parts, so files shared by a copied service are deleted only when unused.

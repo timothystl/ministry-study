@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react'
-import { Copy, Music, Plus, Search, Upload } from 'lucide-react'
+import { Copy, Plus, Search, Upload } from 'lucide-react'
 import {
   allUsage,
   applyFilePlan,
@@ -7,7 +7,6 @@ import {
   deleteHymn,
   fileKinds,
   hymnarySearchUrl,
-  hymnsFromRuf,
   isWebLocation,
   liturgiesForHymn,
   mergeHymns,
@@ -19,10 +18,9 @@ import {
   MAX_HYMN_TEXT,
   type FilePlan,
   type Hymn,
-  type RufEntry,
 } from '../lib/hymns'
 import type { Library } from '../lib/model'
-import { removeFile } from '../lib/attachments'
+import { attachmentRefs, removeUnused } from '../lib/attachments'
 import { Attachments } from './Attachments'
 import { Modal } from './Modal'
 
@@ -246,69 +244,6 @@ export function HymnEditor({
   )
 }
 
-function RufImport({
-  library,
-  onSave,
-  onClose,
-}: {
-  library: Library
-  onSave: (l: Library) => boolean
-  onClose: () => void
-}) {
-  const [entries, setEntries] = useState<RufEntry[] | null>(null)
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  async function load() {
-    setLoading(true)
-    setError('')
-    try {
-      const res = await fetch('/data/ruf-hymnbook.json')
-      if (!res.ok) throw new Error('not available')
-      setEntries((await res.json()) as RufEntry[])
-    } catch {
-      setError('The hymnbook index could not be loaded. Try again in a moment.')
-    }
-    setLoading(false)
-  }
-  const plan = entries ? hymnsFromRuf(entries, library) : null
-  return (
-    <Modal title="Add the RUF Hymnbook" onClose={onClose} wide>
-      <p>
-        The RUF Hymnbook (igracemusic.com) has about 175 hymns with lead sheets, overhead lyrics,
-        chord charts and demo recordings. This adds each hymn with its lyricist, composer and links
-        to those pages. The songs themselves stay on their site, and nothing is copied.
-      </p>
-      {!entries && (
-        <button className="primary" disabled={loading} onClick={() => void load()}>
-          {loading ? 'Loading…' : 'Look at the list'}
-        </button>
-      )}
-      {error && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
-      {plan && (
-        <section className="import-review">
-          <p>
-            {plan.hymns.length} to add; {plan.skipped} already in your catalog.
-          </p>
-          <button
-            className="primary"
-            disabled={!plan.hymns.length}
-            onClick={() => {
-              if (onSave({ ...library, hymns: [...library.hymns, ...plan.hymns] })) onClose()
-              else setError('Could not save.')
-            }}
-          >
-            Add {plan.hymns.length} hymns
-          </button>
-        </section>
-      )}
-    </Modal>
-  )
-}
-
 function ListImport({
   library,
   onSave,
@@ -516,7 +451,7 @@ export function Hymns({
   const [usage, setUsage] = useState('')
   const [hasFiles, setHasFiles] = useState(false)
   const [editing, setEditing] = useState<Hymn | null>(null)
-  const [modal, setModal] = useState<'ruf' | 'list' | 'files' | null>(null)
+  const [modal, setModal] = useState<'list' | 'files' | null>(null)
   const [confirm, setConfirm] = useState(false)
   const [limit, setLimit] = useState(60)
   const hymns = library.hymns
@@ -526,6 +461,7 @@ export function Hymns({
     [hymns, query, usage, hasFiles],
   )
   const open = hymns.find((h) => h.id === openId)
+  const refs = useMemo(() => attachmentRefs(library), [library])
   const used = open ? liturgiesForHymn(library, open.id) : []
   return (
     <section className="sermons" aria-label="Hymns">
@@ -549,7 +485,7 @@ export function Hymns({
                 <button
                   onClick={() => {
                     if (onSave(deleteHymn(library, open.id))) {
-                      open.attachments.forEach((a) => void removeFile(a.id))
+                      removeUnused(library, open.attachments)
                       setOpenId('')
                     }
                   }}
@@ -602,6 +538,7 @@ export function Hymns({
             </ul>
           </section>
           <Attachments
+            refs={refs}
             attachments={open.attachments}
             onChange={(next) => onSave(saveHymn(library, { ...open, attachments: next }))}
           />
@@ -644,9 +581,6 @@ export function Hymns({
             <div className="sermon-actions">
               <button className="primary" onClick={() => setEditing(blankHymn())}>
                 <Plus size={16} /> Add hymn
-              </button>
-              <button onClick={() => setModal('ruf')}>
-                <Music size={16} /> RUF Hymnbook
               </button>
               <button onClick={() => setModal('list')}>
                 <Upload size={16} /> Import list
@@ -695,8 +629,7 @@ export function Hymns({
           {hymns.length === 0 ? (
             <div className="empty-state">
               <p>
-                No hymns yet. Add one, import a spreadsheet, add the RUF Hymnbook, or attach a
-                folder of Finale files.
+                No hymns yet. Add one, import a spreadsheet, or attach a folder of Finale files.
               </p>
             </div>
           ) : hits.length === 0 ? (
@@ -743,9 +676,6 @@ export function Hymns({
             return false
           }}
         />
-      )}
-      {modal === 'ruf' && (
-        <RufImport library={library} onSave={onSave} onClose={() => setModal(null)} />
       )}
       {modal === 'list' && (
         <ListImport library={library} onSave={onSave} onClose={() => setModal(null)} />

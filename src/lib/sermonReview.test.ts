@@ -15,6 +15,7 @@ const library = (sermons: Sermon[]): Library => ({
   prayerSets: [],
   hymns: [],
   liturgies: [],
+  resources: [],
   notes: [],
   sample: false,
 })
