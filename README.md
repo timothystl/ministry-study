@@ -213,6 +213,13 @@ Choose from:
 - **Hebrew** (Westminster Leningrad Codex, Aleppo Codex) and **Greek** (Tischendorf, Westcott–Hort,
   Textus Receptus for the New Testament; the Septuagint for the Old), read from the free getBible
   service.
+- **Modern critical Greek New Testaments,** shipped with the site (no service needed): the **SBL Greek
+  New Testament** (SBLGNT, CC BY 4.0), the **Tyndale House GNT** and **NA28** readings. The last two
+  are rebuilt from STEPBible's tagged Greek New Testament (CC BY 4.0), which marks every word with
+  the editions that contain it; they follow STEPBible's reading of those editions, without the
+  printed editions' apparatus. To rebuild them, check out LogosBible/SBLGNT and
+  STEPBible/STEPBible-Data and run `node scripts/buildGreekTexts.mjs <SBLGNT> <STEPBible-Data>`.
+  The NA28 and BHS as printed are copyrighted by the German Bible Society and are not included.
 - **English:** World English Bible, KJV, ASV, Young's Literal, Weymouth, Douay–Rheims and Tyndale
   (getBible); the **ESV** (Crossway); and the **NET Bible** (bible.org's free service).
 - **YouVersion:** every Bible your YouVersion Platform key has been licensed for appears in its own

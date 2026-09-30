@@ -116,3 +116,27 @@ describe('versions read through the server', () => {
     expect(await loadYvpVersions()).toEqual([])
   })
 })
+describe('bundled Greek editions', () => {
+  it('reads a chapter from the book file and keeps the file', async () => {
+    const fetcher = vi.fn(async (_url: string) => ({
+      ok: true,
+      status: 200,
+      headers: { get: () => 'application/json' },
+      json: async () => ({ '3': { '17': 'b', '16': 'a' } }),
+    }))
+    vi.stubGlobal('fetch', fetcher)
+    expect(await loadChapter('sblgnt', 'John', 3)).toEqual([
+      { verse: 16, text: 'a' },
+      { verse: 17, text: 'b' },
+    ])
+    expect(await loadChapter('sblgnt', 'John', 4)).toEqual([])
+    expect(fetcher).toHaveBeenCalledTimes(1)
+    expect(fetcher.mock.calls[0][0]).toBe('/data/greek/sblgnt/43.json')
+  })
+  it('offers the three editions for the New Testament only', () => {
+    for (const id of ['sblgnt', 'thgnt', 'na28']) {
+      expect(versionsFor('NT').some((v) => v.id === id)).toBe(true)
+      expect(versionsFor('OT').some((v) => v.id === id)).toBe(false)
+    }
+  })
+})

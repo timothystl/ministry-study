@@ -18,7 +18,15 @@ export interface Version {
   license: string
   // Read through this site's own server (it holds the key), not from getBible.
   viaServer?: boolean
+  // Shipped with the site as files under /data/greek, one per book.
+  bundled?: boolean
+  // Words to show under the page when this version is on screen.
+  credit?: string
 }
+const SBLGNT_CREDIT =
+  'SBL Greek New Testament: Michael W. Holmes, ed., The Greek New Testament: SBL Edition (Society of Biblical Literature and Logos Bible Software, 2010), CC BY 4.0.'
+const STEP_CREDIT =
+  'Data created by www.STEPBible.org based on work at Tyndale House, Cambridge (CC BY 4.0).'
 export const versions: Version[] = [
   {
     id: 'codex',
@@ -37,6 +45,36 @@ export const versions: Version[] = [
     covers: ['OT'],
     rtl: true,
     license: 'Public domain',
+  },
+  {
+    id: 'sblgnt',
+    name: 'SBL Greek New Testament',
+    short: 'SBLGNT',
+    language: 'Greek',
+    covers: ['NT'],
+    license: 'CC BY 4.0',
+    bundled: true,
+    credit: SBLGNT_CREDIT,
+  },
+  {
+    id: 'thgnt',
+    name: 'Tyndale House Greek New Testament (via STEPBible)',
+    short: 'Tyndale House',
+    language: 'Greek',
+    covers: ['NT'],
+    license: 'CC BY 4.0',
+    bundled: true,
+    credit: STEP_CREDIT,
+  },
+  {
+    id: 'na28',
+    name: 'Nestle-Aland 28th edition readings (via STEPBible)',
+    short: 'NA28',
+    language: 'Greek',
+    covers: ['NT'],
+    license: 'CC BY 4.0',
+    bundled: true,
+    credit: `${STEP_CREDIT} The NA28 column is the words STEPBible marks as NA28, without the printed edition’s apparatus.`,
   },
   {
     id: 'tischendorf',
@@ -155,7 +193,7 @@ export const versionsFor = (testament: Testament, extra: Version[] = []) =>
   [...versions, ...extra].filter((v) => v.covers.includes(testament))
 // The original language of the testament comes first, then an English translation to read beside it.
 export const defaultVersionIds = (testament: Testament) =>
-  testament === 'OT' ? ['codex', 'web', 'kjv'] : ['tischendorf', 'web', 'kjv']
+  testament === 'OT' ? ['codex', 'web', 'kjv'] : ['sblgnt', 'web', 'kjv']
 
 export interface Verse {
   verse: number
@@ -247,11 +285,30 @@ export async function loadYvpVersions(): Promise<Version[]> {
     return []
   }
 }
+const books = new Map<string, Promise<Record<string, Record<string, string>>>>()
+async function loadBundled(id: string, book: string, chapter: number): Promise<Verse[]> {
+  const url = `/data/greek/${id}/${bookNumber(book)}.json`
+  let found = books.get(url)
+  if (!found) {
+    found = (async () => {
+      const response = await fetch(url, { headers: { Accept: 'application/json' } })
+      if (!(response.headers.get('Content-Type') || '').includes('json')) return {}
+      return (await response.json()) as Record<string, Record<string, string>>
+    })()
+    books.set(url, found)
+    found.catch(() => books.delete(url))
+  }
+  const verses = (await found)[String(chapter)] ?? {}
+  return Object.entries(verses)
+    .map(([verse, text]) => ({ verse: Number(verse), text }))
+    .sort((a, b) => a.verse - b.verse)
+}
 export function loadChapter(id: string, book: string, chapter: number): Promise<Verse[]> {
   const key = `${id}/${book}/${chapter}`
   let found = cache.get(key)
   if (!found) {
     found = (async () => {
+      if (versions.find((v) => v.id === id)?.bundled) return loadBundled(id, book, chapter)
       const served = loadViaServer(id, book, chapter)
       if (served) return served
       const response = await fetch(address(id, book, chapter), {
@@ -268,7 +325,10 @@ export function loadChapter(id: string, book: string, chapter: number): Promise<
   }
   return found
 }
-export const clearBibleCache = () => cache.clear()
+export const clearBibleCache = () => {
+  cache.clear()
+  books.clear()
+}
 
 const CHOICE_KEY = 'ministry-study.bible-versions.v1'
 // What was ticked last time, or the defaults. It is not checked against the versions on offer here,
