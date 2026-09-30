@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react'
-import { Camera, Link2, Plus, Search, Upload } from 'lucide-react'
+import { Camera, ExternalLink, Link2, Plus, Search, Upload } from 'lucide-react'
 import type { Library } from '../lib/model'
 import {
   blankNote,
@@ -598,6 +598,17 @@ export function Notes({
               <button onClick={() => setImporting(true)}>
                 <Upload size={16} /> Import files
               </button>
+              {!ideasPage && (
+                <a
+                  className="button-link"
+                  href="https://claude.ai/artifact/RtpqpPoXsERRCdD8Wd2DxE"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ExternalLink size={16} />{' '}
+                  {kidsPage ? 'Write a message with Claude' : 'Write a devotion with Claude'}
+                </a>
+              )}
             </div>
           </header>
           {photoError && (
