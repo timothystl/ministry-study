@@ -2872,3 +2872,80 @@ mark {
   font-size: 13px;
   line-height: 1.5;
 }
+.bible-word {
+  display: inline;
+  min-width: 0;
+  padding: 0 2px;
+  margin: 0 1px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.bible-word:hover,
+.bible-word.picked {
+  background: rgba(11, 107, 91, 0.16);
+}
+.word-study {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  max-height: 55vh;
+  overflow-y: auto;
+  margin: 16px 0;
+  padding: 14px 16px;
+  border: 1px solid var(--line, #d9d9d9);
+  border-radius: 10px;
+  background: var(--surface, #fff);
+  box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.12);
+}
+.word-study-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.word-study p {
+  margin: 2px 0;
+}
+.word-study-hebrew {
+  font-size: 34px;
+  line-height: 1.5;
+}
+.word-parts {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.word-part-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+.word-part-role {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.word-part-hebrew {
+  font-size: 22px;
+}
+.word-parts dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 2px 12px;
+  margin: 4px 0 0;
+  font-size: 14px;
+}
+.word-parts dt {
+  color: var(--muted, #667);
+}
+.word-parts dd {
+  margin: 0;
+}

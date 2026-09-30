@@ -202,3 +202,25 @@ describe('bundled Greek editions', () => {
     }
   })
 })
+describe('Hebrew word study', () => {
+  it('reads a chapter of words and joins each verse into text', async () => {
+    const fetcher = vi.fn(async (_url: string) => ({
+      ok: true,
+      status: 200,
+      headers: { get: () => 'application/json' },
+      json: async () => ({
+        '1': {
+          '1': [
+            ['בְּ/רֵאשִׁית', 'x', 'in/ beginning', 'H9003/{H7225G}', 'HR/Ncfsa'],
+            ['בָּרָא', 'y', 'he created', '{H1254A}', 'HVqp3ms'],
+          ],
+        },
+      }),
+    }))
+    vi.stubGlobal('fetch', fetcher)
+    const [verse] = await loadChapter('tahot', 'Genesis', 1)
+    expect(verse.text).toBe('בְּרֵאשִׁית בָּרָא')
+    expect(verse.words).toHaveLength(2)
+    expect(fetcher.mock.calls[0][0]).toBe('/data/hebrew/1.json')
+  })
+})
