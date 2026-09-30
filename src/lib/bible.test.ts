@@ -133,6 +133,21 @@ describe('bundled Greek editions', () => {
     expect(fetcher).toHaveBeenCalledTimes(1)
     expect(fetcher.mock.calls[0][0]).toBe('/data/greek/sblgnt/43.json')
   })
+  it('reads the Lexham English Bible from its own folder, for either testament', async () => {
+    const fetcher = vi.fn(async (_url: string) => ({
+      ok: true,
+      status: 200,
+      headers: { get: () => 'application/json' },
+      json: async () => ({ '23': { '1': 'Yahweh is my shepherd' } }),
+    }))
+    vi.stubGlobal('fetch', fetcher)
+    expect(await loadChapter('leb', 'Psalms', 23)).toEqual([
+      { verse: 1, text: 'Yahweh is my shepherd' },
+    ])
+    expect(fetcher.mock.calls[0][0]).toBe('/data/english/leb/19.json')
+    expect(versionsFor('OT').some((v) => v.id === 'leb')).toBe(true)
+    expect(versionsFor('NT').some((v) => v.id === 'leb')).toBe(true)
+  })
   it('offers the three editions for the New Testament only', () => {
     for (const id of ['sblgnt', 'thgnt', 'na28']) {
       expect(versionsFor('NT').some((v) => v.id === id)).toBe(true)
