@@ -89,6 +89,46 @@ describe('hymn catalog', () => {
   })
 })
 
+describe('a hymnal index', () => {
+  it('adds hymnal numbers to hymns already in the catalog, and adds only the new ones', () => {
+    let lib = saveHymn(
+      empty(),
+      hymn({
+        id: 'a',
+        title: 'Abide With Me',
+        composer: 'W. H. Monk',
+        hymnal: 'RUF Hymnbook',
+        notes: 'mine',
+      }),
+    )
+    const csv =
+      'Hymnal,Number,Title,Tune,Composer,Meter,Usage\n' +
+      'LSB,878,Abide With Me,Eventide,William Henry Monk,10 10 10 10,Evening\n' +
+      'LSB,656,A Mighty Fortress Is Our God,Ein feste Burg,Martin Luther,87 87 55 567,Reformation\n'
+    const { hymns } = parseHymnList(csv)
+    expect(hymns[0].hymnal).toBe('LSB 878')
+    const done = mergeHymns(lib, hymns)
+    expect(done).toMatchObject({ added: 1, updated: 1, skipped: 0 })
+    const abide = done.library.hymns.find((h) => h.id === 'a')!
+    expect(abide.hymnal).toBe('RUF Hymnbook; LSB 878')
+    expect(abide.composer).toBe('W. H. Monk') // what was there is kept
+    expect(abide).toMatchObject({ tune: 'Eventide', meter: '10 10 10 10', notes: 'mine' })
+    expect(abide.usage).toEqual(['Evening'])
+    // the same index again changes nothing
+    const again = mergeHymns(done.library, hymns)
+    expect(again).toMatchObject({ added: 0, updated: 0, skipped: 2 })
+    expect(again.library.hymns).toHaveLength(2)
+    // searching by the hymnal number finds it
+    expect(searchHymns(again.library.hymns, 'LSB 878').map((h) => h.hymn.id)).toEqual(['a'])
+    lib = again.library
+    // a same-titled hymn with a different tune is its own hymn
+    const other = parseHymnList(
+      'Hymnal,Number,Title,Tune\nTLH,262,Abide With Me,Another Tune\n',
+    ).hymns
+    expect(mergeHymns(lib, other)).toMatchObject({ added: 1, updated: 0 })
+  })
+})
+
 describe('files', () => {
   it('names the kind of file from its extension', () => {
     expect(fileKindFor('Abide.musx')).toBe('Finale')

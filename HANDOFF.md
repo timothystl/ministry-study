@@ -162,3 +162,7 @@ Illustrations & Ideas (quick add, photograph a scrap, sources incl. user-added s
 licenses, YouTube/Vimeo player with start/end, credit line, sermon-page panel. Cloudflare account has Workers Paid, R2 Paid and
 Images/Stream: next steps are uploading clips (Stream, private with signed URLs) and moving photos to R2. Film scenes stay as
 links with timestamps; do not copy streaming video.
+
+## Latest update: hymnal indexes
+The hymn list import merges a hymnal index into existing hymns (Hymnal + Number columns), so a hymn
+can list every hymnal it is in. Waiting on the LSB index pages (photos or PDF) to turn into a CSV.
