@@ -24,55 +24,67 @@ const input = (text: string, over = {}) => ({
 describe('sermon text storage', () => {
   it('stores text, replaces it, and reports status', async () => {
     const db = fakeD1()
-    await putText(db, 's1', input('The prodigal son came home.'))
-    await putText(db, 's1', input('A different manuscript entirely.', { hash: '12345678' }))
-    expect(await getText(db, 's1')).toMatchObject({
+    await putText(db, 'admin', 's1', input('The prodigal son came home.'))
+    await putText(
+      db,
+      'admin',
+      's1',
+      input('A different manuscript entirely.', { hash: '12345678' }),
+    )
+    expect(await getText(db, 'admin', 's1')).toMatchObject({
       text: 'A different manuscript entirely.',
       hash: '12345678',
       indexed: true,
     })
-    expect(await listStatus(db)).toEqual([{ id: 's1', chars: 32, hash: '12345678', indexed: true }])
-    expect(await searchText(db, 'prodigal')).toEqual([])
-    expect((await searchText(db, 'entirely')).map((h) => h.id)).toEqual(['s1'])
+    expect(await listStatus(db, 'admin')).toEqual([
+      { id: 's1', chars: 32, hash: '12345678', indexed: true },
+    ])
+    expect(await searchText(db, 'admin', 'prodigal')).toEqual([])
+    expect((await searchText(db, 'admin', 'entirely')).map((h) => h.id)).toEqual(['s1'])
   })
   it('searches whole words with stemming, phrases, and highlights the match', async () => {
     const db = fakeD1()
-    await putText(db, 'a', input('The son returned home and the father ran to meet him.'))
-    await putText(db, 'b', input('A sower went out to sow. Some seed fell on the path.'))
-    expect((await searchText(db, 'son returning')).map((h) => h.id)).toEqual(['a'])
-    expect((await searchText(db, '"father ran"')).map((h) => h.id)).toEqual(['a'])
-    expect((await searchText(db, '"ran father"')).map((h) => h.id)).toEqual([])
-    const [hit] = await searchText(db, 'seed')
+    await putText(db, 'admin', 'a', input('The son returned home and the father ran to meet him.'))
+    await putText(db, 'admin', 'b', input('A sower went out to sow. Some seed fell on the path.'))
+    expect((await searchText(db, 'admin', 'son returning')).map((h) => h.id)).toEqual(['a'])
+    expect((await searchText(db, 'admin', '"father ran"')).map((h) => h.id)).toEqual(['a'])
+    expect((await searchText(db, 'admin', '"ran father"')).map((h) => h.id)).toEqual([])
+    const [hit] = await searchText(db, 'admin', 'seed')
     expect(hit).toMatchObject({ id: 'b' })
     expect(hit.snippet).toContain('[[seed]]')
   })
   it('never lets punctuation break a search', async () => {
     const db = fakeD1()
-    await putText(db, 'a', input("God's grace is enough."))
+    await putText(db, 'admin', 'a', input("God's grace is enough."))
     expect(ftsQuery('grace* OR (NOT enough)')).toBe('"grace" AND "OR" AND "NOT" AND "enough"')
-    expect(await searchText(db, 'grace"; DROP TABLE x;--')).toEqual([])
-    expect((await searchText(db, "God's grace")).map((h) => h.id)).toEqual(['a'])
-    expect(await searchText(db, '   ')).toEqual([])
+    expect(await searchText(db, 'admin', 'grace"; DROP TABLE x;--')).toEqual([])
+    expect((await searchText(db, 'admin', "God's grace")).map((h) => h.id)).toEqual(['a'])
+    expect(await searchText(db, 'admin', '   ')).toEqual([])
   })
   it('keeps text but leaves a private sermon out of search, and can change its mind', async () => {
     const db = fakeD1()
-    await putText(db, 'p', input('A funeral sermon with private details.', { indexed: false }))
-    expect(await searchText(db, 'funeral')).toEqual([])
-    expect((await getText(db, 'p'))?.text).toContain('funeral')
-    expect(await setIndexed(db, 'p', true)).toBe(true)
-    expect((await searchText(db, 'funeral')).map((h) => h.id)).toEqual(['p'])
-    expect((await getText(db, 'p'))?.hash).toBe('abcdef12')
-    await setIndexed(db, 'p', false)
-    expect(await searchText(db, 'funeral')).toEqual([])
-    expect(await setIndexed(db, 'missing', true)).toBe(false)
+    await putText(
+      db,
+      'admin',
+      'p',
+      input('A funeral sermon with private details.', { indexed: false }),
+    )
+    expect(await searchText(db, 'admin', 'funeral')).toEqual([])
+    expect((await getText(db, 'admin', 'p'))?.text).toContain('funeral')
+    expect(await setIndexed(db, 'admin', 'p', true)).toBe(true)
+    expect((await searchText(db, 'admin', 'funeral')).map((h) => h.id)).toEqual(['p'])
+    expect((await getText(db, 'admin', 'p'))?.hash).toBe('abcdef12')
+    await setIndexed(db, 'admin', 'p', false)
+    expect(await searchText(db, 'admin', 'funeral')).toEqual([])
+    expect(await setIndexed(db, 'admin', 'missing', true)).toBe(false)
   })
   it('deletes text and its index, and exports in pages', async () => {
     const db = fakeD1()
-    for (const id of ['a', 'b', 'c']) await putText(db, id, input(`Text of ${id}.`))
-    await deleteText(db, 'b')
-    expect(await searchText(db, 'text b')).toEqual([])
-    expect((await exportAll(db, '', 1)).map((r) => r.id)).toEqual(['a'])
-    expect((await exportAll(db, 'a', 5)).map((r) => r.id)).toEqual(['c'])
+    for (const id of ['a', 'b', 'c']) await putText(db, 'admin', id, input(`Text of ${id}.`))
+    await deleteText(db, 'admin', 'b')
+    expect(await searchText(db, 'admin', 'text b')).toEqual([])
+    expect((await exportAll(db, 'admin', '', 1)).map((r) => r.id)).toEqual(['a'])
+    expect((await exportAll(db, 'admin', 'a', 5)).map((r) => r.id)).toEqual(['c'])
   })
   it('rejects bad input', () => {
     expect(() => validateText({ text: '  ', hash: 'abcdef12' })).toThrow()
@@ -117,5 +129,49 @@ describe('sermon text API', () => {
     const closed = { DB: fakeD1(), STUDY_ACCESS_TEAM_DOMAIN: 't.example', STUDY_ACCESS_AUD: 'a' }
     expect((await call(closed, '/api/sermon-search?q=x')).status).toBe(401)
     expect((await call({ DB: fakeD1() }, '/api/sermon-text')).status).toBe(503)
+  })
+})
+
+describe('manuscripts are private to each person', () => {
+  it('never shows one person’s text, search or export to another', async () => {
+    const db = fakeD1()
+    await putText(db, 'admin', 's1', input('Grace upon grace, said the pastor.'))
+    await putText(db, 'g@x.org', 's1', input('Grace and peace, said the guest.'))
+    expect((await getText(db, 'g@x.org', 's1'))?.text).toContain('guest')
+    expect((await searchText(db, 'admin', 'grace')).map((h) => h.id)).toEqual(['s1'])
+    expect((await searchText(db, 'g@x.org', 'pastor')).map((h) => h.id)).toEqual([])
+    expect((await exportAll(db, 'g@x.org')).map((r) => r.text)).toEqual([
+      'Grace and peace, said the guest.',
+    ])
+    await deleteText(db, 'g@x.org', 's1')
+    expect(await getText(db, 'g@x.org', 's1')).toBeUndefined()
+    expect((await getText(db, 'admin', 's1'))?.text).toContain('pastor')
+    expect((await searchText(db, 'admin', 'pastor')).map((h) => h.id)).toEqual(['s1'])
+  })
+  it('keeps and re-indexes manuscripts saved before people were added', async () => {
+    const db = fakeD1()
+    await db.batch([
+      db.prepare(
+        `CREATE TABLE sermon_text (sermon_id TEXT PRIMARY KEY, body TEXT NOT NULL,
+          chars INTEGER NOT NULL, hash TEXT NOT NULL, file_name TEXT NOT NULL,
+          indexed INTEGER NOT NULL DEFAULT 1, updated_at TEXT NOT NULL)`,
+      ),
+      db.prepare(
+        `CREATE VIRTUAL TABLE sermon_fts USING fts5(body, sermon_id UNINDEXED, tokenize = 'porter unicode61')`,
+      ),
+      db.prepare(
+        `INSERT INTO sermon_text VALUES ('old', 'The lost sheep was found.', 25, 'abcdef12', 'f.md', 1, 't')`,
+      ),
+      db.prepare(
+        `INSERT INTO sermon_text VALUES ('quiet', 'A private funeral text.', 23, 'abcdef12', 'g.md', 0, 't')`,
+      ),
+      db.prepare(
+        `INSERT INTO sermon_fts (body, sermon_id) VALUES ('The lost sheep was found.', 'old')`,
+      ),
+    ])
+    expect((await searchText(db, 'admin', 'sheep')).map((h) => h.id)).toEqual(['old'])
+    expect((await searchText(db, 'admin', 'funeral')).map((h) => h.id)).toEqual([])
+    expect((await getText(db, 'admin', 'quiet'))?.text).toContain('funeral')
+    expect(await searchText(db, 'g@x.org', 'sheep')).toEqual([])
   })
 })

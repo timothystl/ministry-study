@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Library } from './model'
+import { scopedKey } from './storage'
 import {
   chunkChanges,
   diffRecords,
@@ -21,24 +22,28 @@ export type SyncStatus =
   | 'choose' // both have a library and this device has never synced
   | 'conflict' // shared library changed elsewhere while this device also changed
 const SYNC_KEY = 'ministry-study.sync.v1'
+const syncKey = () => scopedKey(SYNC_KEY)
 interface Baseline {
   revision: number
   hashes: Hashes
+  // Which parts of the library the hashes cover ('*' is all of it; older saves have none recorded).
+  kinds?: string
 }
+const kindsSignature = (kinds: string[] | null) => (kinds ? [...kinds].sort().join(',') : '*')
 interface Remote extends Baseline {
   records: SyncRecord[]
 }
 function loadBaseline(): Baseline | null {
   try {
-    const value = JSON.parse(localStorage.getItem(SYNC_KEY) || 'null')
+    const value = JSON.parse(localStorage.getItem(syncKey()) || 'null')
     return value && typeof value.revision === 'number' && value.hashes ? value : null
   } catch {
     return null
   }
 }
-function saveBaseline(baseline: Baseline) {
+function saveBaseline(baseline: Baseline, kinds: string[] | null) {
   try {
-    localStorage.setItem(SYNC_KEY, JSON.stringify(baseline))
+    localStorage.setItem(syncKey(), JSON.stringify({ ...baseline, kinds: kindsSignature(kinds) }))
   } catch {
     // Without a saved baseline the next start simply asks again.
   }
@@ -55,7 +60,14 @@ async function fetchRemote(): Promise<Remote | 'unavailable'> {
   }
 }
 
-export function useSync(library: Library, adopt: (library: Library) => boolean) {
+// `kinds` limits sync to the parts of the app this person may use (null: everything).
+export function useSync(
+  library: Library,
+  adopt: (library: Library) => boolean,
+  kinds: string[] | null = null,
+) {
+  // Fixed for the life of the page: a different person, or a change to their parts, reloads the app.
+  const kindsRef = useRef(kinds)
   const [status, setStatus] = useState<SyncStatus>('starting')
   const [remoteCount, setRemoteCount] = useState(0)
   const baseline = useRef<Baseline>({ revision: 0, hashes: {} })
@@ -72,7 +84,7 @@ export function useSync(library: Library, adopt: (library: Library) => boolean) 
     busy.current = true
     try {
       for (;;) {
-        const records = libraryToRecords(latest.current)
+        const records = libraryToRecords(latest.current, kindsRef.current)
         const change = diffRecords(records, baseline.current.hashes)
         if (!change.upserts.length && !change.deletes.length) {
           setStatus('synced')
@@ -99,7 +111,7 @@ export function useSync(library: Library, adopt: (library: Library) => boolean) 
           for (const r of chunk.upserts) hashes[recordKey(r)] = hashRecords([r])[recordKey(r)]
           for (const r of chunk.deletes) delete hashes[recordKey(r)]
           baseline.current = { revision, hashes }
-          saveBaseline(baseline.current)
+          saveBaseline(baseline.current, kindsRef.current)
         }
       }
     } catch {
@@ -123,18 +135,27 @@ export function useSync(library: Library, adopt: (library: Library) => boolean) 
       setRemoteCount(found.records.length)
       const saved = loadBaseline()
       const local = latest.current
-      const localRecords = libraryToRecords(local)
+      const localRecords = libraryToRecords(local, kindsRef.current)
       const localEmpty = localRecords.length === 0 // only illustrative samples, or nothing
       const localHashes = hashRecords(localRecords)
       const same =
         Object.keys(localHashes).length === Object.keys(found.hashes).length &&
         Object.entries(localHashes).every(([k, v]) => found.hashes[k] === v)
-      const dirty = saved ? diffRecords(libraryToRecords(local), saved.hashes) : null
+      // If the parts this person may use have changed since the last save, what this device holds
+      // may not cover what the shared library now has, so take the shared copy unless edits wait.
+      const partsChanged =
+        Boolean(saved) && (saved!.kinds ?? '*') !== kindsSignature(kindsRef.current)
+      const savedKinds = !saved
+        ? kindsRef.current
+        : saved.kinds === undefined || saved.kinds === '*'
+          ? null
+          : saved.kinds.split(',').filter(Boolean)
+      const dirty = saved ? diffRecords(libraryToRecords(local, savedKinds), saved.hashes) : null
       const localChanged = dirty && (dirty.upserts.length > 0 || dirty.deletes.length > 0)
       const takeRemote = () => {
         baseline.current = { revision: found.revision, hashes: found.hashes }
         if (adopt(recordsToLibrary(found.records))) {
-          saveBaseline(baseline.current)
+          saveBaseline(baseline.current, kindsRef.current)
           active.current = true
           setStatus('synced')
         } else setStatus('choose')
@@ -147,12 +168,15 @@ export function useSync(library: Library, adopt: (library: Library) => boolean) 
         } else setStatus('upload')
       } else if (same) {
         baseline.current = { revision: found.revision, hashes: found.hashes }
-        saveBaseline(baseline.current)
+        saveBaseline(baseline.current, kindsRef.current)
         active.current = true
         setStatus('synced')
       } else if (localEmpty) takeRemote()
       else if (!saved) setStatus('choose')
-      else if (saved.revision === found.revision) {
+      else if (partsChanged) {
+        if (!localChanged) takeRemote()
+        else setStatus('conflict')
+      } else if (saved.revision === found.revision) {
         baseline.current = saved
         active.current = true
         if (localChanged) void push()
@@ -169,7 +193,7 @@ export function useSync(library: Library, adopt: (library: Library) => boolean) 
   useEffect(() => {
     if (!active.current) return
     // Say "saving" as soon as there is something unsaved, not only once the request starts.
-    const change = diffRecords(libraryToRecords(library), baseline.current.hashes)
+    const change = diffRecords(libraryToRecords(library, kindsRef.current), baseline.current.hashes)
     if (!change.upserts.length && !change.deletes.length) return
     setStatus((current) => (current === 'synced' ? 'saving' : current))
     const timer = setTimeout(() => void push(), 700)
@@ -203,7 +227,7 @@ export function useSync(library: Library, adopt: (library: Library) => boolean) 
       const next = recordsToLibrary(found.records)
       baseline.current = { revision: found.revision, hashes: found.hashes }
       if (adopt(next)) {
-        saveBaseline(baseline.current)
+        saveBaseline(baseline.current, kindsRef.current)
         active.current = true
         setStatus('synced')
       }

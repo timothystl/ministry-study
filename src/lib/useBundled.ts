@@ -1,13 +1,15 @@
 import { useEffect, useRef } from 'react'
 import { hymnsFromRuf, type RufEntry } from './hymns'
 import type { Library } from './model'
+import { scopedKey } from './storage'
 import { BUNDLE_SOURCE, resourcesFromBundle, type BundledResource } from './resources'
 
 // The RUF Hymnbook index and the Retuned Hymn Movement list are added to the library by
 // themselves, once, after the shared library has loaded. Each is added only if none of its records
 // are there yet, so anything removed afterward stays removed. Their ids are fixed, so two devices
 // doing this at once cannot create duplicates.
-const DONE = 'ministry-study.bundled.v1'
+// One flag per person, like the library itself.
+const done = () => scopedKey('ministry-study.bundled.v1')
 async function json<T>(path: string): Promise<T> {
   const response = await fetch(path)
   if (!response.ok) throw new Error(path)
@@ -49,7 +51,7 @@ export function useBundled(
     if (!ready || started.current) return
     started.current = true
     try {
-      if (localStorage.getItem(DONE)) return
+      if (localStorage.getItem(done())) return
     } catch {
       // Without local storage the check simply runs each visit; it adds nothing twice.
     }
@@ -62,7 +64,7 @@ export function useBundled(
         const next = planBundled(latest.current, ruf, resources)
         if (next && !save.current(next)) return
         try {
-          localStorage.setItem(DONE, '1')
+          localStorage.setItem(done(), '1')
         } catch {
           // fine
         }

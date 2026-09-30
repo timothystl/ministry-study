@@ -93,10 +93,21 @@ The app can save to a free Cloudflare D1 database, following the same pattern as
 
 1. Make sure the `name` in `wrangler.jsonc` matches the existing Cloudflare project for study.timothystl.org.
 2. In Zero Trust → Access → Applications, protect `study.timothystl.org` (self-hosted; policy limited to the people who should see the library). The site is otherwise public and the repository is public.
-3. In the project's Settings → Variables, set `STUDY_ACCESS_TEAM_DOMAIN` (the `…cloudflareaccess.com` team domain) and `STUDY_ACCESS_AUD` (the Access application's audience tag).
+3. In the project's Settings → Variables, set `STUDY_ACCESS_TEAM_DOMAIN` (the `…cloudflareaccess.com` team domain), `STUDY_ACCESS_AUD` (the Access application's audience tag) and `STUDY_ADMIN_EMAIL` (the pastor's sign-in address; without it the API refuses everyone, so set it before deploying).
 4. Deploy. The D1 database `timothy-study-db` was created in the dashboard and is referenced by ID in `wrangler.jsonc`; the worker creates its tables on first use.
 
 The first device to open the app after that is offered **Save this library to the shared library**; later devices adopt it. D1 keeps 30 days of point-in-time recovery; **Export backup** remains the private off-Cloudflare copy. Local runs use `npx wrangler dev` with `STUDY_DEV_NO_AUTH=1` in an ignored `.dev.vars`. Free-tier limits (5 GB, 100,000 writes a day) are far above this use.
+
+### People and permissions
+
+The pastor (`STUDY_ADMIN_EMAIL`) is the administrator and always has every part of the study. **People** (in the menu, administrator only) adds other people, each with a **library of their own**: the same catalog kinds, kept as separate rows in the shared database (`records` and the manuscript tables carry an `owner`; the pastor's is `admin`). The administrator does not see their library and they do not see the administrator's.
+
+- **Parts to turn on or off:** Library (books, series, loans, wishlist, scanning), Sermons (catalog, manuscripts, review), Prayers, Devotions & Notes, Children's Messages, Hymns & Liturgies (the hymn catalog, liturgies and attached files). The choice is saved as soon as a box is ticked. Each part owns certain record kinds (`worker/sections.ts`), and the server checks that on every read and write, so hiding a menu item is never the only lock. Turning a part off hides what the person saved there and blocks saving more; it does not delete it, and turning it back on brings it back.
+- **Pause access** stops someone signing in to the study while keeping their library; **Restore access** undoes it. There is no delete-a-person button, so nothing can be lost by a misclick.
+- A new person starts with an empty library (no illustrative samples). Their browser keeps its own local copy under separate keys, so two people sharing one browser never see each other's.
+- **Two steps to let someone in:** add them on the People page, and add their email to the Access policy for study.timothystl.org in Cloudflare. Someone signed in but not added (or paused) sees a short message asking them to contact Andrew.
+- Upgrade: the first request after this change moves every existing row and manuscript to the pastor's library and rebuilds the manuscript search index from the saved text; nothing has to be done by hand, and the pastor's revision counter carries over unchanged.
+- Running locally with no shared server, everything is on and nothing is shared, as before.
 
 ## Sermons
 
@@ -132,6 +143,9 @@ The instructions live in `src/lib/reviewBrief.ts`.
 
 - **Library.** Biddings, sermon-theme starters, prayers and devotions, searchable by words, category and type, with add, edit, copy and remove. **Import prayers** reads the Prayers of the Church builder file (its `LIBRARY` and `STARTERS`), or the same data as JSON, shows a preview, and skips prayers already there. A bidding is stored without its closing "Lord, in your mercy," (the builder adds it once). Write `[names]` where names should go.
 - **Build the Prayers of the Church.** Enter the Sunday or occasion, date and text (or pick a sermon to fill the text), names of the sick, the grieving and birthdays, then choose one bidding per category. Names replace `[names]` in those three categories. Add other concerns and a sermon-tied petition (optionally started from a sermon-theme starter). A live preview shows the whole service; **Copy all** or **Download** it as text.
+  - **Starter biddings.** With an empty library, **Load starter biddings** adds a ready set (church, world, nation, need, sick, grieving, birthdays, thanksgiving), and **Choose the first bidding in every category** fills a whole service in one click. Names typed in are prayed for even if no bidding is chosen. The date starts at the coming Sunday.
+  - **LCMS weekly prayer.** The LCMS posts each Sunday's Prayers of the Church, free to use, as Word files. **Get this Sunday's LCMS prayer** reads the file for the chosen date (Three-Year or One-Year Series) through the server (`/api/lcms-prayer`, which reads the .doc text itself), offers the Responsive or Ektene form (and both days when a festival shares the date), and puts it in an editable box. It goes into the service under its own heading, exactly as the LCMS wrote it (it carries its own responses), with the names of the sick filled into the LCMS's `[especially ____]` blank. The blanks for the district president, pastor and so on are left for you to fill. Links to the LCMS pages and a paste box remain for when the LCMS site is unreachable.
+  - **Export and email.** **Copy all**, **Download** (text), **Print or save as PDF**, and **Email these prayers** (opens your mail program; the address is remembered; if the prayers are too long for a link, they are copied for you to paste).
 - **Saved services.** **Save this service** keeps the built text. Names are left out of the saved copy unless you tick Keep the names, since they are private pastoral information. Open a saved service to reuse it.
 
 The prayer texts are personal content and are never committed; tests use invented prayers in the same shape. Drafting new biddings with an AI model (as the original builder did) is not part of the app.

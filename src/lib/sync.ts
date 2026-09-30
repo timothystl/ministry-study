@@ -26,10 +26,11 @@ export function hashText(text: string) {
 }
 const isSample = (id: string) => id.startsWith('sample-')
 // Illustrative sample books (and any loans on them) are never sent to the shared database.
-export function libraryToRecords(library: Library): SyncRecord[] {
+// `kinds` (when given) keeps only the parts of the library this person may use.
+export function libraryToRecords(library: Library, kinds: string[] | null = null): SyncRecord[] {
   const make = (kind: string, items: { id: string }[]) =>
     items.map((item) => ({ kind, id: item.id, data: JSON.stringify(item) }))
-  return [
+  const all = [
     ...make(
       'book',
       library.books.filter((b) => !isSample(b.id)),
@@ -47,6 +48,7 @@ export function libraryToRecords(library: Library): SyncRecord[] {
       library.loans.filter((l) => !isSample(l.bookId)),
     ),
   ]
+  return kinds ? all.filter((r) => kinds.includes(r.kind)) : all
 }
 export function hashRecords(records: SyncRecord[]): Hashes {
   return Object.fromEntries(records.map((r) => [recordKey(r), hashText(r.data)]))

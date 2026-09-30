@@ -11,6 +11,11 @@ import {
   blankPrayer,
   categories,
   withNames,
+  defaultSelections,
+  loadStarterBiddings,
+  nextSunday,
+  fillLcmsBlanks,
+  prayerMailto,
 } from './prayers'
 
 const empty = (): Library => ({
@@ -159,6 +164,7 @@ describe('building the prayers of the church', () => {
           namesKept: false,
           other: '',
           petition: '',
+          lcms: '',
           text: '',
           updatedAt: '',
         },
@@ -167,5 +173,69 @@ describe('building the prayers of the church', () => {
     const removed = deletePrayer(withSet, library.prayers[0].id)
     expect(removed.prayers).toHaveLength(library.prayers.length - 1)
     expect(removed.prayerSets[0].selections).toEqual([])
+  })
+})
+
+describe('starter biddings, the LCMS weekly prayer and sharing', () => {
+  it('loads once and builds a full service from the defaults', () => {
+    const first = loadStarterBiddings(empty())
+    expect(first.added).toBeGreaterThan(8)
+    expect(loadStarterBiddings(first.library).added).toBe(0)
+    const prayers = first.library.prayers
+    const text = buildPrayers(
+      {
+        date: '2026-10-04',
+        sunday: 'Proper 22',
+        scripture: '',
+        selections: defaultSelections(prayers),
+        names: { sick: 'Ann', grieving: '', birthdays: '' },
+        other: '',
+        petition: '',
+        lcms: 'Almighty God, hear us. Lord, in your mercy,',
+      },
+      prayers,
+    )
+    expect(text).toContain('THE SICK')
+    expect(text).toContain('be near Ann and all who are ill')
+    expect(text).toContain('LCMS PRAYER OF THE CHURCH\nAlmighty God, hear us. Lord, in your mercy,')
+    // The LCMS prayer carries its own responses, so no extra one is added after it.
+    expect(text).not.toContain('Lord, in your mercy,\nHear our prayer.\n\nOTHER')
+    expect(text.endsWith('Almighty God, hear us. Lord, in your mercy,\n')).toBe(true)
+  })
+  it('still prays for names typed in when no bidding is chosen', () => {
+    const text = buildPrayers(
+      {
+        date: '',
+        sunday: '',
+        scripture: '',
+        selections: [],
+        names: { sick: 'Bob', grieving: '', birthdays: '' },
+        other: '',
+        petition: '',
+      },
+      [],
+    )
+    expect(text).toContain('THE SICK\nLord Jesus, healer of the sick, be near Bob.')
+  })
+  it('finds the coming Sunday', () => {
+    expect(nextSunday(new Date(2026, 8, 29))).toBe('2026-10-04') // a Tuesday
+    expect(nextSunday(new Date(2026, 9, 4))).toBe('2026-10-04') // a Sunday
+  })
+  it('makes a mailto link, and asks for a paste when the prayers are too long', () => {
+    const short = prayerMailto('a@b.org', 'Prayers', 'Hi')
+    expect(short).toEqual({ href: 'mailto:a%40b.org?subject=Prayers&body=Hi', complete: true })
+    expect(prayerMailto('', 'Prayers', 'x'.repeat(3000)).complete).toBe(false)
+  })
+  it('puts the names of the sick into the LCMS prayer blanks', () => {
+    const names = { sick: 'Ann and Bob', grieving: '', birthdays: '' }
+    expect(fillLcmsBlanks('suffer [especially _____________]. Lord', names)).toBe(
+      'suffer especially Ann and Bob. Lord',
+    )
+    expect(fillLcmsBlanks('suffer, [especially _____________,] let us', names)).toBe(
+      'suffer, especially Ann and Bob, let us',
+    )
+    expect(fillLcmsBlanks('[especially _____________]', { ...names, sick: '' })).toBe(
+      '[especially _____________]',
+    )
   })
 })

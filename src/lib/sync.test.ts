@@ -67,3 +67,19 @@ describe('sync helpers', () => {
     ).toThrow()
   })
 })
+
+describe('sharing only the parts a person may use', () => {
+  it('leaves out records of parts that are switched off', () => {
+    const library = {
+      ...realLibrary(),
+      sermons: [{ ...blankSermon(), id: 's1', title: 'The Lost Son' }],
+    }
+    const kinds = (only: string[] | null) => [
+      ...new Set(libraryToRecords(library, only).map((r) => r.kind)),
+    ]
+    expect(kinds(null).sort()).toEqual(['book', 'sermon'])
+    expect(kinds(['sermon'])).toEqual(['sermon'])
+    expect(kinds(['book', 'series', 'loan'])).toEqual(['book'])
+    expect(kinds([])).toEqual([])
+  })
+})
