@@ -27,6 +27,7 @@ import {
   Music,
   ScrollText,
   NotebookPen,
+  BookText,
   UserCog,
 } from 'lucide-react'
 import {
@@ -57,6 +58,7 @@ import { SermonCatalog } from './components/SermonCatalog'
 import { ScanBook } from './components/ScanBook'
 import { Prayers } from './components/Prayers'
 import { Notes } from './components/Notes'
+import { BibleStudy } from './components/BibleStudy'
 import { Visuals } from './components/Visuals'
 import { People } from './components/People'
 import { Hymns } from './components/Hymns'
@@ -75,6 +77,7 @@ type Page =
   | 'Loans'
   | 'Wishlist'
   | 'Sermons'
+  | 'Bible'
   | 'Prayers'
   | 'Notes'
   | 'Ideas'
@@ -94,6 +97,7 @@ const navigation = [
   { name: 'Loans', label: 'Loans', icon: Users, part: 'library' },
   { name: 'Wishlist', label: 'Wishlist', icon: Heart, part: 'library' },
   { name: 'Sermons', label: 'Sermons', icon: Mic, part: 'sermons' },
+  { name: 'Bible', label: 'Bible Study', icon: BookText, part: 'bible' },
   { name: 'Prayers', label: 'Prayers', icon: HandHeart, part: 'prayers' },
   { name: 'Notes', label: 'Devotions & Notes', icon: NotebookPen, part: 'notes' },
   { name: 'Ideas', label: 'Illustrations & Ideas', icon: Lightbulb, part: 'ideas' },
@@ -580,6 +584,8 @@ export default function App({ me }: { me: Me }) {
             </section>
           ) : page === 'Sermons' ? (
             <SermonCatalog library={library} onSave={commit} />
+          ) : page === 'Bible' ? (
+            <BibleStudy />
           ) : page === 'Prayers' ? (
             <Prayers library={library} onSave={commit} />
           ) : page === 'Notes' ? (

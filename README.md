@@ -102,7 +102,7 @@ The first device to open the app after that is offered **Save this library to th
 
 The pastor (`STUDY_ADMIN_EMAIL`) is the administrator and always has every part of the study. **People** (in the menu, administrator only) adds other people, each with a **library of their own**: the same catalog kinds, kept as separate rows in the shared database (`records` and the manuscript tables carry an `owner`; the pastor's is `admin`). The administrator does not see their library and they do not see the administrator's.
 
-- **Parts to turn on or off:** Library (books, series, loans, wishlist, scanning), Sermons (catalog, manuscripts, review), Prayers, Devotions & Notes, Children's Messages, Hymns & Liturgies (the hymn catalog, liturgies and attached files). The choice is saved as soon as a box is ticked. Each part owns certain record kinds (`worker/sections.ts`), and the server checks that on every read and write, so hiding a menu item is never the only lock. Turning a part off hides what the person saved there and blocks saving more; it does not delete it, and turning it back on brings it back.
+- **Parts to turn on or off:** Library (books, series, loans, wishlist, scanning), Sermons (catalog, manuscripts, review), Prayers, Devotions & Notes, Bible Study, Children's Messages, Hymns & Liturgies (the hymn catalog, liturgies and attached files). The choice is saved as soon as a box is ticked. Each part owns certain record kinds (`worker/sections.ts`), and the server checks that on every read and write, so hiding a menu item is never the only lock. Turning a part off hides what the person saved there and blocks saving more; it does not delete it, and turning it back on brings it back.
 - **Pause access** stops someone signing in to the study while keeping their library; **Restore access** undoes it. There is no delete-a-person button, so nothing can be lost by a misclick.
 - A new person starts with an empty library (no illustrative samples). Their browser keeps its own local copy under separate keys, so two people sharing one browser never see each other's.
 - **Two steps to let someone in:** add them on the People page, and add their email to the Access policy for study.timothystl.org in Cloudflare. Someone signed in but not added (or paused) sees a short message asking them to contact Andrew.
@@ -204,6 +204,19 @@ loads from there until you press play) and opens at its start time. Paste a link
 YouTube. A sermon's page lists the images and clips on its passage. Uploading clips to Cloudflare R2/Stream is not built yet.
 It is its own part on People and its records sync like the others.
 
+## Bible Study
+
+A first Bible Study page: type a passage (John 3:16–21, Psalm 23, Luke 15:30–16:2) and read it in
+columns, verse by verse. Choose from Hebrew (Westminster Leningrad Codex, Aleppo Codex), Greek
+(Tischendorf, Westcott–Hort, Textus Receptus for the New Testament; the Septuagint for the Old)
+and English (ESV, World English Bible, KJV, ASV, Young's Literal, Weymouth, Douay–Rheims, Tyndale). The
+original language of the testament and the WEB and KJV are on by default; your choices are
+remembered on this device. Texts are read from the free getBible service, one chapter at a time,
+so nothing is stored in the catalog. The ESV is read through the Worker from Crossway's service using the study's API key: add it as
+the secret `ESV_API_KEY` in the Cloudflare project (Settings → Variables and Secrets); until then
+the ESV column says it isn't set up. The key never reaches the browser, and the ESV copyright line
+shows whenever the ESV is on screen. The NIV and NRSV are not included. It is its own part ("Bible Study") that can be turned on or off for other people.
+
 ## Children's Messages
 
 Its own page for pre-K children's messages and grade school chapel talks (two audiences). They use
@@ -219,6 +232,7 @@ copyright, and any words you type in (keep only public-domain words or ones you 
 records where the music is: Finale files, sheet music, slides, recordings (a web address, or a
 path in your files) and links to where it is found online. Every hymn has a link that searches
 Hymnary.org (Hymnary blocks automated lookups, so it opens in its own tab).
+
 - **RUF Hymnbook**: the ~175 hymns of igracemusic.com/hymnbook are added automatically, once, with
   their credits and links to the lead sheet, overhead lyrics, chord chart and demo. Only titles,
   credits and links are kept.
@@ -230,6 +244,7 @@ Hymnary.org (Hymnary blocks automated lookups, so it opens in its own tab).
   match nothing become new hymns.
 
 **Liturgies** are held as one whole: every part in order, each with its own words, files and music.
+
 - A **Setting** is a complete rite kept to use again (Divine Service, Matins, Evening Prayer); a
   Sunday service, season or occasion is one used on a day. "Start a new service from this" copies a
   liturgy with every part, its words, hymns, files and music, and leaves the date blank.
@@ -241,9 +256,10 @@ Hymnary.org (Hymnary blocks automated lookups, so it opens in its own tab).
   the clipboard, and "Print" prints just the service.
 - Photos and PDFs stay in the shared library once, however many liturgies use them; a file is
   deleted only when the last record using it is removed.
-A hymn's page lists the liturgies that use it. Everything syncs and is included in backups.
+  A hymn's page lists the liturgies that use it. Everything syncs and is included in backups.
 
 ### Photos and PDFs on a hymn
+
 Open a hymn and choose "Attach photos or PDFs" (or "Take a photo" on a phone) to keep sheet music,
 a scanned hymnal page or a lead sheet with it. Photos over 1.5 MB are shrunk in the browser. PDFs,
 Finale (.musx, .mus), PowerPoint, Word and audio files can be attached too, up to 8 MB each. Files are stored in the shared library's database, so they need the shared library
@@ -252,6 +268,7 @@ those kinds are accepted, and the file's contents are checked, not just its name
 PowerPoint files are kept as downloads.
 
 ## Music Resources
+
 A page for the artists, albums, articles, books, songbooks and websites where hymns and songs are
 found. Each has a kind, creator, year, place, link, tags and notes, plus copies kept in your own
 files and photos or PDFs attached to it. The 466 artists, albums, articles and books from your
@@ -260,6 +277,7 @@ enter yourself is untouched, and anything you remove stays removed). "Add resour
 album you downloaded or a songbook you bought. Search covers every field; filter by kind or tag.
 
 ### Storing the original sermon files
+
 Sermons → Manuscripts now also stores the original files. Choose the folder of Word files as before;
 each file is matched to its sermon, its text is saved for search, and (with "Also store the original
 files" on, the default) the file itself is stored and attached to the sermon, where it appears under

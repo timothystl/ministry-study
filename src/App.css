@@ -2754,6 +2754,80 @@ mark {
   padding: 0;
   margin: 0;
 }
+
+.bible-search {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  margin: 8px 0 12px;
+}
+.bible-search .search-bar {
+  flex: 1;
+}
+.bible-versions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin: 0 0 16px;
+}
+.bible-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+.bible-group label {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+}
+.bible-passage h2 {
+  font-size: 20px;
+  margin: 20px 0 8px;
+}
+.bible-scroll {
+  overflow-x: auto;
+}
+.bible-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  min-width: 560px;
+}
+.bible-table th,
+.bible-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line, #d9d9d9);
+}
+.bible-table thead th {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.bible-table .bible-num {
+  width: 34px;
+  color: var(--muted, #667);
+  font-weight: 600;
+  font-size: 12px;
+}
+.bible-text {
+  line-height: 1.6;
+}
+.bible-text.hebrew {
+  font-size: 22px;
+  line-height: 1.9;
+}
+.bible-text.greek {
+  font-size: 18px;
+}
+.bible-note {
+  font-size: 12px;
+  margin-top: 20px;
+}
 .usage-rows {
   list-style: none;
   padding: 0;
