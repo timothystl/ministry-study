@@ -1,3 +1,4 @@
+import { ESV_COPYRIGHT, fetchEsvChapter, validEsvReference } from './esv'
 import { findPrayers, seriesPages, type Series } from './lcms'
 import { verifyAccess, type AccessEnv } from './access'
 import {
@@ -33,6 +34,8 @@ import {
 interface Env extends AccessEnv {
   // The pastor's sign-in address. Everyone else is added on the People page.
   STUDY_ADMIN_EMAIL?: string
+  // Crossway's ESV API key (a secret in the Cloudflare dashboard). Without it the ESV is left out.
+  ESV_API_KEY?: string
   DB: D1Database
   ASSETS: Fetcher
 }
@@ -93,6 +96,22 @@ export async function handleApi(
           : reply({ error: 'The LCMS has not posted a prayer for that date.' }, 404)
       } catch {
         return reply({ error: 'The LCMS prayers could not be read right now.' }, 502)
+      }
+    }
+    if (pathname === '/api/esv' && request.method === 'GET') {
+      if (!may('bible')) return denied()
+      const q = new URL(request.url).searchParams.get('q') || ''
+      if (!validEsvReference(q))
+        return reply({ error: 'Ask for one chapter, such as John 3.' }, 400)
+      if (!env.ESV_API_KEY)
+        return reply({ error: 'The ESV is not set up yet (ESV_API_KEY is missing).' }, 503)
+      try {
+        return reply({
+          verses: await fetchEsvChapter(q, env.ESV_API_KEY),
+          copyright: ESV_COPYRIGHT,
+        })
+      } catch {
+        return reply({ error: 'The ESV could not be read right now.' }, 502)
       }
     }
     if (pathname === '/api/me' && request.method === 'GET')

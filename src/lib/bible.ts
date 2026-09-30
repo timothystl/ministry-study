@@ -1,3 +1,4 @@
+import { ESV_COPYRIGHT } from '../../worker/esv'
 import { bookNames, parseReferences, type Reference } from './scripture'
 
 // Bible texts for study: the original languages and English translations, read chapter by chapter
@@ -14,6 +15,8 @@ export interface Version {
   covers: Testament[]
   rtl?: boolean
   license: string
+  // Read through this site's own server (it holds the key), not from getBible.
+  viaServer?: boolean
 }
 export const versions: Version[] = [
   {
@@ -65,6 +68,15 @@ export const versions: Version[] = [
     language: 'Greek',
     covers: ['OT'],
     license: 'Free for non-commercial use',
+  },
+  {
+    id: 'esv',
+    name: 'English Standard Version',
+    short: 'ESV',
+    language: 'English',
+    covers: ['OT', 'NT'],
+    license: 'Crossway, by permission',
+    viaServer: true,
   },
   {
     id: 'web',
@@ -123,6 +135,7 @@ export const versions: Version[] = [
     license: 'Public domain',
   },
 ]
+export { ESV_COPYRIGHT }
 export const languages: Language[] = ['Hebrew', 'Greek', 'English']
 
 export const testamentOf = (book: string): Testament => (bookNames.indexOf(book) < 39 ? 'OT' : 'NT')
@@ -173,11 +186,23 @@ const address = (id: string, book: string, chapter: number) =>
   `https://api.getbible.net/v2/${id}/${bookNumber(book)}/${chapter}.json`
 // One chapter of one version. A version that lacks the chapter (a different numbering, or a New
 // Testament–only text) resolves to an empty list so the other versions still show.
+async function loadEsv(book: string, chapter: number): Promise<Verse[]> {
+  const response = await fetch(`/api/esv?q=${encodeURIComponent(`${book} ${chapter}`)}`, {
+    headers: { Accept: 'application/json' },
+    credentials: 'same-origin',
+  })
+  if (!(response.headers.get('Content-Type') || '').includes('json'))
+    throw new Error('The ESV is only available on the shared study site.')
+  const body = (await response.json()) as { verses?: Verse[]; error?: string }
+  if (!response.ok) throw new Error(body.error || `The ESV service answered ${response.status}.`)
+  return body.verses ?? []
+}
 export function loadChapter(id: string, book: string, chapter: number): Promise<Verse[]> {
   const key = `${id}/${book}/${chapter}`
   let found = cache.get(key)
   if (!found) {
     found = (async () => {
+      if (id === 'esv') return loadEsv(book, chapter)
       const response = await fetch(address(id, book, chapter), {
         headers: { Accept: 'application/json' },
       })

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Search } from 'lucide-react'
 import {
+  ESV_COPYRIGHT,
   languages,
   loadChapter,
   passagesFor,
@@ -14,7 +15,9 @@ import {
   type Verse,
 } from '../lib/bible'
 
-type Loaded = Record<string, Verse[] | 'error'>
+type Failed = { error: string }
+type Loaded = Record<string, Verse[] | Failed>
+const isFailed = (x: Verse[] | Failed | undefined): x is Failed => !!x && !Array.isArray(x)
 const label = (p: Passage) => `${p.book} ${p.chapter}`
 
 function PassageTable({
@@ -33,7 +36,7 @@ function PassageTable({
     for (const v of versions.filter((x) => ids.includes(x.id)))
       loadChapter(v.id, passage.book, passage.chapter).then(
         (verses) => live && setLoaded((l) => ({ ...l, [v.id]: verses })),
-        () => live && setLoaded((l) => ({ ...l, [v.id]: 'error' })),
+        (e: Error) => live && setLoaded((l) => ({ ...l, [v.id]: { error: e.message } })),
       )
     return () => {
       live = false
@@ -41,7 +44,7 @@ function PassageTable({
   }, [passage.book, passage.chapter, ids, reload])
   const numbers = new Set<number>()
   for (const verses of Object.values(loaded))
-    if (verses !== 'error')
+    if (Array.isArray(verses))
       for (const v of verses)
         if (v.verse >= passage.first && v.verse <= passage.last) numbers.add(v.verse)
   const rows = [...numbers].sort((a, b) => a - b)
@@ -49,7 +52,7 @@ function PassageTable({
   return (
     <section className="bible-passage">
       <h2>{label(passage)}</h2>
-      {!waiting && !rows.length && !shown.some((v) => loaded[v.id] === 'error') && (
+      {!waiting && !rows.length && !shown.some((v) => isFailed(loaded[v.id])) && (
         <p className="muted">
           None of the chosen versions has these verses. Try another version, or check the numbers.
         </p>
@@ -76,8 +79,9 @@ function PassageTable({
                 </th>
                 {shown.map((v) => {
                   const chapter = loaded[v.id]
-                  const text =
-                    chapter && chapter !== 'error' ? chapter.find((x) => x.verse === n)?.text : ''
+                  const text = Array.isArray(chapter)
+                    ? chapter.find((x) => x.verse === n)?.text
+                    : ''
                   return (
                     <td
                       key={v.id}
@@ -101,14 +105,12 @@ function PassageTable({
           </tbody>
         </table>
       </div>
-      {shown.some((v) => loaded[v.id] === 'error') && (
+      {shown.some((v) => isFailed(loaded[v.id])) && (
         <p className="error" role="alert">
-          Could not load{' '}
           {shown
-            .filter((v) => loaded[v.id] === 'error')
-            .map((v) => v.short)
-            .join(', ')}
-          . Check the connection and search again.
+            .filter((v) => isFailed(loaded[v.id]))
+            .map((v) => `${v.short}: ${(loaded[v.id] as Failed).error}`)
+            .join(' ')}
         </p>
       )}
     </section>
@@ -193,10 +195,12 @@ export function BibleStudy() {
           reload={reload}
         />
       ))}
+      {ids.includes('esv') && <p className="muted bible-note">{ESV_COPYRIGHT}</p>}
       <p className="muted bible-note">
-        Texts come from getBible.net. Hebrew follows the Hebrew verse numbering, which differs from
-        English in places (most Psalm titles are verse 1), so a verse can sit in a different row.
-        Modern copyrighted translations such as the ESV, NIV and NRSV are not included.
+        Texts come from getBible.net, except the ESV, which comes from Crossway. Hebrew follows the
+        Hebrew verse numbering, which differs from English in places (most Psalm titles are verse
+        1), so a verse can sit in a different row. The NIV, NRSV and other copyrighted translations
+        are not included.
       </p>
     </section>
   )
