@@ -1,3 +1,4 @@
+import type { Attachment } from './attachments'
 import type { Library } from './model'
 import { findReference, formatReferences, parseReferences, referencesOverlap } from './scripture'
 
@@ -34,6 +35,7 @@ export interface Sermon {
   // From an approved review: what the reviewer said, and the titles the sermon had before.
   reviewNote: string
   formerTitles: string[]
+  attachments: Attachment[] // the original files (Word, PDF), kept in the shared library
   source: string
   updatedAt: string
 }
@@ -66,6 +68,7 @@ export const blankSermon = (): Sermon => ({
   closing: '',
   reviewNote: '',
   formerTitles: [],
+  attachments: [],
   source: '',
   updatedAt: '',
 })

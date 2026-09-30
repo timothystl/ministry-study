@@ -7,7 +7,7 @@ describe('attachments', () => {
     expect(attachmentType({ type: '', name: 'Scan.PDF' })).toBe('application/pdf')
     expect(attachmentType({ type: '', name: 'page.jpeg' })).toBe('image/jpeg')
     expect(attachmentType({ type: 'image/heic', name: 'IMG.HEIC' })).toBe('image/other')
-    expect(attachmentType({ type: 'text/plain', name: 'a.txt' })).toBe('')
+    expect(attachmentType({ type: 'text/plain', name: 'a.txt' })).toBe('application/octet-stream')
     expect(attachmentType({ type: '', name: 'song.musx' })).toBe('application/octet-stream')
     expect(attachmentType({ type: 'application/vnd.ms-powerpoint', name: 'Advent.PPTX' })).toBe(
       'application/octet-stream',

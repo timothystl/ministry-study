@@ -77,7 +77,21 @@ export function sniff(bytes: Uint8Array): string {
 // format must really start like one, and an mp3 must start like an mp3.
 export const DOWNLOAD_TYPE = 'application/octet-stream'
 const ZIPPED = new Set(['pptx', 'docx', 'musx', 'mscz', 'key'])
-const PLAIN = new Set(['mus', 'etf', 'mxl', 'sib', 'ppt', 'doc', 'mid', 'midi', 'wav', 'm4a'])
+const PLAIN = new Set([
+  'mus',
+  'etf',
+  'mxl',
+  'sib',
+  'ppt',
+  'doc',
+  'mid',
+  'midi',
+  'wav',
+  'm4a',
+  'txt',
+  'md',
+  'rtf',
+])
 const extension = (name: string) => /\.([a-z0-9]+)$/i.exec(name)?.[1].toLowerCase() || ''
 export const isDownloadName = (name: string) => {
   const ext = extension(name)

@@ -76,6 +76,14 @@ const book = z.object({
   sourceMetadata: z.record(z.string(), z.string()).optional(),
   updatedAt: z.string(),
 })
+const attachmentSchema = z.object({
+  id: z.string().min(8),
+  name: z.string(),
+  mime: z.string(),
+  size: z.number(),
+  addedAt: z.string(),
+})
+const attachment = attachmentSchema
 const sermon = z.object({
   id: z.string().min(1),
   title: z.string().trim().min(1),
@@ -105,6 +113,7 @@ const sermon = z.object({
   closing: z.string().default(''),
   reviewNote: z.string().default(''),
   formerTitles: z.array(z.string()).default([]),
+  attachments: z.array(attachment).default([]),
   source: z.string(),
   updatedAt: z.string(),
 })
@@ -137,14 +146,6 @@ const prayerSet = z.object({
   text: z.string(),
   updatedAt: z.string(),
 })
-const attachmentSchema = z.object({
-  id: z.string().min(8),
-  name: z.string(),
-  mime: z.string(),
-  size: z.number(),
-  addedAt: z.string(),
-})
-const attachment = attachmentSchema
 const note = z.object({
   id: z.string().min(1),
   title: z.string(),

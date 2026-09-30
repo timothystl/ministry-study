@@ -114,3 +114,7 @@ Attachments accept JPEG, PNG, WebP, GIF, PDF (served inline) and music/slide/Fin
 `application/octet-stream`, served as downloads). 8 MB each. Zip-based formats and mp3 must start
 like their type. "Attach files" on Hymns uploads a chosen folder's files (three at a time) and
 attaches them; the rest keep their location only.
+
+A sermon's `attachments` list holds its stored original files (same shape as a hymn's). Text files
+(`.txt .md .rtf`) are accepted as downloads too. The attachment routes are open to anyone with the
+Hymns or Sermons part turned on.

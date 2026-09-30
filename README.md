@@ -236,3 +236,12 @@ files and photos or PDFs attached to it. The 466 artists, albums, articles and b
 Retuned Hymn Movement workbook are added automatically, once, with their links (anything you
 enter yourself is untouched, and anything you remove stays removed). "Add resource" is for anything new you start using, such as an
 album you downloaded or a songbook you bought. Search covers every field; filter by kind or tag.
+
+### Storing the original sermon files
+Sermons → Manuscripts now also stores the original files. Choose the folder of Word files as before;
+each file is matched to its sermon, its text is saved for search, and (with "Also store the original
+files" on, the default) the file itself is stored and attached to the sermon, where it appears under
+"Sermon files". Running it again skips files already stored with the same name and size, and a
+changed file replaces its older copy. A sermon's page also has "Attach photos or files" for adding
+one by hand. Files up to 8 MB (Word, PDF, text, photos); funeral and wedding sermons are kept out of
+search as before, but their original files are stored like the rest.

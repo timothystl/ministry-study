@@ -151,3 +151,7 @@ Attach files can store the files themselves (8 MB cap each, D1). Whole hymnal sc
 recordings do not fit; for those, or if uploads slow down on the Workers free plan, move file bytes
 to R2 (create a bucket, then add an `r2_buckets` binding; do not declare it before the bucket
 exists or deploys fail).
+
+## Latest update: original sermon files
+Sermons keep their original Word/PDF files as attachments, stored during Manuscripts import (skips
+files already stored by name and size). Same 8 MB D1 limit as hymns.

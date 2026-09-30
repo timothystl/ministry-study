@@ -47,8 +47,8 @@ test('attach a photo and a PDF to a hymn, keep them, and remove one', async ({ p
   await expect(list.getByRole('img', { name: 'page 312.png' })).toHaveJSProperty('naturalWidth', 10)
 
   await page.getByLabel('Attach photos or files').setInputFiles({
-    name: 'notes.txt',
-    mimeType: 'text/plain',
+    name: 'setup.exe',
+    mimeType: 'application/x-msdownload',
     buffer: Buffer.from('hello'),
   })
   await expect(page.getByRole('alert')).toContainText('only photos, PDFs, music')

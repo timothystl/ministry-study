@@ -53,6 +53,9 @@ export const DOWNLOAD_EXTENSIONS = [
   'wav',
   'mid',
   'midi',
+  'txt',
+  'md',
+  'rtf',
 ]
 export const ACCEPTED_FILES = `image/*,application/pdf,${DOWNLOAD_EXTENSIONS.map((e) => `.${e}`).join(',')}`
 async function shrink(file: File): Promise<Blob> {
@@ -147,6 +150,7 @@ export function attachmentRefs(library: Library): Map<string, number> {
   const add = (list: Attachment[]) =>
     list.forEach((a) => counts.set(a.id, (counts.get(a.id) || 0) + 1))
   library.hymns.forEach((h) => add(h.attachments))
+  library.sermons.forEach((s) => add(s.attachments))
   library.notes.forEach((n) => add(n.attachments))
   library.resources.forEach((r) => add(r.attachments))
   library.liturgies.forEach((l) => {
