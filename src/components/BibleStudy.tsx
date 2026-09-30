@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Search } from 'lucide-react'
-import { HebrewVerse, WordStudy } from './HebrewStudy'
-import type { HebrewWord } from '../lib/hebrewWords'
+import { StudyVerse, WordStudy } from './WordStudy'
+import type { StudyWord } from '../lib/wordStudy'
 import {
   ESV_COPYRIGHT,
   languages,
@@ -72,7 +72,7 @@ function PassageTable({
   all: Version[]
   reload: number
   picked: string
-  onPick: (key: string, word: HebrewWord, reference: string) => void
+  onPick: (key: string, word: StudyWord, reference: string) => void
 }) {
   const shown = all.filter((v) => ids.includes(v.id))
   const [loaded, setLoaded] = useState<Loaded>({})
@@ -134,9 +134,9 @@ function PassageTable({
                       dir={v.rtl ? 'rtl' : undefined}
                       className={`bible-text ${v.language.toLowerCase()}`}
                     >
-                      {found?.words ? (
-                        <HebrewVerse
-                          words={found.words}
+                      {found?.study ? (
+                        <StudyVerse
+                          words={found.study}
                           keyPrefix={`${passage.book} ${passage.chapter}:${n}`}
                           picked={picked}
                           onPick={(key, word) =>
@@ -179,9 +179,7 @@ export function BibleStudy() {
   const [input, setInput] = useState('John 3:16–21'),
     [asked, setAsked] = useState('John 3:16–21'),
     [reload, setReload] = useState(0),
-    [picked, setPicked] = useState<{ key: string; word: HebrewWord; reference: string } | null>(
-      null,
-    )
+    [picked, setPicked] = useState<{ key: string; word: StudyWord; reference: string } | null>(null)
   const { passages, error } = useMemo(() => passagesFor(asked), [asked])
   const testament: Testament = passages.length ? testamentOf(passages[0].book) : 'NT'
   const [chosen, setChosen] = useState<Record<Testament, string[]>>(() => ({

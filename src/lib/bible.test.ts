@@ -220,7 +220,29 @@ describe('Hebrew word study', () => {
     vi.stubGlobal('fetch', fetcher)
     const [verse] = await loadChapter('tahot', 'Genesis', 1)
     expect(verse.text).toBe('בְּרֵאשִׁית בָּרָא')
-    expect(verse.words).toHaveLength(2)
+    expect(verse.study).toHaveLength(2)
     expect(fetcher.mock.calls[0][0]).toBe('/data/hebrew/1.json')
+  })
+})
+describe('Greek word study', () => {
+  it('reads a chapter of words and joins each verse into text', async () => {
+    const fetcher = vi.fn(async (_url: string) => ({
+      ok: true,
+      status: 200,
+      headers: { get: () => 'application/json' },
+      json: async () => ({
+        '3': {
+          '16': [
+            ['οὕτως', 'houtōs', 'Thus', 'G3779', 'ADV', 'οὕτω, οὕτως=thus(-ly)'],
+            ['γὰρ', 'gar', 'for', 'G1063', 'CONJ', 'γάρ=for'],
+          ],
+        },
+      }),
+    }))
+    vi.stubGlobal('fetch', fetcher)
+    const [verse] = await loadChapter('nawords', 'John', 3)
+    expect(verse.text).toBe('οὕτως γὰρ')
+    expect(verse.study?.[0].parts[0]).toMatchObject({ number: 'G3779', lemma: 'οὕτω, οὕτως' })
+    expect(fetcher.mock.calls[0][0]).toBe('/data/greek-words/43.json')
   })
 })
