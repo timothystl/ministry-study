@@ -52,7 +52,7 @@ test('a liturgy is kept whole, with its words and music, and a service starts fr
   await expect(parts.nth(0)).toContainText('Music/kyrie.musx')
   await expect(parts.nth(1)).toContainText('Almighty God, grant us your peace.')
 
-  await parts.nth(0).getByLabel('Attach photos or PDFs').setInputFiles({
+  await parts.nth(0).getByLabel('Attach photos or files').setInputFiles({
     name: 'kyrie music.png',
     mimeType: 'image/png',
     buffer: png,

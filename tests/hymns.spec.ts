@@ -2,6 +2,17 @@ import { test, expect } from '@playwright/test'
 import { nav } from './helpers'
 
 test('add a hymn, attach files, and keep a service together', async ({ page }) => {
+  // A stand-in for the shared library's file storage.
+  const stored = new Map<string, string>()
+  await page.route('**/api/attachments/*', async (route) => {
+    const request = route.request()
+    const id = request.url().split('/').pop()!
+    if (request.method() === 'PUT') {
+      stored.set(id, decodeURIComponent(request.headers()['x-file-name']))
+      return route.fulfill({ json: { ok: true } })
+    }
+    return route.fulfill({ json: { ok: true } })
+  })
   await page.goto('/')
   await nav(page, 'Hymns')
   await expect(page.getByText('No hymns yet')).toBeVisible()
@@ -41,9 +52,22 @@ test('add a hymn, attach files, and keep a service together', async ({ page }) =
   ])
   const files = page.getByRole('dialog')
   await expect(files.getByText(/1 files to attach to 1 hymns; 2 new hymns/)).toBeVisible()
+  await expect(
+    files.getByText(/Store the files themselves in the app \(3 of 3 can be/),
+  ).toBeVisible()
   await files.getByRole('button', { name: 'Save these' }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  // the files themselves were stored, not just their names
+  expect([...stored.values()].sort()).toEqual([
+    '012 Abide With Me.pdf',
+    'Be Thou My Vision.pptx',
+    'Zeal Unknown Hymn.musx',
+  ])
   await page.getByLabel('Search hymns').fill('vision')
   await expect(page.getByText('Be Thou My Vision')).toBeVisible()
+  await page.getByRole('button', { name: /Be Thou My Vision/ }).click()
+  await expect(page.getByText('Be Thou My Vision.pptx')).toBeVisible()
+  await page.getByRole('button', { name: 'All hymns' }).click()
 
   await nav(page, 'Liturgies')
   await page.getByRole('button', { name: 'Add liturgy' }).click()

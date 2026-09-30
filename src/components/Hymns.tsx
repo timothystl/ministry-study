@@ -20,7 +20,17 @@ import {
   type Hymn,
 } from '../lib/hymns'
 import type { Library } from '../lib/model'
-import { attachmentRefs, removeUnused } from '../lib/attachments'
+import {
+  attachmentRefs,
+  attachmentType,
+  MAX_ATTACHMENT,
+  prepareFile,
+  removeFile,
+  removeUnused,
+  sizeLabel,
+  uploadFile,
+  type Attachment,
+} from '../lib/attachments'
 import { Attachments } from './Attachments'
 import { Modal } from './Modal'
 
@@ -344,22 +354,82 @@ export function FilesImport({
   onClose: () => void
 }) {
   const [plan, setPlan] = useState<FilePlan | null>(null)
+  const [picked, setPicked] = useState<Map<string, File>>(new Map())
+  const [store, setStore] = useState(true)
+  const [busy, setBusy] = useState('')
+  const [problems, setProblems] = useState<string[]>([])
   const [error, setError] = useState('')
   function choose(list: FileList | null) {
     setError('')
-    const files = [...(list || [])]
-      .filter((f) => !f.name.startsWith('~$') && !f.name.startsWith('.'))
-      .map((f) => ({ name: f.name, path: f.webkitRelativePath || f.name }))
-    if (!files.length) return setError('No files were found in that selection.')
+    setProblems([])
+    const chosen = [...(list || [])].filter(
+      (f) => !f.name.startsWith('~$') && !f.name.startsWith('.'),
+    )
+    if (!chosen.length) return setError('No files were found in that selection.')
+    const files = chosen.map((f) => ({ name: f.name, path: f.webkitRelativePath || f.name }))
+    setPicked(new Map(chosen.map((f) => [f.webkitRelativePath || f.name, f])))
     setPlan(planFiles(library, files))
   }
+  const planned = plan
+    ? [...plan.attach.flatMap((a) => a.files), ...plan.create.flatMap((c) => c.files)]
+    : []
   const count = plan ? plan.attach.reduce((n, a) => n + a.files.length, 0) : 0
+  const storable = planned.filter((f) => {
+    const file = picked.get(f.location)
+    return file && attachmentType(file) && file.size <= MAX_ATTACHMENT
+  })
+  async function save() {
+    if (!plan) return
+    setError('')
+    setProblems([])
+    const uploaded = new Map<string, Attachment>()
+    const failed: string[] = []
+    if (store) {
+      let next = 0
+      let done = 0
+      const worker = async () => {
+        while (next < storable.length) {
+          const item = storable[next++]
+          const file = picked.get(item.location)!
+          try {
+            const { blob, mime, name } = await prepareFile(file)
+            const id = crypto.randomUUID()
+            const problem = await uploadFile(id, blob, mime, name)
+            if (problem) failed.push(`${file.name}: ${problem}`)
+            else
+              uploaded.set(item.location, {
+                id,
+                name,
+                mime,
+                size: blob.size,
+                addedAt: new Date().toISOString(),
+              })
+          } catch (e) {
+            failed.push((e as Error).message)
+          }
+          done++
+          setBusy(`Storing files… ${done} of ${storable.length}`)
+        }
+      }
+      setBusy(`Storing files… 0 of ${storable.length}`)
+      await Promise.all([worker(), worker(), worker()])
+    }
+    setBusy('')
+    if (!onSave(applyFilePlan(library, plan, uploaded))) {
+      await Promise.all([...uploaded.values()].map((a) => removeFile(a.id)))
+      return setError('Could not save. Nothing was changed.')
+    }
+    if (failed.length) {
+      setProblems(failed)
+      setPlan(null)
+    } else onClose()
+  }
   return (
     <Modal title="Attach files from a folder" onClose={onClose} wide>
       <p>
         Choose the folder of Finale files, sheet music or slides. Each file is matched to a hymn by
         its name (a leading number is ignored). Files that match no hymn become new hymns so none is
-        lost. Only the names and folders are recorded; your files are not uploaded or changed.
+        lost. Your originals are not changed.
       </p>
       <div className="scan-typed">
         <label className="file-label">
@@ -370,6 +440,7 @@ export function FilesImport({
             // @ts-expect-error webkitdirectory is supported by every current browser
             webkitdirectory=""
             multiple
+            disabled={Boolean(busy)}
             onChange={(e) => {
               choose(e.target.files)
               e.target.value = ''
@@ -382,6 +453,7 @@ export function FilesImport({
             aria-label="Choose hymn files"
             type="file"
             multiple
+            disabled={Boolean(busy)}
             onChange={(e) => {
               choose(e.target.files)
               e.target.value = ''
@@ -394,12 +466,36 @@ export function FilesImport({
           {error}
         </p>
       )}
+      {problems.length > 0 && (
+        <section className="import-review" role="status">
+          <p>
+            Saved. {problems.length} {problems.length === 1 ? 'file was' : 'files were'} not stored;
+            their locations are recorded instead.
+          </p>
+          <ul>
+            {problems.slice(0, 30).map((p) => (
+              <li key={p}>{p}</li>
+            ))}
+          </ul>
+        </section>
+      )}
       {plan && (
         <section className="import-review" aria-label="File matches">
           <p>
             {count} files to attach to {plan.attach.length} hymns; {plan.create.length} new hymns
             from unmatched files{plan.already ? `; ${plan.already} already recorded` : ''}.
           </p>
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={store}
+              disabled={Boolean(busy)}
+              onChange={(e) => setStore(e.target.checked)}
+            />
+            Store the files themselves in the app ({storable.length} of {planned.length} can be:
+            photos, PDFs, music, slide and Finale files up to {sizeLabel(MAX_ATTACHMENT)}). The rest
+            are recorded by location.
+          </label>
           <ul className="sermon-preview">
             {plan.attach.slice(0, 60).map((a) => (
               <li key={a.hymnId}>
@@ -418,13 +514,11 @@ export function FilesImport({
               </li>
             ))}
           </ul>
+          {busy && <p role="status">{busy}</p>}
           <button
             className="primary"
-            disabled={!count && !plan.create.length}
-            onClick={() => {
-              if (onSave(applyFilePlan(library, plan))) onClose()
-              else setError('Could not save.')
-            }}
+            disabled={(!count && !plan.create.length) || Boolean(busy)}
+            onClick={() => void save()}
           >
             Save these
           </button>

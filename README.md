@@ -207,8 +207,10 @@ Hymnary.org (Hymnary blocks automated lookups, so it opens in its own tab).
   credits and links are kept.
 - **Import list** reads a spreadsheet saved as CSV (Title, First line, Tune, Composer, Lyricist,
   Meter, Scripture, Year, Key, Hymnal, Usage, Themes, Finale, Sheet music, Slides, Link).
-- **Attach files** matches a folder of files (Finale, PDF, PowerPoint, audio) to hymns by name and
-  records where each one is. Files that match nothing become new hymns. Nothing is uploaded.
+- **Attach files** matches a folder of files (Finale, PDF, PowerPoint, audio) to hymns by name.
+  With "Store the files themselves" on (the default) each file under 8 MB is uploaded and attached
+  to its hymn; larger files, and any you turn it off for, are recorded by location. Files that
+  match nothing become new hymns.
 
 **Liturgies** are held as one whole: every part in order, each with its own words, files and music.
 - A **Setting** is a complete rite kept to use again (Divine Service, Matins, Evening Prayer); a
@@ -226,10 +228,11 @@ A hymn's page lists the liturgies that use it. Everything syncs and is included 
 
 ### Photos and PDFs on a hymn
 Open a hymn and choose "Attach photos or PDFs" (or "Take a photo" on a phone) to keep sheet music,
-a scanned hymnal page or a lead sheet with it. Photos over 1 MB are shrunk in the browser; a PDF can
-be up to 6 MB. Files are stored in the shared library's database, so they need the shared library
+a scanned hymnal page or a lead sheet with it. Photos over 1.5 MB are shrunk in the browser. PDFs,
+Finale (.musx, .mus), PowerPoint, Word and audio files can be attached too, up to 8 MB each. Files are stored in the shared library's database, so they need the shared library
 (they are not in the JSON backup download; Cloudflare's own database backups cover them). Only
-photos and PDFs are accepted, and the file's contents are checked, not just its name.
+those kinds are accepted, and the file's contents are checked, not just its name. Finale and
+PowerPoint files are kept as downloads.
 
 ## Music Resources
 A page for the artists, albums, articles, books, songbooks and websites where hymns and songs are
@@ -238,3 +241,12 @@ files and photos or PDFs attached to it. The 466 artists, albums, articles and b
 Retuned Hymn Movement workbook are added automatically, once, with their links (anything you
 enter yourself is untouched, and anything you remove stays removed). "Add resource" is for anything new you start using, such as an
 album you downloaded or a songbook you bought. Search covers every field; filter by kind or tag.
+
+### Storing the original sermon files
+Sermons → Manuscripts now also stores the original files. Choose the folder of Word files as before;
+each file is matched to its sermon, its text is saved for search, and (with "Also store the original
+files" on, the default) the file itself is stored and attached to the sermon, where it appears under
+"Sermon files". Running it again skips files already stored with the same name and size, and a
+changed file replaces its older copy. A sermon's page also has "Attach photos or files" for adding
+one by hand. Files up to 8 MB (Word, PDF, text, photos); funeral and wedding sermons are kept out of
+search as before, but their original files are stored like the rest.

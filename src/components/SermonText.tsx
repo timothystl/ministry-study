@@ -22,6 +22,16 @@ import {
   type SavedText,
   type TextStatus,
 } from '../lib/sermonText'
+import {
+  attachmentType,
+  MAX_ATTACHMENT,
+  prepareFile,
+  removeFile,
+  removeUnused,
+  sizeLabel,
+  uploadFile,
+  type Attachment,
+} from '../lib/attachments'
 import { Modal } from './Modal'
 
 interface Prepared {
@@ -32,10 +42,17 @@ interface Plan {
   fresh: Prepared[]
   changed: Prepared[]
   unchanged: number
+  unchangedMatches: FileMatch[]
   unmatched: File[]
   duplicates: File[]
   unreadable: { name: string; reason: string }[]
 }
+// The matched files whose originals can be stored: not stored already under the same name and size,
+// a kind that can be kept, and small enough.
+const storable = (match: FileMatch) =>
+  Boolean(attachmentType(match.file)) &&
+  match.file.size <= MAX_ATTACHMENT &&
+  !match.sermon.attachments.some((a) => a.name === match.file.name && a.size === match.file.size)
 const pool = async <T,>(items: T[], size: number, work: (item: T) => Promise<void>) => {
   let next = 0
   await Promise.all(
@@ -62,6 +79,7 @@ export function SermonTextManager({
   const [reading, setReading] = useState(0)
   const [addUnmatched, setAddUnmatched] = useState(false)
   const [keepOut, setKeepOut] = useState(false)
+  const [storeOriginals, setStoreOriginals] = useState(true)
   const [searchPrivate, setSearchPrivate] = useState(false)
   const [saving, setSaving] = useState<{ done: number; total: number } | null>(null)
   const [result, setResult] = useState('')
@@ -94,6 +112,7 @@ export function SermonTextManager({
       fresh: [],
       changed: [],
       unchanged: 0,
+      unchangedMatches: [],
       unmatched,
       duplicates,
       unreadable: [],
@@ -106,7 +125,10 @@ export function SermonTextManager({
         const old = known.get(match.sermon.id)
         if (!old) next.fresh.push({ match, manuscript })
         else if (old.hash !== manuscript.hash) next.changed.push({ match, manuscript })
-        else next.unchanged++
+        else {
+          next.unchanged++
+          next.unchangedMatches.push(match)
+        }
       } catch (e) {
         next.unreadable.push({ name: match.file.name, reason: (e as Error).message })
       }
@@ -121,16 +143,16 @@ export function SermonTextManager({
     setError('')
     setResult('')
     setFailures([])
-    let sermons: Sermon[] = library.sermons
+    let base: Library = library
     const extra: Prepared[] = []
     if (addUnmatched && plan.unmatched.length) {
       const rows = plan.unmatched.map((f) => parseSermonLine(f.name))
       const added = previewSermonImport(rows, library)
       if (!onSave(added.library)) return setError('Could not add the new sermon records.')
-      sermons = added.library.sermons
+      base = added.library
       const fresh = matchFiles(
         plan.unmatched,
-        sermons.filter((s) => !library.sermons.some((o) => o.id === s.id)),
+        base.sermons.filter((s) => !library.sermons.some((o) => o.id === s.id)),
       )
       for (const match of fresh.matched) {
         try {
@@ -141,8 +163,12 @@ export function SermonTextManager({
       }
     }
     const work = [...plan.fresh, ...plan.changed, ...extra]
-    setSaving({ done: 0, total: work.length })
+    const originals = storeOriginals
+      ? [...work.map((w) => w.match), ...plan.unchangedMatches].filter(storable)
+      : []
+    setSaving({ done: 0, total: work.length + originals.length })
     const failed: string[] = []
+    let textFailed = 0
     let done = 0
     await pool(work, 4, async ({ match, manuscript }) => {
       const send = () =>
@@ -160,14 +186,63 @@ export function SermonTextManager({
           await send() // one retry for a dropped connection
         }
       } catch (e) {
+        textFailed++
         failed.push(`${match.file.name}: ${(e as Error).message}`)
       }
-      setSaving({ done: ++done, total: work.length })
+      setSaving({ done: ++done, total: work.length + originals.length })
     })
+    // The original files are stored alongside, and attached to their sermons in one save.
+    const stored = new Map<string, Attachment>()
+    await pool(originals, 3, async (match) => {
+      try {
+        const { blob, mime, name } = await prepareFile(match.file)
+        const id = crypto.randomUUID()
+        const problem = await uploadFile(id, blob, mime, name)
+        if (problem) failed.push(`${match.file.name}: ${problem}`)
+        else
+          stored.set(match.sermon.id, {
+            id,
+            name,
+            mime,
+            size: blob.size,
+            addedAt: new Date().toISOString(),
+          })
+      } catch (e) {
+        failed.push((e as Error).message)
+      }
+      setSaving({ done: ++done, total: work.length + originals.length })
+    })
+    let note = ''
+    if (stored.size) {
+      const replaced: Attachment[] = []
+      const next: Library = {
+        ...base,
+        sermons: base.sermons.map((s) => {
+          const add = stored.get(s.id)
+          if (!add) return s
+          // A newer copy of the same file replaces the older one.
+          const old = s.attachments.filter((a) => a.name === add.name)
+          replaced.push(...old)
+          return {
+            ...s,
+            attachments: [...s.attachments.filter((a) => a.name !== add.name), add],
+            updatedAt: new Date().toISOString(),
+          }
+        }),
+      }
+      if (onSave(next)) {
+        removeUnused(base, replaced)
+        note = `; stored ${stored.size} original files`
+      } else {
+        await Promise.all([...stored.values()].map((a) => removeFile(a.id)))
+        failed.push('The original files could not be attached, so they were not kept.')
+      }
+    }
     setSaving(null)
     setFailures(failed)
+    const saved = work.length - textFailed
     setResult(
-      `Saved ${work.length - failed.length} manuscripts${failed.length ? `; ${failed.length} did not save` : ''}.`,
+      `Saved ${saved} manuscripts${note}${failed.length ? `; ${failed.length} did not save` : ''}.`,
     )
     setPlan(null)
     setFiles([])
@@ -187,6 +262,15 @@ export function SermonTextManager({
   }
   const saved = Array.isArray(status) ? status.length : 0
   const total = plan ? plan.fresh.length + plan.changed.length : 0
+  const originalsCount = plan
+    ? [...plan.fresh, ...plan.changed]
+        .map((p) => p.match)
+        .concat(plan.unchangedMatches)
+        .filter(storable).length +
+      (addUnmatched
+        ? plan.unmatched.filter((f) => attachmentType(f) && f.size <= MAX_ATTACHMENT).length
+        : 0)
+    : 0
   const privateCount = plan
     ? [...plan.fresh, ...plan.changed].filter((p) => isPrivateOccasion(p.match.sermon)).length +
       (addUnmatched
@@ -203,9 +287,9 @@ export function SermonTextManager({
       ) : (
         <>
           <p>
-            Save the full text of your sermons so they can be searched and kept as a backup. Files
-            are read in your browser, and only their text is sent to your shared library. Your
-            originals are not changed.
+            Save the full text of your sermons so they can be searched and kept as a backup, and
+            store the original files so each sermon opens with its Word file. Your originals are not
+            changed.
           </p>
           <p className="muted" role="status">
             {status === null
@@ -309,6 +393,16 @@ export function SermonTextManager({
               <label className="check">
                 <input
                   type="checkbox"
+                  checked={storeOriginals}
+                  onChange={(e) => setStoreOriginals(e.target.checked)}
+                />
+                Also store the original files (Word, PDF, text) so each sermon can open its file:{' '}
+                {originalsCount} to store (files up to {sizeLabel(MAX_ATTACHMENT)} that are not
+                stored already)
+              </label>
+              <label className="check">
+                <input
+                  type="checkbox"
                   checked={keepOut}
                   onChange={(e) => setKeepOut(e.target.checked)}
                 />
@@ -316,10 +410,17 @@ export function SermonTextManager({
               </label>
               <button
                 className="primary"
-                disabled={!total && !(addUnmatched && plan.unmatched.length) && !saving}
+                disabled={
+                  !total &&
+                  !(addUnmatched && plan.unmatched.length) &&
+                  !(storeOriginals && originalsCount) &&
+                  !saving
+                }
                 onClick={() => void save()}
               >
-                Save {total + (addUnmatched ? plan.unmatched.length : 0)} manuscripts
+                {total + (addUnmatched ? plan.unmatched.length : 0) > 0 || !storeOriginals
+                  ? `Save ${total + (addUnmatched ? plan.unmatched.length : 0)} manuscripts`
+                  : `Store ${originalsCount} original files`}
               </button>
             </section>
           )}

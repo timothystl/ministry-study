@@ -34,7 +34,23 @@ describe('attachments', () => {
       /Only photos/,
     )
     expect(() => checkUpload(new Uint8Array(), 'image/png')).toThrow(/empty/)
-    expect(() => checkUpload(new Uint8Array(6_000_001), 'application/pdf')).toThrow(/too large/)
+    expect(() => checkUpload(new Uint8Array(8_000_001), 'application/pdf')).toThrow(/too large/)
+  })
+  it('accepts music, slide and Finale files by their ending, checking what they start like', () => {
+    const zip = new Uint8Array([0x50, 0x4b, 0x03, 0x04, 1, 2, 3])
+    const mp3 = new Uint8Array([0x49, 0x44, 0x33, 4, 0, 0])
+    expect(checkUpload(zip, 'application/octet-stream', 'Advent.pptx')).toBe(
+      'application/octet-stream',
+    )
+    expect(checkUpload(zip, '', 'Abide.musx')).toBe('application/octet-stream')
+    expect(checkUpload(new Uint8Array([9, 9, 9]), '', 'old.MUS')).toBe('application/octet-stream')
+    expect(checkUpload(mp3, 'application/octet-stream', 'demo.mp3')).toBe(
+      'application/octet-stream',
+    )
+    expect(() => checkUpload(new Uint8Array([1, 2, 3]), '', 'Advent.pptx')).toThrow(/name says/)
+    expect(() => checkUpload(zip, '', 'run.exe')).toThrow(/Only photos/)
+    expect(() => checkUpload(zip, 'text/html', 'Advent.pptx')).toThrow(/Only photos/)
+    expect(() => checkUpload(new Uint8Array([1, 2]), '', 'demo.mp3')).toThrow(/name says/)
   })
   it('stores a large file in pieces and returns it whole; delete removes it', async () => {
     const db = fakeD1()

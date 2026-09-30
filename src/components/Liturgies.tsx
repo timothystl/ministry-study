@@ -111,7 +111,7 @@ function LiturgyEditor({
           {draft.items.length === 0 && (
             <p className="muted">
               Add every part in order: hymns, readings, prayers, the liturgy’s own texts and music.
-              Photos and PDFs of each part’s music are attached once the liturgy is saved.
+              Photos and files of each part’s music are attached once the liturgy is saved.
             </p>
           )}
           {draft.items.map((item, i) => (
@@ -515,7 +515,7 @@ export function Liturgies({
           </section>
           <div className="no-print">
             <Attachments
-              heading="Photos and PDFs of the whole service"
+              heading="Photos and files of the whole service"
               refs={refs}
               attachments={open.attachments}
               onChange={(next) => onSave(saveLiturgy(library, { ...open, attachments: next }))}

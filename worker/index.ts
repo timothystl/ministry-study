@@ -196,7 +196,7 @@ export async function handleApi(
     }
     const fileRoute = /^\/api\/attachments\/([^/]+)$/.exec(pathname)
     if (fileRoute) {
-      if (!may('hymns')) return denied()
+      if (!may('hymns') && !may('sermons')) return denied()
       const id = decodeURIComponent(fileRoute[1])
       if (!validAttachmentId(id)) return reply({ error: 'Invalid file.' }, 400)
       if (request.method === 'GET') {
@@ -205,7 +205,7 @@ export async function handleApi(
         return new Response(found.bytes, {
           headers: {
             'Content-Type': found.mime,
-            'Content-Disposition': `inline; filename*=UTF-8''${encodeURIComponent(found.name)}`,
+            'Content-Disposition': `${found.mime === 'application/octet-stream' ? 'attachment' : 'inline'}; filename*=UTF-8''${encodeURIComponent(found.name)}`,
             'Cache-Control': 'private, max-age=86400',
             'X-Content-Type-Options': 'nosniff',
             'Content-Security-Policy': 'sandbox',
@@ -219,19 +219,19 @@ export async function handleApi(
       if (request.method === 'PUT') {
         const declared = Number(request.headers.get('Content-Length') || 0)
         if (declared > MAX_ATTACHMENT)
-          return reply({ error: 'That file is too large (6 MB at most).' }, 413)
+          return reply({ error: 'That file is too large (8 MB at most).' }, 413)
         const bytes = new Uint8Array(await request.arrayBuffer())
-        let mime
-        try {
-          mime = checkUpload(bytes, request.headers.get('Content-Type') || '')
-        } catch (error) {
-          return reply({ error: (error as Error).message }, 400)
-        }
         let name = 'file'
         try {
           name = decodeURIComponent(request.headers.get('X-File-Name') || 'file')
         } catch {
           // keep the plain name
+        }
+        let mime
+        try {
+          mime = checkUpload(bytes, request.headers.get('Content-Type') || '', name)
+        } catch (error) {
+          return reply({ error: (error as Error).message }, 400)
         }
         if (!(await putAttachment(env.DB, who.owner, id, name, mime, bytes)))
           return reply({ error: 'Invalid file.' }, 400)
