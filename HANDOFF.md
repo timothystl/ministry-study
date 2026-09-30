@@ -145,3 +145,9 @@ New page over the notes records (kinds Illustration, Idea, Quote, Story, Fact, S
 photograph a handwritten scrap, source, Personal marker, use history and a used/unused filter. Its own
 part on People. Next: the Visual Collector (images with license and CVLI/reference-only markers, clips
 as links with start/end and notes); see docs/collectors-scope.md.
+
+## Latest update: bulk-storing files
+Attach files can store the files themselves (8 MB cap each, D1). Whole hymnal scans and large
+recordings do not fit; for those, or if uploads slow down on the Workers free plan, move file bytes
+to R2 (create a bucket, then add an `r2_buckets` binding; do not declare it before the bucket
+exists or deploys fail).

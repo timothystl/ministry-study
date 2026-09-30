@@ -107,3 +107,10 @@ A liturgy item now also has `files[]` and `attachments[]` (its music); a liturgy
 for the whole. Kinds: Setting (a rite kept for reuse), Sunday service, Season, Occasion, Other. Item
 kinds add Music and Rubric. Attachments are reference-counted across hymns, resources, liturgies
 and their parts, so files shared by a copied service are deleted only when unused.
+
+## Stored files
+Attachments accept JPEG, PNG, WebP, GIF, PDF (served inline) and music/slide/Finale/Word/audio files
+(`.musx .mus .etf .mxl .mscz .sib .pptx .ppt .key .docx .doc .mp3 .m4a .wav .mid`; stored with type
+`application/octet-stream`, served as downloads). 8 MB each. Zip-based formats and mp3 must start
+like their type. "Attach files" on Hymns uploads a chosen folder's files (three at a time) and
+attaches them; the rest keep their location only.

@@ -36,22 +36,22 @@ test('attach a photo and a PDF to a hymn, keep them, and remove one', async ({ p
   await dialog.getByRole('button', { name: 'Save hymn' }).click()
   await expect(page.getByText('Nothing attached yet')).toBeVisible()
 
-  await page.getByLabel('Attach photos or PDFs').setInputFiles([
+  await page.getByLabel('Attach photos or files').setInputFiles([
     { name: 'page 312.png', mimeType: 'image/png', buffer: png },
     { name: 'Abide lead sheet.pdf', mimeType: 'application/pdf', buffer: pdf },
   ])
-  const list = page.getByRole('region', { name: 'Photos and PDFs' })
+  const list = page.getByRole('region', { name: 'Photos and files' })
   await expect(list.getByText('Abide lead sheet.pdf')).toBeVisible()
   await expect(list.getByRole('img', { name: 'page 312.png' })).toBeVisible()
   expect(stored.size).toBe(2)
   await expect(list.getByRole('img', { name: 'page 312.png' })).toHaveJSProperty('naturalWidth', 10)
 
-  await page.getByLabel('Attach photos or PDFs').setInputFiles({
+  await page.getByLabel('Attach photos or files').setInputFiles({
     name: 'notes.txt',
     mimeType: 'text/plain',
     buffer: Buffer.from('hello'),
   })
-  await expect(page.getByRole('alert')).toContainText('only photos and PDFs')
+  await expect(page.getByRole('alert')).toContainText('only photos, PDFs, music')
   expect(stored.size).toBe(2)
 
   await page.reload()

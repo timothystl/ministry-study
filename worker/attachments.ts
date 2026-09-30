@@ -3,7 +3,7 @@ import { hasColumn } from './store'
 // stored in the shared database in pieces, so nothing more is needed than what is already set up.
 // Each file belongs to one person (the pastor's is 'admin'); nobody can read, replace or delete
 // another person's file, even by guessing its id.
-export const MAX_ATTACHMENT = 6_000_000
+export const MAX_ATTACHMENT = 8_000_000
 const PIECE = 600_000 // characters of base64 per row
 const ID = /^[A-Za-z0-9_-]{8,80}$/
 export const validAttachmentId = (id: string) => ID.test(id)
@@ -73,15 +73,40 @@ export function sniff(bytes: Uint8Array): string {
   if (at(0x52, 0x49, 0x46, 0x46) && bytes[8] === 0x57 && bytes[9] === 0x45) return 'image/webp'
   return ''
 }
-export function checkUpload(bytes: Uint8Array, claimed: string) {
+// Music and slide files are kept as downloads, judged by their ending. Those built on the zip
+// format must really start like one, and an mp3 must start like an mp3.
+export const DOWNLOAD_TYPE = 'application/octet-stream'
+const ZIPPED = new Set(['pptx', 'docx', 'musx', 'mscz', 'key'])
+const PLAIN = new Set(['mus', 'etf', 'mxl', 'sib', 'ppt', 'doc', 'mid', 'midi', 'wav', 'm4a'])
+const extension = (name: string) => /\.([a-z0-9]+)$/i.exec(name)?.[1].toLowerCase() || ''
+export const isDownloadName = (name: string) => {
+  const ext = extension(name)
+  return ZIPPED.has(ext) || PLAIN.has(ext) || ext === 'mp3'
+}
+function looksRight(bytes: Uint8Array, ext: string) {
+  if (ZIPPED.has(ext)) return bytes[0] === 0x50 && bytes[1] === 0x4b
+  if (ext === 'mp3')
+    return (
+      (bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33) ||
+      (bytes[0] === 0xff && (bytes[1] & 0xe0) === 0xe0)
+    )
+  return true
+}
+export function checkUpload(bytes: Uint8Array, claimed: string, name = '') {
   if (!bytes.length) throw new Error('The file is empty.')
-  if (bytes.length > MAX_ATTACHMENT) throw new Error('That file is too large (6 MB at most).')
+  if (bytes.length > MAX_ATTACHMENT) throw new Error('That file is too large (8 MB at most).')
+  const type = claimed.split(';')[0].trim().toLowerCase()
   const real = sniff(bytes)
-  if (!real || !(ATTACHMENT_TYPES as readonly string[]).includes(real))
-    throw new Error('Only photos (JPEG, PNG, WebP, GIF) and PDFs can be attached.')
-  if (claimed && claimed.split(';')[0].trim().toLowerCase() !== real)
-    throw new Error('That file is not the kind it says it is.')
-  return real
+  if (real && (ATTACHMENT_TYPES as readonly string[]).includes(real)) {
+    if (type && type !== real) throw new Error('That file is not the kind it says it is.')
+    return real
+  }
+  const ext = extension(name)
+  if (isDownloadName(name) && (!type || type === DOWNLOAD_TYPE)) {
+    if (!looksRight(bytes, ext)) throw new Error('That file is not the kind its name says it is.')
+    return DOWNLOAD_TYPE
+  }
+  throw new Error('Only photos, PDFs, music, slide and Finale files can be attached.')
 }
 // Returns false, and changes nothing, if the id already belongs to someone else.
 export async function putAttachment(

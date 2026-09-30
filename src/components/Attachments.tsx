@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Camera, FileText, Paperclip, Trash2 } from 'lucide-react'
 import {
+  ACCEPTED_FILES,
   attachFiles,
   attachmentUrl,
   isImageAttachment,
@@ -15,7 +16,7 @@ import {
 export function Attachments({
   attachments,
   onChange,
-  heading = 'Photos and PDFs',
+  heading = 'Photos and files',
   refs,
   compact = false,
 }: {
@@ -89,12 +90,12 @@ export function Attachments({
       )}
       <div className="scan-typed">
         <label className="file-label">
-          <Paperclip size={16} /> Attach photos or PDFs
+          <Paperclip size={16} /> Attach photos or files
           <input
-            aria-label="Attach photos or PDFs"
+            aria-label="Attach photos or files"
             type="file"
             multiple
-            accept="image/*,application/pdf,.pdf"
+            accept={ACCEPTED_FILES}
             disabled={busy}
             onChange={(e) => {
               void add(e.target.files)
@@ -125,7 +126,8 @@ export function Attachments({
       ))}
       {!compact && (
         <p className="muted">
-          Kept in your shared library. Photos over 1 MB are made smaller; a PDF can be up to 6 MB.
+          Kept in your shared library. Photos over 1.5 MB are made smaller. PDFs, music, slide and
+          Finale files can be up to 8 MB.
         </p>
       )}
     </section>

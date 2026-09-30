@@ -9,8 +9,8 @@ export interface Attachment {
   size: number
   addedAt: string
 }
-export const MAX_ATTACHMENT = 6_000_000
-const KEEP_AS_IS = 1_000_000 // photos smaller than this are kept exactly as taken
+export const MAX_ATTACHMENT = 8_000_000
+const KEEP_AS_IS = 1_500_000 // photos smaller than this are kept exactly as taken
 const LONGEST_SIDE = 2200
 export const attachmentUrl = (id: string) => `/api/attachments/${id}`
 export const isImageAttachment = (a: Pick<Attachment, 'mime'>) => a.mime.startsWith('image/')
@@ -25,14 +25,36 @@ export function attachmentType(file: Pick<File, 'type' | 'name'>): string {
   if (['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'].includes(type))
     return type
   if (type.startsWith('image/')) return 'image/other' // HEIC and the like: converted to JPEG
+  const ext = /\.([a-z0-9]+)$/i.exec(file.name)?.[1].toLowerCase() || ''
   if (!type) {
-    const ext = /\.([a-z0-9]+)$/i.exec(file.name)?.[1].toLowerCase()
     if (ext === 'pdf') return 'application/pdf'
     if (ext === 'jpg' || ext === 'jpeg') return 'image/jpeg'
     if (ext === 'png') return 'image/png'
   }
+  // Music, Finale and slide files are kept as downloads.
+  if (DOWNLOAD_EXTENSIONS.includes(ext)) return DOWNLOAD_TYPE
   return ''
 }
+export const DOWNLOAD_TYPE = 'application/octet-stream'
+export const DOWNLOAD_EXTENSIONS = [
+  'mus',
+  'musx',
+  'etf',
+  'mxl',
+  'mscz',
+  'sib',
+  'pptx',
+  'ppt',
+  'key',
+  'docx',
+  'doc',
+  'mp3',
+  'm4a',
+  'wav',
+  'mid',
+  'midi',
+]
+export const ACCEPTED_FILES = `image/*,application/pdf,${DOWNLOAD_EXTENSIONS.map((e) => `.${e}`).join(',')}`
 async function shrink(file: File): Promise<Blob> {
   const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
   try {
@@ -54,16 +76,19 @@ async function shrink(file: File): Promise<Blob> {
 }
 export async function prepareFile(file: File): Promise<{ blob: Blob; mime: string; name: string }> {
   const type = attachmentType(file)
-  if (!type) throw new Error(`${file.name}: only photos and PDFs can be attached.`)
-  if (type === 'application/pdf') {
-    if (file.size > MAX_ATTACHMENT) throw new Error(`${file.name}: too large (6 MB at most).`)
+  if (!type)
+    throw new Error(
+      `${file.name}: only photos, PDFs, music, slide and Finale files can be attached.`,
+    )
+  if (type === 'application/pdf' || type === DOWNLOAD_TYPE) {
+    if (file.size > MAX_ATTACHMENT) throw new Error(`${file.name}: too large (8 MB at most).`)
     return { blob: file, mime: type, name: file.name }
   }
   if (file.size > 40_000_000) throw new Error(`${file.name}: that photo is too large.`)
   if (type !== 'image/other' && type !== 'image/gif' && file.size <= KEEP_AS_IS)
     return { blob: file, mime: type, name: file.name }
   if (type === 'image/gif') {
-    if (file.size > MAX_ATTACHMENT) throw new Error(`${file.name}: too large (6 MB at most).`)
+    if (file.size > MAX_ATTACHMENT) throw new Error(`${file.name}: too large (8 MB at most).`)
     return { blob: file, mime: type, name: file.name }
   }
   const blob = await shrink(file)

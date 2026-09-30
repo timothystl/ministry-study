@@ -250,19 +250,37 @@ export function planFiles(library: Library, files: { name: string; path: string 
   }
   return { attach: [...attach.values()], create: [...create.values()], already }
 }
-export function applyFilePlan(library: Library, plan: FilePlan): Library {
+// Files that were uploaded (keyed by their path) are attached as stored files; the others are
+// recorded by location only.
+export function applyFilePlan(
+  library: Library,
+  plan: FilePlan,
+  uploaded: Map<string, Attachment> = new Map(),
+): Library {
   const now = new Date().toISOString()
-  const attach = new Map(plan.attach.map((a) => [a.hymnId, a.files]))
+  const split = (files: HymnFile[]) => ({
+    files: files.filter((f) => !uploaded.has(f.location)),
+    attachments: files.flatMap((f) => uploaded.get(f.location) ?? []),
+  })
+  const attach = new Map(plan.attach.map((a) => [a.hymnId, split(a.files)]))
   return {
     ...library,
     hymns: [
-      ...library.hymns.map((h) =>
-        attach.has(h.id) ? { ...h, files: [...h.files, ...attach.get(h.id)!], updatedAt: now } : h,
-      ),
+      ...library.hymns.map((h) => {
+        const add = attach.get(h.id)
+        return add
+          ? {
+              ...h,
+              files: [...h.files, ...add.files],
+              attachments: [...h.attachments, ...add.attachments],
+              updatedAt: now,
+            }
+          : h
+      }),
       ...plan.create.map((c) => ({
         ...blankHymn(),
         title: c.title,
-        files: c.files,
+        ...split(c.files),
         source: 'Files',
         updatedAt: now,
       })),

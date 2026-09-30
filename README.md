@@ -202,8 +202,10 @@ Hymnary.org (Hymnary blocks automated lookups, so it opens in its own tab).
   credits and links are kept.
 - **Import list** reads a spreadsheet saved as CSV (Title, First line, Tune, Composer, Lyricist,
   Meter, Scripture, Year, Key, Hymnal, Usage, Themes, Finale, Sheet music, Slides, Link).
-- **Attach files** matches a folder of files (Finale, PDF, PowerPoint, audio) to hymns by name and
-  records where each one is. Files that match nothing become new hymns. Nothing is uploaded.
+- **Attach files** matches a folder of files (Finale, PDF, PowerPoint, audio) to hymns by name.
+  With "Store the files themselves" on (the default) each file under 8 MB is uploaded and attached
+  to its hymn; larger files, and any you turn it off for, are recorded by location. Files that
+  match nothing become new hymns.
 
 **Liturgies** are held as one whole: every part in order, each with its own words, files and music.
 - A **Setting** is a complete rite kept to use again (Divine Service, Matins, Evening Prayer); a
@@ -221,10 +223,11 @@ A hymn's page lists the liturgies that use it. Everything syncs and is included 
 
 ### Photos and PDFs on a hymn
 Open a hymn and choose "Attach photos or PDFs" (or "Take a photo" on a phone) to keep sheet music,
-a scanned hymnal page or a lead sheet with it. Photos over 1 MB are shrunk in the browser; a PDF can
-be up to 6 MB. Files are stored in the shared library's database, so they need the shared library
+a scanned hymnal page or a lead sheet with it. Photos over 1.5 MB are shrunk in the browser. PDFs,
+Finale (.musx, .mus), PowerPoint, Word and audio files can be attached too, up to 8 MB each. Files are stored in the shared library's database, so they need the shared library
 (they are not in the JSON backup download; Cloudflare's own database backups cover them). Only
-photos and PDFs are accepted, and the file's contents are checked, not just its name.
+those kinds are accepted, and the file's contents are checked, not just its name. Finale and
+PowerPoint files are kept as downloads.
 
 ## Music Resources
 A page for the artists, albums, articles, books, songbooks and websites where hymns and songs are
