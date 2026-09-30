@@ -23,6 +23,7 @@ const empty = (): Library => ({
   hymns: [],
   liturgies: [],
   resources: [],
+  ideaSources: [],
   sample: false,
 })
 const res = (over = {}) => ({ ...blankResource(), title: 'Untitled', ...over })

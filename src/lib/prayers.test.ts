@@ -29,6 +29,7 @@ const empty = (): Library => ({
   hymns: [],
   liturgies: [],
   resources: [],
+  ideaSources: [],
   notes: [],
   sample: false,
 })

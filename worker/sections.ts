@@ -26,7 +26,7 @@ const KINDS: Record<SectionKey, string[]> = {
   sermons: ['sermon'],
   prayers: ['prayer', 'prayerset'],
   notes: ['note'],
-  ideas: ['note'],
+  ideas: ['note', 'ideasource'],
   children: ['note'],
   hymns: ['hymn', 'liturgy', 'resource'],
 }

@@ -17,7 +17,7 @@ import {
   searchNotes,
   type Note,
 } from '../lib/notes'
-import { attachmentRefs, removeFile, removeUnused } from '../lib/attachments'
+import { attachFiles, attachmentRefs, removeFile, removeUnused } from '../lib/attachments'
 import { readManuscript } from '../lib/sermonText'
 import { Attachments } from './Attachments'
 import { isWebLink, noteFromLink } from '../lib/ideas'
@@ -381,6 +381,26 @@ export function Notes({
   const [editing, setEditing] = useState<Note | null>(null)
   const [importing, setImporting] = useState(false)
   const [pasting, setPasting] = useState(false)
+  const [shooting, setShooting] = useState(false)
+  const [photoError, setPhotoError] = useState('')
+  // A photo taken on the page becomes a Scrap at once, so nothing is lost if the phone is put away.
+  async function takePhoto(list: FileList | null) {
+    const files = [...(list || [])]
+    if (!files.length) return
+    setShooting(true)
+    setPhotoError('')
+    const { added, errors } = await attachFiles(files)
+    if (added.length) {
+      const scrap = { ...blankNote('Scrap'), attachments: added }
+      if (onSave(saveNote(library, scrap))) setOpenId(scrap.id)
+      else {
+        errors.push('Could not save the photo.')
+        await Promise.all(added.map((a) => removeFile(a.id)))
+      }
+    }
+    setPhotoError(errors.join(' '))
+    setShooting(false)
+  }
   const [confirm, setConfirm] = useState(false)
   const [copied, setCopied] = useState(false)
   const hits = useMemo(() => searchNotes(notes, query, kind, use), [notes, query, kind, use])
@@ -552,15 +572,32 @@ export function Notes({
                 </button>
               )}
               {ideasPage && (
-                <button onClick={() => setEditing(blankNote('Scrap'))}>
-                  <Camera size={16} /> Photograph a scrap
-                </button>
+                <label className="file-label">
+                  <Camera size={16} /> Take a photo
+                  <input
+                    aria-label="Take a photo of a scrap"
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    disabled={shooting}
+                    onChange={(e) => {
+                      void takePhoto(e.target.files)
+                      e.target.value = ''
+                    }}
+                  />
+                </label>
               )}
               <button onClick={() => setImporting(true)}>
                 <Upload size={16} /> Import files
               </button>
             </div>
           </header>
+          {photoError && (
+            <p className="error" role="alert">
+              {photoError}
+            </p>
+          )}
+          {shooting && <p role="status">Saving the photo…</p>}
           {ideasPage && (
             <form
               className="search-bar"
@@ -613,7 +650,7 @@ export function Notes({
               </label>
             )}
           </div>
-          {ideasPage && <IdeaSources query={query} />}
+          {ideasPage && <IdeaSources query={query} library={library} onSave={onSave} />}
           {query.trim() && (
             <p className="muted" role="status">
               {hits.length} {hits.length === 1 ? 'match' : 'matches'}.

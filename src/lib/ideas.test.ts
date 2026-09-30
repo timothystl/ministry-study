@@ -1,6 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import { blankNote } from './notes'
-import { builtInSources, isWebLink, linkTitle, noteFromLink, parseLinks, searchUrl } from './ideas'
+import {
+  addSource,
+  allSources,
+  builtInSources,
+  cleanSite,
+  isWebLink,
+  linkTitle,
+  noteFromLink,
+  parseLinks,
+  searchUrl,
+} from './ideas'
 
 describe('finding illustrations elsewhere', () => {
   it('limits a search to one site', () => {
@@ -12,7 +22,20 @@ describe('finding illustrations elsewhere', () => {
       'The Salt Project',
       'RW360',
       'Cardiphonia',
+      'Working Preacher',
+      'Christian Century',
+      'Sojourners',
     ])
+  })
+  it('adds a site of your own, cleaned up, and refuses repeats and non-addresses', () => {
+    expect(cleanSite(' https://www.Example.org/blog/?x=1 ')).toBe('example.org/blog')
+    const list = addSource([], 'Example', 'https://www.example.org/blog/')
+    expect(list).toMatchObject([{ name: 'Example', site: 'example.org/blog' }])
+    expect(addSource([], '', 'example.org')[0].name).toBe('example.org')
+    expect(() => addSource(list, 'Again', 'example.org/blog')).toThrow(/already/)
+    expect(() => addSource([], 'RW', 'rw360.org')).toThrow(/already/)
+    expect(() => addSource([], 'x', 'not an address')).toThrow(/web address/)
+    expect(allSources(list)).toHaveLength(builtInSources.length + 1)
   })
   it('turns a link into a titled item that keeps the link', () => {
     expect(linkTitle('https://rw360.org/blog/the-lost-son-again/')).toEqual({

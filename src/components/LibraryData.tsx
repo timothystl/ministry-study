@@ -147,6 +147,7 @@ export function LibraryData({
               hymns: library.hymns,
               liturgies: library.liturgies,
               resources: library.resources,
+              ideaSources: library.ideaSources,
               sample: false,
             })
             setMessage('Remove all illustrative samples and start an empty library.')

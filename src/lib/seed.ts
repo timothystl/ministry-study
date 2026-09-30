@@ -98,6 +98,7 @@ export function sampleLibrary(): Library {
     hymns: [],
     liturgies: [],
     resources: [],
+    ideaSources: [],
     notes: [],
     sample: true,
     recentIds: books.map((b) => b.id),

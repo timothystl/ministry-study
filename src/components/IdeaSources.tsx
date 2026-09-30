@@ -1,32 +1,98 @@
 import { useState } from 'react'
-import { ExternalLink, Link2 } from 'lucide-react'
+import { ExternalLink, Link2, Trash2 } from 'lucide-react'
 import type { Library } from '../lib/model'
-import { builtInSources, homeUrl, parseLinks, searchUrl } from '../lib/ideas'
+import { addSource, allSources, homeUrl, parseLinks, searchUrl } from '../lib/ideas'
 import { Modal } from './Modal'
 
 // Where to look for illustrations: each link opens a search limited to that site, in a new tab.
-export function IdeaSources({ query }: { query: string }) {
+// The built-in sites are fixed; sites added here are kept in the shared library.
+export function IdeaSources({
+  query,
+  library,
+  onSave,
+}: {
+  query: string
+  library: Library
+  onSave: (l: Library) => boolean
+}) {
+  const [name, setName] = useState('')
+  const [address, setAddress] = useState('')
+  const [error, setError] = useState('')
+  const q = query.trim()
+  const custom = new Set(library.ideaSources.map((c) => c.id))
   return (
-    <section className="detail-section" aria-label="Look for illustrations elsewhere">
-      <h3>Look elsewhere{query.trim() ? ` for “${query.trim()}”` : ''}</h3>
+    <details className="detail-section" aria-label="Look for illustrations elsewhere">
+      <summary>Look elsewhere{q ? ` for “${q}”` : ''}</summary>
       <p className="muted">
         Opens a search of that site in a new tab. Save what you find by pasting its link.
       </p>
       <ul className="idea-sources">
-        {builtInSources.map((s) => (
-          <li key={s.site}>
-            <a href={searchUrl(s, query)} target="_blank" rel="noreferrer">
-              <ExternalLink size={14} /> {query.trim() ? `Search ${s.name}` : s.name}
-            </a>{' '}
-            {query.trim() && (
-              <a className="muted" href={homeUrl(s)} target="_blank" rel="noreferrer">
-                home
-              </a>
+        {allSources(library.ideaSources).map((src) => (
+          <li key={src.id}>
+            <a href={searchUrl(src, query)} target="_blank" rel="noreferrer">
+              <ExternalLink size={14} /> {q ? `Search ${src.name}` : src.name}
+            </a>
+            {q && (
+              <>
+                {' '}
+                <a className="muted" href={homeUrl(src)} target="_blank" rel="noreferrer">
+                  home
+                </a>
+              </>
+            )}
+            {custom.has(src.id) && (
+              <button
+                aria-label={`Remove ${src.name}`}
+                onClick={() =>
+                  onSave({
+                    ...library,
+                    ideaSources: library.ideaSources.filter((c) => c.id !== src.id),
+                  })
+                }
+              >
+                <Trash2 size={14} />
+              </button>
             )}
           </li>
         ))}
       </ul>
-    </section>
+      <form
+        className="scan-typed"
+        onSubmit={(e) => {
+          e.preventDefault()
+          try {
+            if (
+              onSave({ ...library, ideaSources: addSource(library.ideaSources, name, address) })
+            ) {
+              setName('')
+              setAddress('')
+              setError('')
+            }
+          } catch (err) {
+            setError((err as Error).message)
+          }
+        }}
+      >
+        <label>
+          Site name
+          <input value={name} onChange={(e) => setName(e.target.value)} />
+        </label>
+        <label>
+          Web address
+          <input
+            placeholder="example.org or example.org/blog"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+          />
+        </label>
+        <button type="submit">Add a site</button>
+      </form>
+      {error && (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      )}
+    </details>
   )
 }
 

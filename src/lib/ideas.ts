@@ -3,15 +3,40 @@ import { blankNote, type Note } from './notes'
 // Places to look for illustrations and ideas. The study never copies their pages: it opens a search
 // limited to that site, and an item saved from one keeps the link and the pastor's own note.
 export interface IdeaSource {
+  id: string
   name: string
   site: string // domain, or domain/path, the search is limited to
 }
 export const builtInSources: IdeaSource[] = [
-  { name: 'TextWeek', site: 'textweek.com' },
-  { name: 'The Salt Project', site: 'saltproject.org' },
-  { name: 'RW360', site: 'rw360.org' },
-  { name: 'Cardiphonia', site: 'cardiphonia.wordpress.com' },
+  { id: 'textweek', name: 'TextWeek', site: 'textweek.com' },
+  { id: 'saltproject', name: 'The Salt Project', site: 'saltproject.org' },
+  { id: 'rw360', name: 'RW360', site: 'rw360.org' },
+  { id: 'cardiphonia', name: 'Cardiphonia', site: 'cardiphonia.wordpress.com' },
+  { id: 'workingpreacher', name: 'Working Preacher', site: 'workingpreacher.org' },
+  { id: 'christiancentury', name: 'Christian Century', site: 'christiancentury.org' },
+  { id: 'sojourners', name: 'Sojourners', site: 'sojo.net' },
 ]
+// "https://www.example.org/blog/" becomes "example.org/blog"; anything that is not an address is refused.
+export function cleanSite(input: string): string {
+  const site = input
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, '')
+    .replace(/^www\./, '')
+    .replace(/[?#].*$/, '')
+    .replace(/\/+$/, '')
+  if (!/^[a-z0-9][a-z0-9.-]*\.[a-z]{2,}(\/[^\s]*)?$/.test(site))
+    throw new Error('Enter a web address, such as example.org or example.org/blog.')
+  return site
+}
+export function addSource(list: IdeaSource[], name: string, address: string): IdeaSource[] {
+  const site = cleanSite(address)
+  const label = name.trim() || site
+  if ([...builtInSources, ...list].some((s) => s.site === site))
+    throw new Error('That site is already in the list.')
+  return [...list, { id: crypto.randomUUID(), name: label, site }]
+}
+export const allSources = (custom: IdeaSource[]) => [...builtInSources, ...custom]
 export const searchUrl = (source: IdeaSource, query: string) =>
   `https://duckduckgo.com/?q=${encodeURIComponent(`site:${source.site} ${query}`.trim())}`
 export const homeUrl = (source: IdeaSource) => `https://${source.site}/`
