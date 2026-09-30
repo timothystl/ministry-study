@@ -219,6 +219,10 @@ Choose from:
   shipped with the site (about 23 MB, loaded one book at a time). Rebuild with
   `node scripts/buildHebrewWords.mjs <STEPBible-Data checkout>`. The lexicon keeps Tyndale House's glosses;
   STEPBible's abridged-BDB "Meaning" text needs the Online Bible's permission and is left out.
+- **Greek word study** (the default New Testament column): the same tap-a-word panel for the Greek
+  New Testament, from STEPBible's tagged Greek NT (TAGNT, CC BY 4.0): the words it marks as NA28, each
+  with its dictionary form and gloss, Strong's number and a plain-language reading of the grammar
+  (about 10 MB, one book at a time). Rebuild with `node scripts/buildGreekWords.mjs <STEPBible-Data checkout>`.
 - **Modern critical Greek New Testaments,** shipped with the site (no service needed): the **SBL Greek
   New Testament** (SBLGNT, CC BY 4.0), the **Tyndale House GNT** and **NA28** readings. The last two
   are rebuilt from STEPBible's tagged Greek New Testament (CC BY 4.0), which marks every word with

@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import {
   explainGrammar,
+  greekStudyWord,
+  hebrewStudyWord,
   lookupLexicon,
   plainHebrew,
   wordParts,
   type HebrewWord,
-} from './hebrewWords'
+} from './wordStudy'
 
 const bereshit: HebrewWord = [
   'בְּ/רֵאשִׁ֖ית',
@@ -22,6 +24,40 @@ const ohalo: HebrewWord = [
   'HNcmsc/Sp3ms',
 ]
 
+describe('word study panel', () => {
+  it('shapes a Hebrew word with its note', () => {
+    const word = hebrewStudyWord([
+      bereshit[0],
+      bereshit[1],
+      bereshit[2],
+      bereshit[3],
+      bereshit[4],
+      'Q',
+    ])
+    expect(word).toMatchObject({ text: 'בְּרֵאשִׁ֖ית', language: 'Hebrew', gloss: 'in beginning' })
+    expect(word.note).toMatch(/Qere/)
+    expect(word.parts).toHaveLength(2)
+  })
+  it('shapes a Greek word, and uses the first code of a joined word', () => {
+    const word = greekStudyWord([
+      'ἠγάπησεν',
+      'ēgapēsen',
+      'loved',
+      'G0025',
+      'V-AAI-3S',
+      'ἀγαπάω=to love',
+    ])
+    expect(word.parts[0]).toMatchObject({
+      number: 'G0025',
+      grammar: 'V-AAI-3S',
+      lemma: 'ἀγαπάω',
+      lemmaGloss: 'to love',
+    })
+    const joined = greekStudyWord(['x', 'x', '<the>', 'G1', 'CONJ + G5104', 'a=b'])
+    expect(joined.parts[0].grammar).toBe('CONJ')
+    expect(joined.gloss).toBe('the')
+  })
+})
 describe('Hebrew words', () => {
   it('reads a word as it is written, without the piece markers', () => {
     expect(plainHebrew(bereshit)).toBe('בְּרֵאשִׁ֖ית')

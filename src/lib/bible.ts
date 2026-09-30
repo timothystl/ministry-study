@@ -1,4 +1,10 @@
-import { plainHebrew, type HebrewWord } from './hebrewWords'
+import {
+  greekStudyWord,
+  hebrewStudyWord,
+  type GreekWord,
+  type HebrewWord,
+  type StudyWord,
+} from './wordStudy'
 import { NET_COPYRIGHT, YVP_NOTICE } from '../../worker/bibleSources'
 import { ESV_COPYRIGHT } from '../../worker/esv'
 import { bookNames, parseReferences, type Reference } from './scripture'
@@ -30,6 +36,8 @@ const LEB_CREDIT =
   'Scripture quotations marked (LEB) are from the Lexham English Bible. Copyright 2012 Logos Bible Software. Lexham is a registered trademark of Logos Bible Software.'
 const HEBREW_CREDIT =
   'Hebrew word study: data created by www.STEPBible.org based on work at Tyndale House, Cambridge (CC BY 4.0), from the Westminster Leningrad Codex; it follows the Qere where the text is corrected. Glosses, Strong’s tags and grammar are STEPBible’s.'
+const GREEK_WORDS_CREDIT =
+  'Greek word study: data created by www.STEPBible.org based on work at Tyndale House, Cambridge (CC BY 4.0). The words are those STEPBible marks as Nestle-Aland 28; glosses, Strong’s numbers and grammar are STEPBible’s.'
 const STEP_CREDIT =
   'Data created by www.STEPBible.org based on work at Tyndale House, Cambridge (CC BY 4.0).'
 export const versions: Version[] = [
@@ -61,6 +69,16 @@ export const versions: Version[] = [
     covers: ['OT'],
     rtl: true,
     license: 'Public domain',
+  },
+  {
+    id: 'nawords',
+    name: 'Greek word study: NA28 words (STEPBible)',
+    short: 'Word study',
+    language: 'Greek',
+    covers: ['NT'],
+    license: 'CC BY 4.0',
+    bundled: 'greek-words',
+    credit: GREEK_WORDS_CREDIT,
   },
   {
     id: 'sblgnt',
@@ -219,15 +237,15 @@ export const versionsFor = (testament: Testament, extra: Version[] = []) =>
   [...versions, ...extra].filter((v) => v.covers.includes(testament))
 // The original language of the testament comes first, then an English translation to read beside it.
 export const defaultVersionIds = (testament: Testament) =>
-  testament === 'OT' ? ['tahot', 'web', 'kjv'] : ['sblgnt', 'web', 'kjv']
+  testament === 'OT' ? ['tahot', 'web', 'kjv'] : ['nawords', 'web', 'kjv']
 
 export interface Verse {
   verse: number
   // Where the text has a marker ⟦1⟧, ⟦2⟧ …, the translators' footnote with that number.
   text: string
   notes?: string[]
-  // Hebrew word by word, for the word study.
-  words?: HebrewWord[]
+  // Word by word, for the word study.
+  study?: StudyWord[]
 }
 export interface Passage {
   book: string
@@ -359,7 +377,7 @@ export async function loadYvpVersions(): Promise<Version[]> {
     return []
   }
 }
-type BookFile = Record<string, Record<string, string | HebrewWord[]>> & {
+type BookFile = Record<string, Record<string, string | HebrewWord[] | GreekWord[]>> & {
   _notes?: Record<string, string[]>
 }
 const books = new Map<string, Promise<BookFile>>()
@@ -379,8 +397,13 @@ async function loadBundled(folder: string, book: string, chapter: number): Promi
   const verses = file[String(chapter)] ?? {}
   return Object.entries(verses)
     .map(([verse, text]) => {
-      if (Array.isArray(text))
-        return { verse: Number(verse), text: text.map(plainHebrew).join(' '), words: text }
+      if (Array.isArray(text)) {
+        const study =
+          folder === 'hebrew'
+            ? (text as HebrewWord[]).map(hebrewStudyWord)
+            : (text as GreekWord[]).map(greekStudyWord)
+        return { verse: Number(verse), text: study.map((w) => w.text).join(' '), study }
+      }
       const notes = file._notes?.[`${chapter}:${verse}`]
       return { verse: Number(verse), text, ...(notes ? { notes } : {}) }
     })

@@ -2,25 +2,23 @@ import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import {
   explainGrammar,
-  loadHebrewTables,
+  loadStudyTables,
   lookupLexicon,
-  plainHebrew,
-  wordParts,
-  type HebrewTables,
-  type HebrewWord,
-} from '../lib/hebrewWords'
+  type StudyTables,
+  type StudyWord,
+} from '../lib/wordStudy'
 
-// The words of a Hebrew verse, each one a button that opens the word study below the table.
-export function HebrewVerse({
+// The words of a verse, each one a button that opens the word study below the table.
+export function StudyVerse({
   words,
   keyPrefix,
   picked,
   onPick,
 }: {
-  words: HebrewWord[]
+  words: StudyWord[]
   keyPrefix: string
   picked: string
-  onPick: (key: string, word: HebrewWord) => void
+  onPick: (key: string, word: StudyWord) => void
 }) {
   return (
     <>
@@ -34,7 +32,7 @@ export function HebrewVerse({
             aria-pressed={picked === key}
             onClick={() => onPick(key, word)}
           >
-            {plainHebrew(word)}
+            {word.text}
           </button>
         )
       })}
@@ -49,42 +47,41 @@ export function WordStudy({
   reference,
   onClose,
 }: {
-  word: HebrewWord
+  word: StudyWord
   reference: string
   onClose: () => void
 }) {
-  const [tables, setTables] = useState<HebrewTables | null>(null)
+  const [tables, setTables] = useState<StudyTables | null>(null)
   const [failed, setFailed] = useState('')
   useEffect(() => {
     let live = true
-    loadHebrewTables().then(
+    loadStudyTables(word.language).then(
       (t) => live && setTables(t),
       (e: Error) => live && setFailed(e.message),
     )
     return () => {
       live = false
     }
-  }, [])
-  const parts = wordParts(word)
-  const language = word[4].charAt(0) === 'A' ? 'A' : 'H'
+  }, [word.language])
+  const parts = word.parts
+  // Aramaic passages carry an A in front of their grammar codes; Hebrew ones an H.
+  const language = word.parts[0]?.grammar.charAt(0) === 'A' ? 'A' : 'H'
   return (
     <aside className="word-study" aria-label="Word study">
       <div className="word-study-head">
         <div>
           <p className="muted">{reference}</p>
-          <p className="word-study-hebrew" lang="he" dir="rtl">
-            {plainHebrew(word)}
+          <p
+            className="word-study-hebrew"
+            lang={word.language === 'Hebrew' ? 'he' : 'el'}
+            dir={word.language === 'Hebrew' ? 'rtl' : undefined}
+          >
+            {word.text}
           </p>
           <p>
-            <em>{word[1].replace(/[/\\]/g, '')}</em> · {word[2].replace(/\s*\/\s*/g, ' ')}
+            <em>{word.translit}</em> · {word.gloss}
           </p>
-          {word[5] && (
-            <p className="muted">
-              {word[5] === 'Q'
-                ? 'Qere: the scribes’ corrected reading, followed by translators.'
-                : 'This word is added or restored in STEPBible’s text.'}
-            </p>
-          )}
+          {word.note && <p className="muted">{word.note}</p>}
         </div>
         <button
           type="button"
@@ -109,7 +106,11 @@ export function WordStudy({
             <li key={i}>
               <div className="word-part-head">
                 <span className="word-part-role">{roleLabel[part.role]}</span>
-                <span className="word-part-hebrew" lang="he" dir="rtl">
+                <span
+                  className="word-part-hebrew"
+                  lang={word.language === 'Hebrew' ? 'he' : 'el'}
+                  dir={word.language === 'Hebrew' ? 'rtl' : undefined}
+                >
                   {part.hebrew}
                 </span>
                 <span className="muted">
@@ -117,6 +118,15 @@ export function WordStudy({
                 </span>
               </div>
               <dl>
+                {part.lemma && (
+                  <>
+                    <dt>Dictionary form</dt>
+                    <dd>
+                      <span lang="el">{part.lemma}</span>
+                      {part.lemmaGloss ? `: ${part.lemmaGloss}` : ''}
+                    </dd>
+                  </>
+                )}
                 {entry && (
                   <>
                     <dt>Lexical form</dt>
