@@ -17,6 +17,7 @@ const empty = (): Library => ({
   hymns: [],
   liturgies: [],
   resources: [],
+  ideaSources: [],
   sample: false,
 })
 const ruf: RufEntry[] = [

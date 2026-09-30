@@ -1,5 +1,6 @@
 import type { Hymn, Liturgy } from './hymns'
 import type { Resource } from './resources'
+import type { IdeaSource } from './ideas'
 import type { Note } from './notes'
 import type { Prayer, PrayerSet } from './prayers'
 import type { Sermon } from './sermons'
@@ -106,6 +107,7 @@ export interface Library {
   hymns: Hymn[]
   liturgies: Liturgy[]
   resources: Resource[]
+  ideaSources: IdeaSource[]
   sample: boolean
 }
 export const blankLocation = (): Location => ({ room: '', bookcase: '', shelf: '', position: '' })

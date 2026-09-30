@@ -160,6 +160,11 @@ const note = z.object({
   personal: z.boolean().default(false),
   updatedAt: z.string(),
 })
+const ideaSource = z.object({
+  id: z.string().min(1),
+  name: z.string().trim().min(1),
+  site: z.string().trim().min(3),
+})
 const hymnFile = z.object({ kind: z.enum(fileKinds), location: z.string() })
 const hymn = z.object({
   id: z.string().min(1),
@@ -269,6 +274,7 @@ const schema = z.object({
   hymns: z.array(hymn).default([]),
   liturgies: z.array(liturgy).default([]),
   resources: z.array(resource).default([]),
+  ideaSources: z.array(ideaSource).default([]),
   sample: z.boolean(),
 })
 const LIBRARY_KEY = 'ministry-study.library.v1'
@@ -293,6 +299,7 @@ export function parseBackup(input: unknown): Library {
     data.hymns,
     data.liturgies,
     data.resources,
+    data.ideaSources,
   ])
     if (new Set(items.map((x) => x.id)).size !== items.length)
       throw new Error('Duplicate record IDs in backup.')
@@ -327,6 +334,7 @@ const emptyLibrary = (): Library => ({
   hymns: [],
   liturgies: [],
   resources: [],
+  ideaSources: [],
   sample: false,
 })
 export function loadLibrary(): { library: Library; error: string } {
@@ -348,6 +356,7 @@ export function loadLibrary(): { library: Library; error: string } {
         hymns: [],
         liturgies: [],
         resources: [],
+        ideaSources: [],
         notes: [],
         sample: false,
       },

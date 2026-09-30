@@ -57,6 +57,7 @@ describe('physical verification', () => {
     hymns: [],
     liturgies: [],
     resources: [],
+    ideaSources: [],
     notes: [],
   })
   it('moves forward in shelf order, wraps, and skips confirmed copies', () => {

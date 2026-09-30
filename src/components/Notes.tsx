@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react'
-import { Camera, Plus, Search, Upload } from 'lucide-react'
+import { Camera, Link2, Plus, Search, Upload } from 'lucide-react'
 import type { Library } from '../lib/model'
 import {
   blankNote,
@@ -17,9 +17,11 @@ import {
   searchNotes,
   type Note,
 } from '../lib/notes'
-import { attachmentRefs, removeFile, removeUnused } from '../lib/attachments'
+import { attachFiles, attachmentRefs, removeFile, removeUnused } from '../lib/attachments'
 import { readManuscript } from '../lib/sermonText'
 import { Attachments } from './Attachments'
+import { isWebLink, noteFromLink } from '../lib/ideas'
+import { IdeaSources, PasteLinks } from './IdeaSources'
 import { Modal } from './Modal'
 
 const dateLabel = (date: string) =>
@@ -378,6 +380,27 @@ export function Notes({
   const [openId, setOpenId] = useState('')
   const [editing, setEditing] = useState<Note | null>(null)
   const [importing, setImporting] = useState(false)
+  const [pasting, setPasting] = useState(false)
+  const [shooting, setShooting] = useState(false)
+  const [photoError, setPhotoError] = useState('')
+  // A photo taken on the page becomes a Scrap at once, so nothing is lost if the phone is put away.
+  async function takePhoto(list: FileList | null) {
+    const files = [...(list || [])]
+    if (!files.length) return
+    setShooting(true)
+    setPhotoError('')
+    const { added, errors } = await attachFiles(files)
+    if (added.length) {
+      const scrap = { ...blankNote('Scrap'), attachments: added }
+      if (onSave(saveNote(library, scrap))) setOpenId(scrap.id)
+      else {
+        errors.push('Could not save the photo.')
+        await Promise.all(added.map((a) => removeFile(a.id)))
+      }
+    }
+    setPhotoError(errors.join(' '))
+    setShooting(false)
+  }
   const [confirm, setConfirm] = useState(false)
   const [copied, setCopied] = useState(false)
   const hits = useMemo(() => searchNotes(notes, query, kind, use), [notes, query, kind, use])
@@ -441,7 +464,16 @@ export function Notes({
             )}
           </div>
           {open.source && !open.source.startsWith('Imported file:') && (
-            <p className="muted">From: {open.source}</p>
+            <p className="muted">
+              From:{' '}
+              {isWebLink(open.source) ? (
+                <a href={open.source} target="_blank" rel="noreferrer">
+                  {open.source}
+                </a>
+              ) : (
+                open.source
+              )}
+            </p>
           )}
           {open.body && <pre className="manuscript note-body">{open.body}</pre>}
           {isIdeaKind(open.kind) && (
@@ -535,15 +567,37 @@ export function Notes({
                 <Plus size={16} /> {kidsPage ? 'Add message' : ideasPage ? 'Add item' : 'Add note'}
               </button>
               {ideasPage && (
-                <button onClick={() => setEditing(blankNote('Scrap'))}>
-                  <Camera size={16} /> Photograph a scrap
+                <button onClick={() => setPasting(true)}>
+                  <Link2 size={16} /> Paste links
                 </button>
+              )}
+              {ideasPage && (
+                <label className="file-label">
+                  <Camera size={16} /> Take a photo
+                  <input
+                    aria-label="Take a photo of a scrap"
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    disabled={shooting}
+                    onChange={(e) => {
+                      void takePhoto(e.target.files)
+                      e.target.value = ''
+                    }}
+                  />
+                </label>
               )}
               <button onClick={() => setImporting(true)}>
                 <Upload size={16} /> Import files
               </button>
             </div>
           </header>
+          {photoError && (
+            <p className="error" role="alert">
+              {photoError}
+            </p>
+          )}
+          {shooting && <p role="status">Saving the photo…</p>}
           {ideasPage && (
             <form
               className="search-bar"
@@ -551,14 +605,16 @@ export function Notes({
               onSubmit={(e) => {
                 e.preventDefault()
                 if (!quick.trim()) return
-                const idea = { ...blankNote('Idea'), title: quick.trim() }
+                const idea = isWebLink(quick)
+                  ? noteFromLink(quick)
+                  : { ...blankNote('Idea'), title: quick.trim() }
                 if (onSave(saveNote(library, idea))) setQuick('')
               }}
             >
               <Plus size={20} />
               <input
                 aria-label="Quick add an idea"
-                placeholder="Catch an idea in a line, then press Enter..."
+                placeholder="Catch an idea or paste a link, then press Enter..."
                 value={quick}
                 onChange={(e) => setQuick(e.target.value)}
               />
@@ -594,6 +650,7 @@ export function Notes({
               </label>
             )}
           </div>
+          {ideasPage && <IdeaSources query={query} library={library} onSave={onSave} />}
           {query.trim() && (
             <p className="muted" role="status">
               {hits.length} {hits.length === 1 ? 'match' : 'matches'}.
@@ -648,6 +705,9 @@ export function Notes({
             return false
           }}
         />
+      )}
+      {pasting && (
+        <PasteLinks library={library} onSave={onSave} onClose={() => setPasting(false)} />
       )}
       {importing && (
         <NoteImport

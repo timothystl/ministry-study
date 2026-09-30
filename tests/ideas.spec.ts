@@ -40,3 +40,69 @@ test('collect an idea and an illustration, mark it used, and keep it apart from 
   await nav(page, 'Devotions & Notes')
   await expect(page.getByText('Small mercy')).toHaveCount(0)
 })
+
+test('look for illustrations on other sites and save their links', async ({ page }) => {
+  await page.goto('/')
+  await nav(page, 'Illustrations & Ideas')
+  await page.getByLabel('Search notes').fill('Luke 15')
+  await page.getByText('Look elsewhere').click()
+  const link = page.getByRole('link', { name: 'Search TextWeek' })
+  await expect(link).toHaveAttribute(
+    'href',
+    /duckduckgo\.com\/\?q=site%3Atextweek\.com%20Luke%2015/,
+  )
+
+  await page.getByRole('button', { name: 'Paste links' }).click()
+  const dialog = page.getByRole('dialog')
+  await dialog
+    .getByLabel('Links')
+    .fill('https://rw360.org/blog/the-lost-son-again/ | good for Lent 3\nnot a link')
+  await expect(dialog.getByText('1 to add; 1 skipped.')).toBeVisible()
+  await dialog.getByRole('button', { name: 'Save 1 link' }).click()
+
+  await page.getByLabel('Search notes').fill('')
+  await page.getByRole('button', { name: /The lost son again/ }).click()
+  await expect(
+    page.getByRole('link', { name: 'https://rw360.org/blog/the-lost-son-again/' }),
+  ).toBeVisible()
+  await expect(page.getByText('good for Lent 3')).toBeVisible()
+})
+
+test('add a site of your own to look elsewhere', async ({ page }) => {
+  await page.goto('/')
+  await nav(page, 'Illustrations & Ideas')
+  await page.getByText('Look elsewhere').click()
+  await expect(page.getByRole('link', { name: 'Working Preacher' })).toBeVisible()
+  await page.getByLabel('Site name').fill('Example blog')
+  await page.getByLabel('Web address').fill('https://www.example.org/blog/')
+  await page.getByRole('button', { name: 'Add a site' }).click()
+  await expect(page.getByRole('link', { name: 'Example blog' })).toBeVisible()
+  await page.getByLabel('Web address').fill('nonsense')
+  await page.getByRole('button', { name: 'Add a site' }).click()
+  await expect(page.getByRole('alert')).toContainText('web address')
+  await page.getByRole('button', { name: 'Remove Example blog' }).click()
+  await expect(page.getByRole('link', { name: 'Example blog' })).toHaveCount(0)
+})
+
+const png = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mNkYPhfz0AEYBxVSF+FAP5FDvcfRYWgAAAAAElFTkSuQmCC',
+  'base64',
+)
+
+test('a photo taken on the page becomes a scrap at once', async ({ page }) => {
+  await page.route('**/api/attachments/*', (route) => {
+    const method = route.request().method()
+    return method === 'GET'
+      ? route.fulfill({ body: png, contentType: 'image/png' })
+      : route.fulfill({ json: { ok: true } })
+  })
+  await page.goto('/')
+  await nav(page, 'Illustrations & Ideas')
+  await page
+    .getByLabel('Take a photo of a scrap')
+    .setInputFiles({ name: 'card.png', mimeType: 'image/png', buffer: png })
+  await expect(page.getByRole('heading', { name: /^Scrap \d{4}-\d{2}-\d{2}$/ })).toBeVisible()
+  await expect(page.getByRole('img', { name: 'card.png' })).toBeVisible()
+  await page.getByRole('button', { name: 'All items' }).click()
+  await expect(page.getByText(/^Scrap \d{4}-\d{2}-\d{2}$/)).toBeVisible()
+})
