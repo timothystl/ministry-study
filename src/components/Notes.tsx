@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react'
-import { Plus, Search, Upload } from 'lucide-react'
+import { Camera, Plus, Search, Upload } from 'lucide-react'
 import type { Library } from '../lib/model'
 import {
   blankNote,
@@ -8,13 +8,18 @@ import {
   noteFromFile,
   childrenKinds,
   devotionKinds,
+  ideaKinds,
   isChildrensKind,
+  isIdeaKind,
+  markUsed,
   noteKinds,
   saveNote,
   searchNotes,
   type Note,
 } from '../lib/notes'
+import { attachmentRefs, removeFile, removeUnused } from '../lib/attachments'
 import { readManuscript } from '../lib/sermonText'
+import { Attachments } from './Attachments'
 import { Modal } from './Modal'
 
 const dateLabel = (date: string) =>
@@ -25,7 +30,9 @@ const dateLabel = (date: string) =>
         day: 'numeric',
       })
     : ''
-const summary = (n: Note) => [n.kind, n.scripture, dateLabel(n.date)].filter(Boolean).join(' · ')
+const summary = (n: Note) =>
+  [n.kind, n.scripture, dateLabel(n.date), n.personal ? 'Personal' : ''].filter(Boolean).join(' · ')
+const today = () => new Date().toISOString().slice(0, 10)
 
 export function NoteEditor({
   note,
@@ -44,11 +51,22 @@ export function NoteEditor({
   const [tags, setTags] = useState(note.tags.join('; '))
   const [error, setError] = useState('')
   const sermon = library.sermons.find((s) => s.id === draft.sermonId)
+  const collected = isIdeaKind(draft.kind)
+  // Files added in this form but never saved are deleted if the form is cancelled.
+  function cancel() {
+    const kept = new Set(note.attachments.map((a) => a.id))
+    draft.attachments.filter((a) => !kept.has(a.id)).forEach((a) => void removeFile(a.id))
+    onClose()
+  }
   function submit(e: FormEvent) {
     e.preventDefault()
     try {
-      if (!onSave(saveNote(library, { ...draft, tags: tags.split(';') })))
+      if (!onSave(saveNote(library, { ...draft, tags: tags.split(';') }))) {
         setError('Could not save. Your changes are still in this form.')
+        return
+      }
+      const now = new Set(draft.attachments.map((a) => a.id))
+      note.attachments.filter((a) => !now.has(a.id)).forEach((a) => void removeFile(a.id))
     } catch (err) {
       setError((err as Error).message)
     }
@@ -60,9 +78,11 @@ export function NoteEditor({
           ? 'Edit'
           : isChildrensKind(note.kind)
             ? 'Add a children’s message'
-            : 'Add a devotion or note'
+            : isIdeaKind(note.kind)
+              ? 'Add an illustration or idea'
+              : 'Add a devotion or note'
       }
-      onClose={onClose}
+      onClose={cancel}
       wide
     >
       <form onSubmit={submit} className="form-grid">
@@ -116,6 +136,39 @@ export function NoteEditor({
           Tags (separate with semicolons)
           <input value={tags} onChange={(e) => setTags(e.target.value)} />
         </label>
+        {collected && (
+          <>
+            <label className="wide-field">
+              Where it came from
+              <span className="muted">
+                A book and page, a link, a person, “overheard,” “my own.”
+              </span>
+              <input
+                value={draft.source}
+                onChange={(e) => setDraft({ ...draft, source: e.target.value })}
+              />
+            </label>
+            <label className="wide-field check-row">
+              <input
+                type="checkbox"
+                checked={draft.personal}
+                onChange={(e) => setDraft({ ...draft, personal: e.target.checked })}
+              />{' '}
+              Personal or pastoral: about real people, keep it private
+            </label>
+            <div className="wide-field">
+              <Attachments
+                heading="Photos of handwritten notes or pages"
+                attachments={draft.attachments}
+                refs={new Map(note.attachments.map((a) => [a.id, 2]))}
+                onChange={(next) => {
+                  setDraft({ ...draft, attachments: next })
+                  return true
+                }}
+              />
+            </div>
+          </>
+        )}
         {sermon && (
           <p className="wide-field">
             Tied to the sermon “{sermon.title}”.{' '}
@@ -130,7 +183,7 @@ export function NoteEditor({
           </p>
         )}
         <div className="form-actions wide-field">
-          <button type="button" onClick={onClose}>
+          <button type="button" onClick={cancel}>
             Cancel
           </button>
           <button className="primary" type="submit">
@@ -186,7 +239,9 @@ function NoteImport({
   return (
     <Modal
       title={
-        kidsPage ? 'Import children’s messages from files' : 'Import devotions or notes from files'
+        kidsPage
+          ? 'Import children’s messages from files'
+          : 'Import devotions, notes or ideas from files'
       }
       onClose={onClose}
       wide
@@ -293,31 +348,52 @@ export function Notes({
   library,
   onSave,
   kidsPage = false,
+  ideasPage = false,
 }: {
   library: Library
   onSave: (library: Library) => boolean
   kidsPage?: boolean
+  ideasPage?: boolean
 }) {
-  const kinds = kidsPage ? childrenKinds : devotionKinds
+  const kinds = kidsPage ? childrenKinds : ideasPage ? ideaKinds : devotionKinds
   const notes = useMemo(
-    () => library.notes.filter((n) => isChildrensKind(n.kind) === kidsPage),
-    [library.notes, kidsPage],
+    () =>
+      library.notes.filter((n) =>
+        kidsPage
+          ? isChildrensKind(n.kind)
+          : ideasPage
+            ? isIdeaKind(n.kind)
+            : !isChildrensKind(n.kind) && !isIdeaKind(n.kind),
+      ),
+    [library.notes, kidsPage, ideasPage],
   )
-  const noun = kidsPage ? 'messages' : 'notes'
+  const noun = kidsPage ? 'messages' : ideasPage ? 'items' : 'notes'
   const [query, setQuery] = useState('')
   const [kind, setKind] = useState('')
+  const [use, setUse] = useState<'' | 'unused' | 'used'>('')
+  const [quick, setQuick] = useState('')
+  const [usedWhere, setUsedWhere] = useState('')
+  const [usedDate, setUsedDate] = useState(today())
+  const [usedError, setUsedError] = useState('')
   const [openId, setOpenId] = useState('')
   const [editing, setEditing] = useState<Note | null>(null)
   const [importing, setImporting] = useState(false)
   const [confirm, setConfirm] = useState(false)
   const [copied, setCopied] = useState(false)
-  const hits = useMemo(() => searchNotes(notes, query, kind), [notes, query, kind])
+  const hits = useMemo(() => searchNotes(notes, query, kind, use), [notes, query, kind, use])
+  const refs = useMemo(() => attachmentRefs(library), [library])
   const open = library.notes.find((n) => n.id === openId)
   const sermon = open && library.sermons.find((s) => s.id === open.sermonId)
   return (
     <section
       className="sermons"
-      aria-label={kidsPage ? 'Children’s messages' : 'Devotions and notes'}
+      aria-label={
+        kidsPage
+          ? 'Children’s messages'
+          : ideasPage
+            ? 'Illustrations and ideas'
+            : 'Devotions and notes'
+      }
     >
       {open ? (
         <article className="sermon-detail">
@@ -327,7 +403,7 @@ export function Notes({
               setConfirm(false)
             }}
           >
-            {kidsPage ? 'All messages' : 'All notes'}
+            {kidsPage ? 'All messages' : ideasPage ? 'All items' : 'All notes'}
           </button>
           <h1>{open.title}</h1>
           <p className="muted">{summary(open) || 'No date or passage'}</p>
@@ -347,7 +423,13 @@ export function Notes({
                 <span>Remove this note?</span>
                 <button
                   onClick={() => {
-                    if (onSave(deleteNote(library, open.id))) setOpenId('')
+                    if (onSave(deleteNote(library, open.id))) {
+                      removeUnused(
+                        deleteNote(library, open.id),
+                        open.attachments.filter((a) => (refs.get(a.id) || 0) <= 1),
+                      )
+                      setOpenId('')
+                    }
                   }}
                 >
                   Yes, remove
@@ -358,30 +440,130 @@ export function Notes({
               <button onClick={() => setConfirm(true)}>Remove</button>
             )}
           </div>
-          <pre className="manuscript note-body">{open.body}</pre>
+          {open.source && !open.source.startsWith('Imported file:') && (
+            <p className="muted">From: {open.source}</p>
+          )}
+          {open.body && <pre className="manuscript note-body">{open.body}</pre>}
+          {isIdeaKind(open.kind) && (
+            <>
+              <Attachments
+                heading="Photos and pages"
+                attachments={open.attachments}
+                refs={refs}
+                onChange={(next) => onSave(saveNote(library, { ...open, attachments: next }))}
+              />
+              <section className="detail-section" aria-label="Where it has been used">
+                <h3>Where it has been used</h3>
+                {open.uses.length === 0 ? (
+                  <p className="muted">Not used yet.</p>
+                ) : (
+                  <ul>
+                    {open.uses.map((u, i) => (
+                      <li key={`${u}-${i}`}>{u}</li>
+                    ))}
+                  </ul>
+                )}
+                <form
+                  className="scan-typed"
+                  onSubmit={(e) => {
+                    e.preventDefault()
+                    try {
+                      if (onSave(saveNote(library, markUsed(open, usedWhere, usedDate)))) {
+                        setUsedWhere('')
+                        setUsedError('')
+                      }
+                    } catch (err) {
+                      setUsedError((err as Error).message)
+                    }
+                  }}
+                >
+                  <label>
+                    Date
+                    <input
+                      type="date"
+                      value={usedDate}
+                      onChange={(e) => setUsedDate(e.target.value)}
+                    />
+                  </label>
+                  <label>
+                    Sermon or place
+                    <input
+                      list="used-sermons"
+                      value={usedWhere}
+                      onChange={(e) => setUsedWhere(e.target.value)}
+                    />
+                  </label>
+                  <datalist id="used-sermons">
+                    {library.sermons.slice(0, 200).map((sm) => (
+                      <option key={sm.id} value={sm.title} />
+                    ))}
+                  </datalist>
+                  <button type="submit">Mark as used</button>
+                </form>
+                {usedError && (
+                  <p className="error" role="alert">
+                    {usedError}
+                  </p>
+                )}
+              </section>
+            </>
+          )}
         </article>
       ) : (
         <>
           <header className="sermons-head">
             <div>
-              <h1>{kidsPage ? 'Children’s Messages' : 'Devotions & Notes'}</h1>
+              <h1>
+                {kidsPage
+                  ? 'Children’s Messages'
+                  : ideasPage
+                    ? 'Illustrations & Ideas'
+                    : 'Devotions & Notes'}
+              </h1>
               <p className="muted">
                 {notes.length
                   ? `${notes.length.toLocaleString()} ${noun}`
                   : kidsPage
                     ? 'Pre-K children’s messages and grade school chapel talks.'
-                    : 'Council and midweek devotions, sermon-preparation notes, illustrations and ideas.'}
+                    : ideasPage
+                      ? 'Stories, quotes, images, facts, half-ideas and photographed scraps.'
+                      : 'Council and midweek devotions and sermon-preparation notes.'}
               </p>
             </div>
             <div className="sermon-actions">
               <button className="primary" onClick={() => setEditing(blankNote(kinds[0]))}>
-                <Plus size={16} /> {kidsPage ? 'Add message' : 'Add note'}
+                <Plus size={16} /> {kidsPage ? 'Add message' : ideasPage ? 'Add item' : 'Add note'}
               </button>
+              {ideasPage && (
+                <button onClick={() => setEditing(blankNote('Scrap'))}>
+                  <Camera size={16} /> Photograph a scrap
+                </button>
+              )}
               <button onClick={() => setImporting(true)}>
                 <Upload size={16} /> Import files
               </button>
             </div>
           </header>
+          {ideasPage && (
+            <form
+              className="search-bar"
+              aria-label="Quick add"
+              onSubmit={(e) => {
+                e.preventDefault()
+                if (!quick.trim()) return
+                const idea = { ...blankNote('Idea'), title: quick.trim() }
+                if (onSave(saveNote(library, idea))) setQuick('')
+              }}
+            >
+              <Plus size={20} />
+              <input
+                aria-label="Quick add an idea"
+                placeholder="Catch an idea in a line, then press Enter..."
+                value={quick}
+                onChange={(e) => setQuick(e.target.value)}
+              />
+            </form>
+          )}
           <div className="search-bar">
             <Search size={20} />
             <input
@@ -401,6 +583,16 @@ export function Notes({
                 ))}
               </select>
             </label>
+            {ideasPage && (
+              <label>
+                Use
+                <select value={use} onChange={(e) => setUse(e.target.value as typeof use)}>
+                  <option value="">Used or not</option>
+                  <option value="unused">Not yet used</option>
+                  <option value="used">Already used</option>
+                </select>
+              </label>
+            )}
           </div>
           {query.trim() && (
             <p className="muted" role="status">
@@ -412,7 +604,9 @@ export function Notes({
               <p>
                 {kidsPage
                   ? 'No children’s messages yet. Add one, or import a folder of them from your computer or OneDrive.'
-                  : 'No notes yet. Add one, or import a folder of devotions or notes from your computer or OneDrive.'}
+                  : ideasPage
+                    ? 'Nothing collected yet. Catch an idea in one line above, or photograph a handwritten scrap and sort it later.'
+                    : 'No notes yet. Add one, or import a folder of devotions or notes from your computer or OneDrive.'}
               </p>
             </div>
           ) : hits.length === 0 ? (
@@ -423,7 +617,10 @@ export function Notes({
                 <li key={note.id}>
                   <button className="sermon-row" onClick={() => setOpenId(note.id)}>
                     <strong>{note.title}</strong>
-                    <span className="muted">{summary(note) || 'No date or passage'}</span>
+                    <span className="muted">
+                      {summary(note) || 'No date or passage'}
+                      {note.uses.length ? ` · Used ${note.uses.length}×` : ''}
+                    </span>
                     {reasons.length > 0 && (
                       <span className="sermon-reason">{reasons.join(' · ')}</span>
                     )}

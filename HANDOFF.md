@@ -139,3 +139,9 @@ A second (and further) person can now use the study with a private library of th
 Liturgies are complete services and settings with per-part words, files and music; whole-service
 view, copy as text, print, and "start a new service from this". Next idea: build a liturgy from an
 existing PowerPoint (one slide per part) or Word file, reading the text from it.
+
+## Latest update: illustrations & ideas
+New page over the notes records (kinds Illustration, Idea, Quote, Story, Fact, Scrap): one-line quick add,
+photograph a handwritten scrap, source, Personal marker, use history and a used/unused filter. Its own
+part on People. Next: the Visual Collector (images with license and CVLI/reference-only markers, clips
+as links with start/end and notes); see docs/collectors-scope.md.

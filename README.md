@@ -158,8 +158,7 @@ Funerals and weddings name real families, so they are private by default: their 
 
 ## Devotions & Notes
 
-A page for council and midweek devotions, sermon-preparation notes, illustrations, ideas and study
-notes. Each note has a kind, an optional passage and date, tags, and an optional link to a sermon.
+A page for council and midweek devotions, sermon-preparation notes and study notes. Each note has a kind, an optional passage and date, tags, and an optional link to a sermon.
 Search matches words, or a passage by chapter and verse. A sermon's page lists its linked notes and
 other notes on the same passage, with "Add a note" pre-linked to that sermon. "Import" turns a
 folder of text or Word files into notes (already-imported files are skipped; anything over 30,000
@@ -170,6 +169,18 @@ characters belongs in Sermons → Manuscripts). Notes sync to the shared library
 Add Book has "Scan the barcode to fill this in" (title, author, publisher, year, ISBN, cover and
 summary; you review before saving). An open book has "Scan barcode", which saves the ISBN. The
 author, publisher, year and subtitle from the scan replace what was recorded; the cover and summary are added only if the book has none. The camera can be replaced by typing the ISBN.
+
+## Illustrations & Ideas
+
+The collector: its own page for stories, quotes, illustrations, facts, half-ideas and photographed
+scraps. Built for capture first: type an idea in one line and press Enter, or use "Photograph a
+scrap" for handwritten notes and index cards (sort them later). Each item can record where it came
+from (a book and page, a link, a person), be marked Personal (about real people), and carry photos.
+"Mark as used" keeps a history of where it was used, and the Use filter shows what is still unused.
+Search reads the words, the source, the use history and passages by chapter and verse. It uses the
+same records as Devotions & Notes, so it syncs and backs up with them; earlier notes of the
+Illustration and Idea kinds appear here instead. It is its own part on People. Planned next: the
+Visual Collector (images and clip links), see docs/collectors-scope.md.
 
 ## Children's Messages
 

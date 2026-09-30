@@ -6,6 +6,11 @@ export const SECTIONS = [
   { key: 'sermons', label: 'Sermons', detail: 'Sermon catalog, manuscripts, review' },
   { key: 'prayers', label: 'Prayers', detail: 'Prayer library, builder, saved services' },
   { key: 'notes', label: 'Devotions & Notes', detail: 'Devotions and sermon notes' },
+  {
+    key: 'ideas',
+    label: 'Illustrations & Ideas',
+    detail: 'Collected stories, quotes, ideas and photographed scraps',
+  },
   { key: 'children', label: 'Children’s Messages', detail: 'Pre-K and chapel messages' },
   {
     key: 'hymns',
@@ -21,6 +26,7 @@ const KINDS: Record<SectionKey, string[]> = {
   sermons: ['sermon'],
   prayers: ['prayer', 'prayerset'],
   notes: ['note'],
+  ideas: ['note'],
   children: ['note'],
   hymns: ['hymn', 'liturgy', 'resource'],
 }

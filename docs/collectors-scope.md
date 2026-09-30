@@ -141,7 +141,7 @@ credit line and link in one paste.
 
 | Phase | Delivers | Size |
 | --- | --- | --- |
-| 1 | Illustration & Idea page: quick add, fields, search, filters, private handling, import of existing notes | Small–medium |
+| 1 (built) | Illustration & Idea page: quick add, fields, search, filters, private handling, import of existing notes | Small–medium |
 | 2 | "Collected for this passage" on sermon pages; use history; random pull | Small |
 | 3 | Visual Collector: images with license fields, clip links with start/end and content notes, grid, filters | Medium |
 | 4 | URL and Commons metadata fill, YouTube/Vimeo thumbnails, slide-ready credit copy | Small–medium |
@@ -149,12 +149,13 @@ credit line and link in one paste.
 
 Phases 1 and 3 are the ones that change daily work. The rest can wait on how the first two feel.
 
-## Questions for Andrew
+## Decisions (from Andrew)
 
-1. **Illustrations:** should they stay inside Devotions & Notes as a filtered view, or get their own
-   page and menu entry? (Recommended: own page, same underlying records.)
-2. **Clips:** is a link-plus-notes approach enough to start, or do you need clips playable inside the study?
-3. **License:** does Timothy hold a Church Video License or similar, and does the school need a separate one?
-4. **Sources:** any places you already draw from that should get a search shortcut (a favorite art site, a film list)?
-5. **Existing collection:** where do illustrations live today (Word files, Notes app, index cards, email to yourself)? That decides the import.
-6. **Who else uses these:** only you, or also the school and children's staff?
+1. Illustrations get **their own page** (built; same records as Devotions & Notes).
+2. Clips start as **a link with notes**; a player can come later.
+3. Timothy holds a **CVLI** license. Some material is **personal reference, not public display**, so
+   each item needs a "for reference only / not for display" marker alongside the license.
+4. No favorite sources to add as search shortcuts yet.
+5. The existing collection is **very little, some handwritten, some scraps**. Capture matters more
+   than import: quick one-line add and photographing scraps come first (built).
+6. **Just Andrew** uses these, so nothing about sharing between people is needed now.
