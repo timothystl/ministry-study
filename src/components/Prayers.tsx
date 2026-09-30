@@ -11,6 +11,7 @@ import {
   deletePrayer,
   lcmsLinks,
   loadStarterBiddings,
+  loadTimothyLibrary,
   parsePrayerFile,
   prayerMailto,
   prayerTypes,
@@ -26,6 +27,45 @@ import {
 } from '../lib/prayers'
 import { downloadBlob } from '../lib/sermonText'
 import { Modal } from './Modal'
+
+function LoadTimothy({
+  library,
+  onSave,
+  primary = false,
+}: {
+  library: Library
+  onSave: (library: Library) => boolean
+  primary?: boolean
+}) {
+  const [note, setNote] = useState('')
+  const [busy, setBusy] = useState(false)
+  async function load() {
+    setBusy(true)
+    setNote('')
+    try {
+      const { library: next, added } = await loadTimothyLibrary(library)
+      setNote(
+        !onSave(next)
+          ? 'Could not save the prayers.'
+          : added
+            ? `Added ${added} prayers.`
+            : 'Those prayers are already in your library.',
+      )
+    } catch (e) {
+      setNote(e instanceof Error ? e.message : 'Could not load the prayer library.')
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <>
+      <button className={primary ? 'primary' : ''} disabled={busy} onClick={() => void load()}>
+        {busy ? 'Loading…' : 'Load Timothy’s prayers'}
+      </button>
+      {note && <span role="status">{note}</span>}
+    </>
+  )
+}
 
 const keyOf = (p: Prayer) => p.categoryKey || p.category || 'other'
 
@@ -237,6 +277,15 @@ function LibraryTab({ library, onSave }: { library: Library; onSave: (l: Library
         <button onClick={() => setImporting(true)}>
           <Upload size={16} /> Import prayers
         </button>
+        <LoadTimothy library={library} onSave={onSave} />
+        <a
+          className="button-link"
+          href="https://claude.ai/artifact/RtpqpPoXsERRCdD8Wd2DxE"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <ExternalLink size={16} /> Prayer Writer (drafts new prayers)
+        </a>
       </div>
       <div className="search-bar">
         <Search size={20} />
@@ -276,11 +325,12 @@ function LibraryTab({ library, onSave }: { library: Library; onSave: (l: Library
       {library.prayers.length === 0 ? (
         <div className="empty-state">
           <p>
-            No prayers yet. Start with the built-in biddings, import your Prayers of the Church
-            builder file, or add a prayer.
+            No prayers yet. Load your prayer library (16 categories of biddings and ten sermon
+            starters), import a builder file, or add a prayer.
           </p>
-          <button className="primary" onClick={() => onSave(loadStarterBiddings(library).library)}>
-            Load starter biddings
+          <LoadTimothy library={library} onSave={onSave} primary />
+          <button onClick={() => onSave(loadStarterBiddings(library).library)}>
+            Or load a small starter set
           </button>
         </div>
       ) : shown.length === 0 ? (
@@ -557,11 +607,9 @@ function BuildTab({
         {cats.length === 0 ? (
           <div className="empty-state">
             <p>There are no biddings to choose from yet.</p>
-            <button
-              className="primary"
-              onClick={() => onSave(loadStarterBiddings(library).library)}
-            >
-              Load starter biddings
+            <LoadTimothy library={library} onSave={onSave} primary />
+            <button onClick={() => onSave(loadStarterBiddings(library).library)}>
+              Or load a small starter set
             </button>
             <p className="muted">
               You can also import your own builder file from the Library tab; nothing is replaced.

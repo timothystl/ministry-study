@@ -1,3 +1,4 @@
+import timothyFile from '../../public/data/timothy-prayers.json?raw'
 import { describe, expect, it } from 'vitest'
 import type { Library } from './model'
 import {
@@ -15,6 +16,7 @@ import {
   loadStarterBiddings,
   nextSunday,
   fillLcmsBlanks,
+  withoutStarters,
   prayerMailto,
 } from './prayers'
 
@@ -239,5 +241,39 @@ describe('starter biddings, the LCMS weekly prayer and sharing', () => {
     expect(fillLcmsBlanks('[especially _____________]', { ...names, sick: '' })).toBe(
       '[especially _____________]',
     )
+  })
+})
+
+describe("Timothy's shipped prayer library", () => {
+  const found = parsePrayerFile(timothyFile)
+  it('has every category, bidding and sermon starter', () => {
+    expect(found.categories).toBe(16)
+    expect(found.starters).toBe(10)
+    expect(found.prayers.filter((p) => p.type === 'Bidding')).toHaveLength(93)
+  })
+  it('replaces the starter set instead of sitting beside it', () => {
+    const cleaned = withoutStarters(loadStarterBiddings(empty()).library)
+    expect(cleaned.prayers).toHaveLength(0)
+    const next = previewPrayerImport(found, cleaned)
+    expect(next.added).toBe(103)
+    // each category key appears once, so choosing a bidding never replaces another category's choice
+    const keys = categories(next.library.prayers).map((c) => c.key)
+    expect(new Set(keys).size).toBe(keys.length)
+  })
+})
+
+describe('a file saved from the Prayer Writer page', () => {
+  it('can hold only sermon petitions', () => {
+    const found = parsePrayerFile(
+      JSON.stringify({
+        library: [],
+        starters: { drafted_lost_sheep: 'God of the lost. Lord, in your mercy,' },
+      }),
+    )
+    expect(found.prayers).toHaveLength(1)
+    expect(found.prayers[0]).toMatchObject({ type: 'Sermon starter', text: 'God of the lost.' })
+  })
+  it('still rejects an empty file', () => {
+    expect(() => parsePrayerFile('{"library":[],"starters":{}}')).toThrow('empty')
   })
 })

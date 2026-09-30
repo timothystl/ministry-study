@@ -226,7 +226,9 @@ export function parsePrayerFile(source: string): PrayerImport {
         starters[m[1]] = JSON.parse(m[2])
     }
   }
-  if (!Array.isArray(library) || !library.length) throw new Error('The prayer library is empty.')
+  // A file may hold only sermon-theme starters, such as one saved from the Prayer Writer page.
+  if (!Array.isArray(library) || (!library.length && !Object.keys(starters).length))
+    throw new Error('The prayer library is empty.')
   const prayers: Prayer[] = []
   for (const cat of library as Record<string, unknown>[]) {
     if (typeof cat?.name !== 'string' || !Array.isArray(cat.prayers))
@@ -447,4 +449,26 @@ export async function fetchLcmsPrayers(date: string, series: LcmsSeries): Promis
   if (!response.ok || !body.prayers?.length)
     throw new Error(body.error || 'Could not get the LCMS prayer. Use the links and paste instead.')
   return body.prayers
+}
+
+// ----- Timothy's own prayer library, shipped with the app (public/data/timothy-prayers.json) -----
+export const timothyLibraryUrl = '/data/timothy-prayers.json'
+// The starter set is a placeholder; once the real library is loaded the starters are dropped so the
+// two never share a category.
+export function withoutStarters(library: Library): Library {
+  const gone = new Set(library.prayers.filter((p) => p.source === starterSource).map((p) => p.id))
+  if (!gone.size) return library
+  return {
+    ...library,
+    prayers: library.prayers.filter((p) => !gone.has(p.id)),
+    prayerSets: library.prayerSets.map((s) => ({
+      ...s,
+      selections: s.selections.filter((x) => !gone.has(x.prayerId)),
+    })),
+  }
+}
+export async function loadTimothyLibrary(library: Library) {
+  const response = await fetch(timothyLibraryUrl)
+  if (!response.ok) throw new Error('Could not load the prayer library.')
+  return previewPrayerImport(parsePrayerFile(await response.text()), withoutStarters(library))
 }
