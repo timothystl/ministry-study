@@ -2741,3 +2741,8 @@ mark {
     max-width: none;
   }
 }
+.check-row {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}

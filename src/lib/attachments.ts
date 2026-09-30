@@ -122,6 +122,7 @@ export function attachmentRefs(library: Library): Map<string, number> {
   const add = (list: Attachment[]) =>
     list.forEach((a) => counts.set(a.id, (counts.get(a.id) || 0) + 1))
   library.hymns.forEach((h) => add(h.attachments))
+  library.notes.forEach((n) => add(n.attachments))
   library.resources.forEach((r) => add(r.attachments))
   library.liturgies.forEach((l) => {
     add(l.attachments)

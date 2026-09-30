@@ -3,6 +3,9 @@ import type { Library } from './model'
 import {
   blankNote,
   childrenKinds,
+  ideaKinds,
+  isIdeaKind,
+  markUsed,
   devotionKinds,
   isChildrensKind,
   noteKinds,
@@ -55,7 +58,9 @@ describe('devotions and notes', () => {
     expect(deleteNote(lib, 'a').notes.map((n) => n.id)).toEqual(['b'])
   })
   it('rejects empty, oversized and badly dated notes', () => {
-    expect(() => saveNote(empty(), note({ title: '', body: ' ' }))).toThrow(/title or some text/)
+    expect(() => saveNote(empty(), note({ title: '', body: ' ' }))).toThrow(
+      /title, some text or a photo/,
+    )
     expect(() => saveNote(empty(), note({ body: 'x'.repeat(MAX_NOTE + 1) }))).toThrow(/Manuscripts/)
     expect(() => saveNote(empty(), note({ date: 'Advent' }))).toThrow(/valid date/)
   })
@@ -131,6 +136,51 @@ describe('children’s messages', () => {
     expect(isChildrensKind('Chapel message')).toBe(true)
     expect(isChildrensKind('Devotion')).toBe(false)
     expect(blankNote(childrenKinds[1]).kind).toBe('Chapel message')
-    expect(noteKinds).toEqual([...devotionKinds, ...childrenKinds])
+    expect(noteKinds).toEqual([...devotionKinds, ...ideaKinds, ...childrenKinds])
+  })
+})
+
+describe('illustrations and ideas', () => {
+  it('are notes of their own kinds, kept apart from devotions and children’s messages', () => {
+    expect(ideaKinds).toContain('Illustration')
+    expect(isIdeaKind('Scrap')).toBe(true)
+    expect(isIdeaKind('Devotion')).toBe(false)
+    expect(isChildrensKind('Idea')).toBe(false)
+  })
+  it('accepts a photographed scrap with no words and gives it a title', () => {
+    const photo = { id: 'abcdefgh', name: 'scrap.jpg', mime: 'image/jpeg', size: 9, addedAt: '' }
+    const saved = saveNote(
+      empty(),
+      note({ kind: 'Scrap', title: '', body: '', attachments: [photo] }),
+    )
+    expect(saved.notes[0].title).toMatch(/^Scrap \d{4}-\d{2}-\d{2}$/)
+    expect(() => saveNote(empty(), note({ kind: 'Scrap', title: '', body: '' }))).toThrow()
+  })
+  it('records where an item was used, and filters used from unused', () => {
+    const fresh = note({ id: 'a', title: 'Lantern', kind: 'Illustration' })
+    const used = markUsed(
+      note({ id: 'b', title: 'Keys', kind: 'Illustration' }),
+      'The Lost Son',
+      '2026-03-08',
+    )
+    expect(used.uses).toEqual(['2026-03-08 The Lost Son'])
+    expect(() => markUsed(fresh, ' ', '')).toThrow(/where/)
+    const list = [fresh, used]
+    const ids = (use: '' | 'used' | 'unused') =>
+      searchNotes(list, '', '', use)
+        .map((h) => h.note.id)
+        .sort()
+    expect(ids('unused')).toEqual(['a'])
+    expect(ids('used')).toEqual(['b'])
+    expect(searchNotes(list, 'lost son')[0].note.id).toBe('b')
+  })
+  it('searches the source of a collected item', () => {
+    const quote = note({
+      id: 'q',
+      title: 'Small mercy',
+      kind: 'Quote',
+      source: 'Dillard, Pilgrim at Tinker Creek, p. 9',
+    })
+    expect(searchNotes([quote], 'tinker creek')).toHaveLength(1)
   })
 })

@@ -21,6 +21,7 @@ import {
   ScanBarcode,
   HandHeart,
   Baby,
+  Lightbulb,
   Disc3,
   Music,
   ScrollText,
@@ -74,6 +75,7 @@ type Page =
   | 'Sermons'
   | 'Prayers'
   | 'Notes'
+  | 'Ideas'
   | 'Children'
   | 'People'
   | 'Hymns'
@@ -91,6 +93,7 @@ const navigation = [
   { name: 'Sermons', label: 'Sermons', icon: Mic, part: 'sermons' },
   { name: 'Prayers', label: 'Prayers', icon: HandHeart, part: 'prayers' },
   { name: 'Notes', label: 'Devotions & Notes', icon: NotebookPen, part: 'notes' },
+  { name: 'Ideas', label: 'Illustrations & Ideas', icon: Lightbulb, part: 'ideas' },
   { name: 'Children', label: 'Children’s Messages', icon: Baby, part: 'children' },
   { name: 'Hymns', label: 'Hymns', icon: Music, part: 'hymns' },
   { name: 'Liturgies', label: 'Liturgies', icon: ScrollText, part: 'hymns' },
@@ -601,6 +604,8 @@ export default function App({ me }: { me: Me }) {
             />
           ) : page === 'Resources' ? (
             <Resources library={library} onSave={commit} />
+          ) : page === 'Ideas' ? (
+            <Notes library={library} onSave={commit} ideasPage />
           ) : page === 'Children' ? (
             <Notes library={library} onSave={commit} kidsPage />
           ) : detail ? (
