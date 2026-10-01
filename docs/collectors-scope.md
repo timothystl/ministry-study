@@ -1,5 +1,25 @@
 # Scope: Illustration & Idea Collector and Visual Collector
 
+**Status (checked against the code, October 1, 2026).** Both collectors are built in reduced form
+as the pages Illustrations & Ideas and Images & Clips (behavior in [FEATURES.md](FEATURES.md)).
+The rest of this file is the original planning scope, kept for its principles, decisions and
+what was deliberately left out.
+
+| Planned item | Status |
+| --- | --- |
+| Quick one-line add, photographed scraps, source, Personal marker, use history, used/unused filter | Built (kinds Illustration, Idea, Quote, Story, Fact, Scrap on the notes records) |
+| Passage-aware search; related notes on a sermon's page | Built |
+| "Look elsewhere" site searches, user-added sites, paste links | Built |
+| Visual records with license (including reference-only marker), credit line copy, passage, tags, intended use | Built |
+| Clips as links with start/end, YouTube/Vimeo player and thumbnail, content note | Built |
+| Image and clip panel on a sermon's page | Built |
+| Wound and gospel-handle fields, "Fits" field, linked Library book and page, random "three unused things" pull | Not built (no such fields or controls in the code) |
+| Export package for an outside read, as Sermons, Review does | Not built for these pages |
+| URL title fetch, Wikimedia Commons metadata auto-fill | Not built |
+| R2/Stream uploads for clips and large images; text from photographed pages | Not built |
+
+Original scope follows. Its phase table is superseded by the status table above.
+
 Two new pages in the study, built the same way Children's Messages was: a focused page over records
 the study already knows how to store, search, back up and share. Nothing here needs a new service.
 
