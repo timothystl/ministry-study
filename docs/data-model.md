@@ -1,4 +1,6 @@
-# Library v0.1 data model and scope
+# Data model
+
+Record shapes and rules for the library and the other record kinds. Storage, sync and permissions are in [ARCHITECTURE.md](ARCHITECTURE.md). The library envelope was designed in v0.1 and is still `version: 1`.
 
 The root envelope has `version: 1`, `books`, `series`, `loans`, and a sample-data flag. IDs stay stable on edits and moves. Import/restore validates record shapes, unique IDs, series and loan references, and active-loan consistency before any change is applied.
 
@@ -23,13 +25,13 @@ Search uses all entered terms (case-insensitive AND) across title, author, publi
 
 Borrowed reading sources can be recorded without ownership; outgoing loans are the only circulation workflow in v0.1. There is no incoming-loan transaction/reminder system. Library views can be empty until the user supplies reading, loan, or wishlist information.
 
-## Explicitly deferred
+## Not built
 
-Research a Text, Scripture reading/languages/patterns, hymn/music, teaching resources, visual library, external-resource discovery, EPUB/PDF reading, full-text indexing, provider APIs, automatic cover enrichment, spreadsheet/photo import and reconciliation, and automatic organization recommendations.
+Research a Text, Scripture pattern tools, external-resource discovery, EPUB/PDF reading, full-text indexing of books, spreadsheet/photo import and reconciliation of the physical library, and automatic organization recommendations. (Sermons, prayers, notes, hymns and liturgies, visuals, Bible Study and cover/ISBN lookup were deferred in v0.1 and are now built; see [FEATURES.md](FEATURES.md).)
 
 ## Source review
 
-Implementation was informed by the uploaded consolidated ministry-study handoff, the local project summary/catalog plans, the original conversation's Mockup #1 design description and Option B pull-quote preference, and the physical interface handoff's import contract. The broader scope in those handoffs is superseded by the explicit Library-only v0.1 request. The initial written-only interpretation was rejected. The user supplied `Codex Image Sep 28, 2026, 02_08_15 PM.png` as the authoritative visual target; the interface was rebuilt around its search row, mountain banner, six statistics, cover row, quick actions, dense detail tabs, reading/loan tables, and mobile bottom navigation.
+Implementation was informed by the uploaded consolidated ministry-study handoff, the local project summary/catalog plans, the original conversation's Mockup #1 design description and Option B pull-quote preference, and the physical interface handoff's import contract. The v0.1 build was scoped to the Library. The authoritative visual target is [chosen-design.png](chosen-design.png) (search row, mountain banner, six statistics, cover row, quick actions, dense detail tabs, reading/loan tables, mobile bottom navigation).
 
 Optional fields added without changing the version-1 import contract: `Book.subtitle`, `Book.coverUrl`, `Book.useFor`, and `Library.recentIds`. Reading History displays the single current reading record explicitly; it does not fabricate earlier reading sessions.
 
@@ -45,7 +47,7 @@ Optional `edition` is editable; older physical imports display the preserved `so
 
 ## Shared database
 
-The database holds rows of `(kind, id, data JSON, updated_at)` with `kind` in `book`, `series`, `loan`; new record kinds need no schema change. Illustrative `sample-` books, and loans on them, are never saved. The stored JSON is the same validated shape as the backup file, and a library rebuilt from rows is validated before it replaces the local copy. Deletes are real deletes; the recovery copies are D1 time travel and exported backups.
+The database holds rows of `(kind, id, data JSON, updated_at, owner)`; `kind` is one of `book`, `series`, `loan`, `sermon`, `prayer`, `prayerset`, `note`, `ideasource`, `visual`, `hymn`, `liturgy`, `resource`, and new kinds need no schema change. Illustrative `sample-` books, and loans on them, are never saved. The stored JSON is the same validated shape as the backup file, and a library rebuilt from rows is validated before it replaces the local copy. Deletes are real deletes; the recovery copies are D1 time travel and exported backups.
 
 ## Sermons
 
@@ -92,8 +94,7 @@ collections restore without erasing them.
 ## Attachments
 A hymn's `attachments` list holds `{id, name, mime, size, addedAt}`. The bytes are in D1 tables
 `attachment` and `attachment_piece` (base64 in 600,000-character rows), served at
-`/api/attachments/:id` (PUT to store, GET to read, DELETE to remove). Limits: JPEG, PNG, WebP, GIF
-and PDF only, 6 MB each. Served with `nosniff` and `sandbox` headers.
+`/api/attachments/:id` (PUT to store, GET to read, DELETE to remove). Served with `nosniff` and `sandbox` headers. Accepted types and limits are under Stored files.
 
 ## Music resources
 `resources` (kind `resource`): title, kind (Artist, Album, Article, Book, Songbook, Website,
