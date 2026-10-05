@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   ArrowRight,
   BookOpen,
@@ -12,6 +13,7 @@ import {
 } from 'lucide-react'
 import { type Book, type Library, locationLabel } from '../lib/model'
 import { Cover } from './BookViews'
+import { nextHero } from '../lib/hero'
 export type QuickScope = 'All' | 'Owned' | 'Read' | 'Wishlist' | 'Loaned' | 'Not Owned'
 export function Dashboard({
   library,
@@ -36,6 +38,7 @@ export function Dashboard({
   onSearch: () => void
   onReadNotOwned: () => void
 }) {
+  const [hero] = useState(() => nextHero())
   const recentIds = library.recentIds || []
   const viewed = recentIds
     .map((id) => library.books.find((b) => b.id === id))
@@ -99,7 +102,11 @@ export function Dashboard({
   ]
   return (
     <>
-      <section className="library-hero" aria-label="Good Books for a Greater Story">
+      <section
+        className="library-hero"
+        aria-label="Good Books for a Greater Story"
+        style={{ backgroundImage: `url('${hero.image}')` }}
+      >
         <div>
           <h1>
             Good Books
@@ -109,13 +116,7 @@ export function Dashboard({
           <p>Read. Study. Preach. Serve.</p>
         </div>
         <blockquote>
-          “The more that you read,
-          <br />
-          the more things you will know.
-          <br />
-          The more that you learn,
-          <br />
-          the more places you’ll go.”<cite>— Dr. Seuss</cite>
+          “{hero.quote.text}”<cite>— {hero.quote.by}</cite>
         </blockquote>
       </section>
       <div className="stats">
