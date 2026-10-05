@@ -25,8 +25,8 @@ in [OPERATIONS.md](OPERATIONS.md). Everything here is built; what is not built i
 The public repository contains illustrative bibliographic samples only. Sample ownership, reading
 and shelf details are fictional and labeled in the UI. The six sample books use retrieved edition
 covers (sources in [assets.md](assets.md)); imported records without a verified cover use a generated
-generic cover labeled "Cover not yet identified". The dashboard quote (Dr. Seuss) comes from the
-selected design.
+generic cover labeled "Cover not yet identified". The dashboard banner shows a different landscape and quote on each load
+(`src/lib/hero.ts`; photos in `public/assets/banners/`, free-license, see [assets.md](assets.md)).
 
 **Library data, Import Logos catalog** reads a `logos-library-inventory.json`. It removes only
 sample records, keeps manually added records, skips existing Logos resource IDs, and preserves

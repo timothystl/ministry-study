@@ -20,3 +20,5 @@ Metadata checked against Open Library's edition record for Surprised by Hope, IV
 Roboto UI text and Georgia display text match the reference's compact sans-serif and traditional serif hierarchy. Lucide's outline book, search, list, users, bookmark, settings, and editing icons match the reference's line-icon family; semantic status and rating colors follow the supplied mockup.
 
 The mockup's Reports and Amazon tab are not built. Barcode scanning (Scan a Book) and Amazon wishlist import were added after v0.1 and are described in [FEATURES.md](FEATURES.md).
+
+`public/assets/banners/*.jpg` are 2172×724 crops of free-license (Unsplash License) landscape photographs obtained through Lorem Picsum, used as rotating dashboard banners.

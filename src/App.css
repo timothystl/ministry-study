@@ -156,16 +156,26 @@ main {
   border-radius: 9px;
 }
 .library-hero {
-  background-image: url('/assets/mountain-banner.png');
+  background-color: #2d4a5a;
   background-size: cover;
   background-position: center 48%;
   border-radius: 7px;
+  position: relative;
+  isolation: isolate;
   min-height: 218px;
   padding: 29px 40px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 25px;
+}
+.library-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #06162a8c 0%, #06162a33 55%, #06162a8c 100%);
 }
 .library-hero h1 {
   font-size: 43px;
@@ -191,9 +201,10 @@ main {
   line-height: 1.35;
   text-align: center;
   margin: 0 0 0 15px;
-  color: #06162a;
+  color: white;
+  text-shadow: 0 1px 3px #06162a99;
   flex-shrink: 0;
-  max-width: 285px;
+  max-width: 320px;
 }
 .library-hero cite {
   display: block;
