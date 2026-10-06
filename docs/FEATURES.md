@@ -278,3 +278,12 @@ Retuned Hymn Movement workbook are added automatically, once, with their links (
 enter yourself is untouched, and anything you remove stays removed). "Add resource" is for anything new you start using, such as an
 album you downloaded or a songbook you bought. Search covers every field; filter by kind or tag.
 
+### Research a Text
+
+Under the Bible Study part. Enter a passage to read it in the original languages and English (the
+same reader as Bible Study), then work through tabs: My material (sermons and notes on an overlapping
+passage; funeral and wedding sermons and notes marked personal are left out), Commentary and Teaching
+(library books whose title, subtitle or topics name that Bible book; "commentary" decides which), and
+Hymns & music (hymns whose passage overlaps). "My observations" saves sermon notes or Bible class notes
+as ordinary notes (kinds Sermon note and Study note) tied to the passage and optionally a sermon;
+saving needs the Devotions & Notes part. Logic is in `src/lib/research.ts`.

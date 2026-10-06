@@ -21,7 +21,7 @@ this cleanup; it is in git history) and checked against the code. The product bo
 - Illustrations & Ideas and Images & Clips planned items not built: see the status table in
   [collectors-scope.md](collectors-scope.md).
 - Copy a resource between people's libraries; per-person backups.
-- Physical-library spreadsheet importer, Research a Text, Scripture pattern tools, EPUB/PDF
+- Physical-library spreadsheet importer, Scripture pattern tools (Research a Text is built; saved collections and outside-resource discovery are not), EPUB/PDF
   reading, full-text indexing of books (see [data-model.md](data-model.md)).
 - Bulk file storage beyond 8 MB per file (whole hymnal scans, large recordings): needs R2.
 

@@ -2960,3 +2960,94 @@ mark {
 .word-parts dd {
   margin: 0;
 }
+
+.research-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 24px;
+  align-items: start;
+}
+.research-main h2,
+.research-side h2,
+.research-observations h2 {
+  font-family: Georgia, serif;
+  font-weight: 400;
+  font-size: 20px;
+  margin: 18px 0 8px;
+}
+.research-observations h3 {
+  font-size: 14px;
+  margin: 18px 0 6px;
+}
+.research-observations form {
+  display: grid;
+  gap: 10px;
+}
+.research-observations label {
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+}
+.research-observations textarea,
+.research-observations input:not([type='radio']),
+.research-observations select {
+  width: 100%;
+}
+.research-kind {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+}
+.research-kind label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+.research-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.research-list li {
+  display: grid;
+  gap: 2px;
+  padding: 9px 0;
+  border-bottom: 1px solid #e3e8ef;
+}
+.research-list .link {
+  justify-self: start;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: #007666;
+  font-weight: 500;
+  text-align: left;
+}
+.research-side {
+  background: white;
+  border: 1px solid #e3e8ef;
+  border-radius: 7px;
+  padding: 4px 16px 16px;
+}
+.research-side .research-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 9px 4px;
+  border: 0;
+  border-top: 1px solid #e3e8ef;
+  border-radius: 0;
+  background: none;
+  color: #0b1c38;
+  font-size: 13px;
+  text-decoration: none;
+  text-align: left;
+}
+@media (max-width: 900px) {
+  .research-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
