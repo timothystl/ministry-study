@@ -175,11 +175,12 @@ function PassageTable({
   )
 }
 
-export function BibleStudy() {
-  const [input, setInput] = useState('John 3:16–21'),
-    [asked, setAsked] = useState('John 3:16–21'),
-    [reload, setReload] = useState(0),
-    [picked, setPicked] = useState<{ key: string; word: StudyWord; reference: string } | null>(null)
+// The versions picker, the passage in each chosen version, and the word study. Shared by the
+// Bible Study page and Research a Text.
+export function PassageReader({ asked, reload }: { asked: string; reload: number }) {
+  const [picked, setPicked] = useState<{ key: string; word: StudyWord; reference: string } | null>(
+    null,
+  )
   const { passages, error } = useMemo(() => passagesFor(asked), [asked])
   const testament: Testament = passages.length ? testamentOf(passages[0].book) : 'NT'
   const [chosen, setChosen] = useState<Record<Testament, string[]>>(() => ({
@@ -209,34 +210,8 @@ export function BibleStudy() {
     saveVersionIds(testament, next)
     setChosen({ ...chosen, [testament]: next })
   }
-  function submit(e: FormEvent) {
-    e.preventDefault()
-    setAsked(input)
-    setPicked(null)
-    setReload((n) => n + 1)
-  }
   return (
-    <section className="sermons bible-study">
-      <div className="sermons-head">
-        <div>
-          <h1>Bible Study</h1>
-          <p className="muted">
-            Read a passage in the original languages beside English translations.
-          </p>
-        </div>
-      </div>
-      <form className="bible-search" onSubmit={submit}>
-        <div className="search-bar">
-          <Search size={20} />
-          <input
-            aria-label="Passage"
-            placeholder="John 3:16–21, Psalm 23, Genesis 1:1–2:3…"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-          />
-        </div>
-        <button type="submit">Read</button>
-      </form>
+    <>
       <fieldset className="bible-versions">
         <legend>Versions for the {testament === 'OT' ? 'Old' : 'New'} Testament</legend>
         {[...languages, 'YouVersion', 'Biblia'].map((group) => {
@@ -313,6 +288,42 @@ export function BibleStudy() {
         (most Psalm titles are verse 1), so a verse can sit in a different row. The NIV, NRSV and
         other copyrighted translations are not included.
       </p>
+    </>
+  )
+}
+
+export function BibleStudy() {
+  const [input, setInput] = useState('John 3:16–21'),
+    [asked, setAsked] = useState('John 3:16–21'),
+    [reload, setReload] = useState(0)
+  function submit(e: FormEvent) {
+    e.preventDefault()
+    setAsked(input)
+    setReload((n) => n + 1)
+  }
+  return (
+    <section className="sermons bible-study">
+      <div className="sermons-head">
+        <div>
+          <h1>Bible Study</h1>
+          <p className="muted">
+            Read a passage in the original languages beside English translations.
+          </p>
+        </div>
+      </div>
+      <form className="bible-search" onSubmit={submit}>
+        <div className="search-bar">
+          <Search size={20} />
+          <input
+            aria-label="Passage"
+            placeholder="John 3:16–21, Psalm 23, Genesis 1:1–2:3…"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+          />
+        </div>
+        <button type="submit">Read</button>
+      </form>
+      <PassageReader key={`${asked}|${reload}`} asked={asked} reload={reload} />
     </section>
   )
 }
