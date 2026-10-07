@@ -186,15 +186,17 @@ export function ResearchText({
   canWriteNotes,
   onOpenBook,
   onOpenHymn,
+  startPassage = '',
 }: {
   library: Library
   onSave: (next: Library) => boolean | void
   canWriteNotes: boolean
   onOpenBook: (b: Book) => void
   onOpenHymn: (id: string) => void
+  startPassage?: string
 }) {
-  const [input, setInput] = useState('Luke 15:1–7'),
-    [asked, setAsked] = useState(''),
+  const [input, setInput] = useState(startPassage || 'Luke 15:1–7'),
+    [asked, setAsked] = useState(startPassage),
     [reload, setReload] = useState(0),
     [tab, setTab] = useState<Tab>('Passage')
   const material = useMemo(() => materialFor(library, asked), [library, asked])

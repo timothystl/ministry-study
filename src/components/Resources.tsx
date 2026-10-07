@@ -165,11 +165,13 @@ function ResourceEditor({
 export function Resources({
   library,
   onSave,
+  startQuery = '',
 }: {
   library: Library
   onSave: (library: Library) => boolean
+  startQuery?: string
 }) {
-  const [query, setQuery] = useState('')
+  const [query, setQuery] = useState(startQuery)
   const [kind, setKind] = useState('')
   const [tag, setTag] = useState('')
   const [openId, setOpenId] = useState('')

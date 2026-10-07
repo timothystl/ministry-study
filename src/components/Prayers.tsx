@@ -27,6 +27,7 @@ import {
 } from '../lib/prayers'
 import { downloadBlob } from '../lib/sermonText'
 import { Modal } from './Modal'
+import { SermonToPrayer } from './SermonToPrayer'
 
 function LoadTimothy({
   library,
@@ -258,8 +259,16 @@ function PrayerImport({
   )
 }
 
-function LibraryTab({ library, onSave }: { library: Library; onSave: (l: Library) => boolean }) {
-  const [query, setQuery] = useState('')
+function LibraryTab({
+  library,
+  onSave,
+  startQuery = '',
+}: {
+  library: Library
+  onSave: (l: Library) => boolean
+  startQuery?: string
+}) {
+  const [query, setQuery] = useState(startQuery)
   const [category, setCategory] = useState('')
   const [type, setType] = useState('')
   const [editing, setEditing] = useState<Prayer | null>(null)
@@ -752,6 +761,7 @@ function BuildTab({
             onChange={(e) => setDraft({ ...draft, other: e.target.value })}
           />
         </label>
+        <SermonToPrayer starters={starters} draft={draft} setDraft={setDraft} />
         <label className="wide-field">
           Sermon-tied petition
           {starters.length > 0 && (
@@ -883,9 +893,11 @@ function SavedTab({
 export function Prayers({
   library,
   onSave,
+  startQuery = '',
 }: {
   library: Library
   onSave: (library: Library) => boolean
+  startQuery?: string
 }) {
   const [tab, setTab] = useState<'library' | 'build' | 'saved'>('library')
   const [draft, setDraft] = useState<PrayerSet>(blankSet)
@@ -914,7 +926,9 @@ export function Prayers({
           </button>
         ))}
       </div>
-      {tab === 'library' && <LibraryTab library={library} onSave={onSave} />}
+      {tab === 'library' && (
+        <LibraryTab library={library} onSave={onSave} startQuery={startQuery} />
+      )}
       {tab === 'build' && (
         <BuildTab library={library} onSave={onSave} draft={draft} setDraft={setDraft} />
       )}

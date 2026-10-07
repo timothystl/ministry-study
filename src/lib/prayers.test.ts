@@ -247,15 +247,15 @@ describe('starter biddings, the LCMS weekly prayer and sharing', () => {
 describe("Timothy's shipped prayer library", () => {
   const found = parsePrayerFile(timothyFile)
   it('has every category, bidding and sermon starter', () => {
-    expect(found.categories).toBe(16)
-    expect(found.starters).toBe(10)
-    expect(found.prayers.filter((p) => p.type === 'Bidding')).toHaveLength(93)
+    expect(found.categories).toBe(17)
+    expect(found.starters).toBe(15)
+    expect(found.prayers.filter((p) => p.type === 'Bidding')).toHaveLength(97)
   })
   it('replaces the starter set instead of sitting beside it', () => {
     const cleaned = withoutStarters(loadStarterBiddings(empty()).library)
     expect(cleaned.prayers).toHaveLength(0)
     const next = previewPrayerImport(found, cleaned)
-    expect(next.added).toBe(103)
+    expect(next.added).toBe(112)
     // each category key appears once, so choosing a bidding never replaces another category's choice
     const keys = categories(next.library.prayers).map((c) => c.key)
     expect(new Set(keys).size).toBe(keys.length)

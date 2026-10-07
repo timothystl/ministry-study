@@ -375,6 +375,21 @@ export const starterBiddings = (): Prayer[] => [
       ],
     ],
   ),
+  ...starter(
+    'stewardship',
+    'Stewardship and Generosity',
+    'For gratitude, generosity, and faithful use of time, talent and treasure',
+    [
+      [
+        'Option A — Everything is gift',
+        'Giver of every good gift, we confess that we hold tightly what you have simply handed us—our money, our hours, our strength, our days. Loosen our grip, not with guilt but with gratitude, until our open hands begin to look like yours.',
+      ],
+      [
+        'Option B — Time and talents',
+        'God of every gift, you have placed in each of us something this congregation and our neighbors need. Make us unembarrassed to offer it and glad to receive from one another, so that your body may be built up in love.',
+      ],
+    ],
+  ),
   ...starter('thanks', 'Thanksgiving', 'For daily bread and every blessing', [
     [
       'Option A — Daily bread',

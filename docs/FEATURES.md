@@ -287,3 +287,28 @@ passage; funeral and wedding sermons and notes marked personal are left out), Co
 Hymns & music (hymns whose passage overlaps). "My observations" saves sermon notes or Bible class notes
 as ordinary notes (kinds Sermon note and Study note) tied to the passage and optionally a sermon;
 saving needs the Devotions & Notes part. Logic is in `src/lib/research.ts`.
+
+### Find Anything (search across the study)
+
+A page for everyone with any part turned on, first in the menu (the opening page is unchanged). One box
+searches sermons, notes, ideas, children's messages, prayers, hymns, liturgies, books, music resources
+and images and clips together (funeral and wedding sermons and notes marked personal are left out), with
+Everything, My resources and Outside resources choices. A passage in the box adds a "Research" result.
+Outside results are the idea sources (TextWeek, Working Preacher and others), Hymnary and Bible Gateway,
+opened as searches; nothing is copied. A result opens its own page with the search carried along. Logic:
+`src/lib/find.ts`. Saved collections from the mockup are not built.
+
+### Stewardship prayers and sermon themes
+
+The shipped prayer library (`public/data/timothy-prayers.json`) has a Stewardship and Generosity
+category (four biddings) and five sermon-theme starters: stewardship, generosity, time and talents,
+contentment and creation care. The small starter set has two stewardship biddings. Use Load Timothy's
+prayers again to add them to an existing library; nothing already there is replaced.
+
+### Sermon file to sermon-tied prayer
+
+In Prayers, Build, "Start from your sermon" reads a Word, text or Markdown file in the browser and
+shows its title, passage, themes, where the gospel lands and how it closes (`src/lib/sermonBrief.ts`,
+plain text matching, no AI and nothing sent anywhere). It fills the passage, starts the petition from
+the closest sermon-theme starter, and copies a summary to paste into the Prayer Writer page.
+

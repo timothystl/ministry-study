@@ -358,11 +358,13 @@ export function Notes({
   onSave,
   kidsPage = false,
   ideasPage = false,
+  startQuery = '',
 }: {
   library: Library
   onSave: (library: Library) => boolean
   kidsPage?: boolean
   ideasPage?: boolean
+  startQuery?: string
 }) {
   const kinds = kidsPage ? childrenKinds : ideasPage ? ideaKinds : devotionKinds
   const notes = useMemo(
@@ -377,7 +379,7 @@ export function Notes({
     [library.notes, kidsPage, ideasPage],
   )
   const noun = kidsPage ? 'messages' : ideasPage ? 'items' : 'notes'
-  const [query, setQuery] = useState('')
+  const [query, setQuery] = useState(startQuery)
   const [kind, setKind] = useState('')
   const [use, setUse] = useState<'' | 'unused' | 'used'>('')
   const [quick, setQuick] = useState('')
