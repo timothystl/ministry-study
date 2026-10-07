@@ -28,6 +28,7 @@ import {
   ScrollText,
   NotebookPen,
   BookText,
+  Compass,
   FileSearch,
   UserCog,
 } from 'lucide-react'
@@ -61,6 +62,8 @@ import { Prayers } from './components/Prayers'
 import { Notes } from './components/Notes'
 import { BibleStudy } from './components/BibleStudy'
 import { ResearchText } from './components/ResearchText'
+import { SearchEverything } from './components/SearchEverything'
+import type { FindResult } from './lib/find'
 import { Visuals } from './components/Visuals'
 import { People } from './components/People'
 import { Hymns } from './components/Hymns'
@@ -81,6 +84,7 @@ type Page =
   | 'Sermons'
   | 'Bible'
   | 'Research'
+  | 'Find'
   | 'Prayers'
   | 'Notes'
   | 'Ideas'
@@ -113,16 +117,21 @@ const navigation = [
 ] as const satisfies readonly { name: Page; label: string; icon: unknown; part: SectionKey }[]
 export default function App({ me }: { me: Me }) {
   const allowed = (part: SectionKey) => can(me, part)
-  const pages = navigation.filter((n) => allowed(n.part))
+  const parts = navigation.filter((n) => allowed(n.part))
+  // Search Everything belongs to no one part: it looks only at what this person can already read.
+  const pages = parts.length
+    ? [{ name: 'Find' as const, label: 'Find Anything', icon: Compass }, ...parts]
+    : parts
   const hasLibrary = allowed('library')
   // Which kinds of record are saved to the shared database for this person (null: all of them).
   const kinds = useMemo(() => (me.role === 'admin' ? null : kindsFor(me.sections)), [me])
   const [initial] = useState(loadLibrary),
     [library, setLibrary] = useState(initial.library),
     [error, setError] = useState(initial.error)
+  const [seed, setSeed] = useState('')
   const [liturgyId, setLiturgyId] = useState(''),
     [hymnId, setHymnId] = useState('')
-  const [page, setPage] = useState<Page>(pages[0]?.name ?? 'Home'),
+  const [page, setPage] = useState<Page>(parts[0]?.name ?? 'Home'),
     [query, setQuery] = useState(''),
     [menu, setMenu] = useState(false),
     [scope, setScope] = useState<QuickScope>('All')
@@ -198,6 +207,7 @@ export default function App({ me }: { me: Me }) {
   )
   function navigate(next: Page) {
     setPage(next)
+    setSeed('')
     setDetailId('')
     setMenu(false)
     setQuery('')
@@ -210,6 +220,22 @@ export default function App({ me }: { me: Me }) {
     setVerification('All verification')
     setNotice('')
     window.scrollTo({ top: 0 })
+  }
+  // From a Search Everything result to the page that holds it, with the search carried along.
+  function goToResult(r: FindResult) {
+    if (r.book) {
+      const found = library.books.find((b) => b.id === r.book)
+      if (found) {
+        setPage('Home')
+        openBook(found)
+      }
+      return
+    }
+    if (!r.page) return
+    navigate(r.page)
+    setSeed(r.seed ?? '')
+    if (r.page === 'Hymns' && r.openId) setHymnId(r.openId)
+    if (r.page === 'Liturgies' && r.openId) setLiturgyId(r.openId)
   }
   function openBook(book: Book) {
     setDetailId(book.id)
@@ -579,7 +605,7 @@ export default function App({ me }: { me: Me }) {
           )}
           {page === 'People' && me.role === 'admin' ? (
             <People />
-          ) : !pages.length ? (
+          ) : !parts.length ? (
             <section className="sermons">
               <h1>Nothing turned on yet</h1>
               <p className="muted">
@@ -587,12 +613,15 @@ export default function App({ me }: { me: Me }) {
               </p>
             </section>
           ) : page === 'Sermons' ? (
-            <SermonCatalog library={library} onSave={commit} />
+            <SermonCatalog library={library} onSave={commit} startQuery={seed} />
+          ) : page === 'Find' ? (
+            <SearchEverything library={library} onGo={goToResult} />
           ) : page === 'Research' ? (
             <ResearchText
               library={library}
               onSave={commit}
               canWriteNotes={allowed('notes')}
+              startPassage={seed}
               onOpenBook={(b) => {
                 setPage('Home')
                 openBook(b)
@@ -605,9 +634,9 @@ export default function App({ me }: { me: Me }) {
           ) : page === 'Bible' ? (
             <BibleStudy />
           ) : page === 'Prayers' ? (
-            <Prayers library={library} onSave={commit} />
+            <Prayers library={library} onSave={commit} startQuery={seed} />
           ) : page === 'Notes' ? (
-            <Notes library={library} onSave={commit} />
+            <Notes library={library} onSave={commit} startQuery={seed} />
           ) : page === 'Hymns' ? (
             <Hymns
               library={library}
@@ -631,13 +660,13 @@ export default function App({ me }: { me: Me }) {
               }}
             />
           ) : page === 'Resources' ? (
-            <Resources library={library} onSave={commit} />
+            <Resources library={library} onSave={commit} startQuery={seed} />
           ) : page === 'Visuals' ? (
-            <Visuals library={library} onSave={commit} />
+            <Visuals library={library} onSave={commit} startQuery={seed} />
           ) : page === 'Ideas' ? (
-            <Notes library={library} onSave={commit} ideasPage />
+            <Notes library={library} onSave={commit} ideasPage startQuery={seed} />
           ) : page === 'Children' ? (
-            <Notes library={library} onSave={commit} kidsPage />
+            <Notes library={library} onSave={commit} kidsPage startQuery={seed} />
           ) : detail ? (
             <BookDetail
               key={detail.id}

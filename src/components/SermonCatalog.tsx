@@ -757,11 +757,13 @@ function SermonDetail({
 export function SermonCatalog({
   library,
   onSave,
+  startQuery = '',
 }: {
   library: Library
   onSave: (library: Library) => boolean
+  startQuery?: string
 }) {
-  const [query, setQuery] = useState('')
+  const [query, setQuery] = useState(startQuery)
   const [series, setSeries] = useState('')
   const [year, setYear] = useState('')
   const [season, setSeason] = useState('')

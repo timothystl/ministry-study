@@ -239,11 +239,13 @@ function VisualEditor({
 export function Visuals({
   library,
   onSave,
+  startQuery = '',
 }: {
   library: Library
   onSave: (library: Library) => boolean
+  startQuery?: string
 }) {
-  const [query, setQuery] = useState('')
+  const [query, setQuery] = useState(startQuery)
   const [kind, setKind] = useState('')
   const [license, setLicense] = useState('')
   const [useFor, setUseFor] = useState('')
