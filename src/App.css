@@ -3181,3 +3181,117 @@ mark {
   margin: 0;
   overflow-wrap: anywhere;
 }
+
+/* Bibliography & Citations */
+.bib-style {
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+}
+.bibliography .sermons-head .bib-style select {
+  min-width: 280px;
+}
+.bib-entry {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 15px;
+  line-height: 1.55;
+  padding-left: 2em;
+  text-indent: -2em;
+  margin: 0 0 10px;
+  overflow-wrap: anywhere;
+}
+.bib-sources,
+.bib-notes {
+  margin: 0;
+  padding-left: 22px;
+}
+.bib-sources li {
+  padding: 10px 0;
+  border-bottom: 1px solid #e3e8ef;
+}
+.bib-sources .bib-entry {
+  margin-bottom: 6px;
+}
+.bib-notes li {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 15px;
+  margin-bottom: 10px;
+  overflow-wrap: anywhere;
+}
+.bib-notes p {
+  margin: 0 0 4px;
+}
+.bib-missing {
+  color: #9a5b00;
+  font-size: 12px;
+  margin: 0 0 6px;
+}
+.bib-hint {
+  font-size: 12px;
+}
+.bib-output-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 22px;
+}
+.bib-output {
+  background: white;
+  border: 1px solid #e3e8ef;
+  border-radius: 7px;
+  padding: 16px 18px 8px;
+}
+.bib-result {
+  display: flex !important;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.bib-add {
+  width: 100%;
+  margin: 10px 0;
+}
+.bib-clear {
+  margin-top: 18px;
+}
+.bib-editor {
+  display: grid;
+  gap: 10px;
+}
+.bib-field,
+.bib-editor > label,
+.bib-cite > label {
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+}
+.bib-preview {
+  background: #f6f7f9;
+  border-radius: 6px;
+  padding: 12px 14px 2px;
+}
+.bib-cite h3 {
+  font-size: 13px;
+  margin: 16px 0 6px;
+}
+.bib-cite .form-actions {
+  flex-wrap: wrap;
+}
+@media (max-width: 700px) {
+  .bibliography .sermons-head .bib-style,
+  .bibliography .sermons-head .bib-style select {
+    width: 100%;
+    min-width: 0;
+  }
+}
+@media (max-width: 900px) {
+  .bibliography .research-side {
+    order: -1;
+  }
+  .bibliography .research-layout {
+    display: flex;
+    flex-direction: column;
+  }
+}

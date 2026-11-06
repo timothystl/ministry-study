@@ -18,6 +18,7 @@ in [OPERATIONS.md](OPERATIONS.md). Everything here is built; what is not built i
 - Separate current shelf and optional future recommended placement. A recommendation never moves a book.
 - Validated Logos inventory JSON import, resource-ID deduplication, preserved source metadata and license distinctions.
 - Versioned JSON backup export and validated restore with a preview before replacing data.
+- **Bibliography & Citations** (library part): gather sources from the library or typed in by hand (book, chapter in an edited book, journal article, website) and get a sorted bibliography plus footnotes or in-text citations in Chicago/Turabian notes-bibliography, Chicago/Turabian author-date, SBL, MLA or APA. Each entry says what its style still needs (for example place of publication, which books do not store). Copy keeps italics for Word, Pages, Google Docs and email; "Download for Word" saves an RTF file. A book's page has **Cite** for that one book. The working list is kept in this browser only (`src/lib/citations.ts`). APA titles are not converted to sentence case automatically.
 - Desktop sidebar and mobile navigation, native keyboard-accessible forms, tabbed book details, compact reading/loan tables, mobile quick actions and bottom navigation, grid/list views, and incremental result display.
 
 ### Samples, Logos import and local data

@@ -8,6 +8,7 @@ import {
   Pencil,
   CheckCircle2,
   Plus,
+  Quote,
 } from 'lucide-react'
 import {
   activeLoan,
@@ -18,6 +19,7 @@ import {
   type Library,
 } from '../lib/model'
 import { Rating } from './Rating'
+import { CiteBook } from './Bibliography'
 import { VerifyBook } from './VerifyBook'
 import { IsbnLookup } from './IsbnLookup'
 import { ScanIsbn } from './ScanIsbn'
@@ -97,6 +99,7 @@ export function BookDetail({
   nextToVerify?: Book
 }) {
   const [isbnOpen, setIsbnOpen] = useState(false)
+  const [citeOpen, setCiteOpen] = useState(false)
   const [scanOpen, setScanOpen] = useState(false)
   const [photoError, setPhotoError] = useState('')
   const [verifyOpen, setVerifyOpen] = useState(false)
@@ -120,11 +123,18 @@ export function BookDetail({
           <ArrowLeft size={16} />
           Back to library
         </button>
-        <button onClick={onEdit}>
-          <Pencil size={14} />
-          Edit
-        </button>
+        <div className="sermon-actions">
+          <button onClick={() => setCiteOpen(true)}>
+            <Quote size={14} />
+            Cite
+          </button>
+          <button onClick={onEdit}>
+            <Pencil size={14} />
+            Edit
+          </button>
+        </div>
       </div>
+      {citeOpen && <CiteBook book={book} library={library} onClose={() => setCiteOpen(false)} />}
       <section className="detail-hero">
         <div className="detail-cover">
           <Cover book={book} />

@@ -31,6 +31,7 @@ import {
   Compass,
   FileSearch,
   UserCog,
+  Quote,
 } from 'lucide-react'
 import {
   blankBook,
@@ -69,6 +70,7 @@ import { People } from './components/People'
 import { Hymns } from './components/Hymns'
 import { Liturgies } from './components/Liturgies'
 import { Resources } from './components/Resources'
+import { Bibliography } from './components/Bibliography'
 import { Dashboard, type QuickScope } from './components/Dashboard'
 import { ReadingTable, LoansTable } from './components/RecordsTable'
 import { Modal } from './components/Modal'
@@ -94,6 +96,7 @@ type Page =
   | 'Hymns'
   | 'Liturgies'
   | 'Resources'
+  | 'Bibliography'
 type Browse = 'Topic' | 'Author' | 'Series' | 'Physical shelf'
 // Each page belongs to one part of the study; the pastor switches parts on or off for other people.
 const navigation = [
@@ -103,6 +106,7 @@ const navigation = [
   { name: 'Reading', label: 'Reading', icon: Bookmark, part: 'library' },
   { name: 'Loans', label: 'Loans', icon: Users, part: 'library' },
   { name: 'Wishlist', label: 'Wishlist', icon: Heart, part: 'library' },
+  { name: 'Bibliography', label: 'Bibliography', icon: Quote, part: 'library' },
   { name: 'Sermons', label: 'Sermons', icon: Mic, part: 'sermons' },
   { name: 'Research', label: 'Research a Text', icon: FileSearch, part: 'bible' },
   { name: 'Bible', label: 'Bible Study', icon: BookText, part: 'bible' },
@@ -614,6 +618,8 @@ export default function App({ me }: { me: Me }) {
             </section>
           ) : page === 'Sermons' ? (
             <SermonCatalog library={library} onSave={commit} startQuery={seed} />
+          ) : page === 'Bibliography' ? (
+            <Bibliography library={library} />
           ) : page === 'Find' ? (
             <SearchEverything library={library} onGo={goToResult} />
           ) : page === 'Research' ? (
