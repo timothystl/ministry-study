@@ -49,6 +49,12 @@ To let another person in: add them on the People page and add their email to the
 - UI only: `npm ci`, `npm run dev -- --host 127.0.0.1 --port 4173` (Node 24; browser storage only).
 - With the Worker: `npx wrangler dev` with `STUDY_DEV_NO_AUTH=1` in an ignored `.dev.vars`.
 
+Development bypass is limited to exact `localhost`, `127.0.0.1` and `[::1]` request hosts.
+If it is enabled on any other hostname, the API refuses the request before accessing data.
+The production build also rejects this flag in its environment or any checked-in Worker environment.
+Do not put the flag in production dashboard settings; the runtime check is a second boundary.
+Query strings are redacted from Worker logs/traces; this does not sanitize application log payloads.
+
 Each browser origin (host and port) has its own local data; clearing site data removes the local
 copy.
 

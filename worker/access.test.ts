@@ -40,6 +40,16 @@ const ask = (jwt: string) =>
   new Request('https://x.test/api/library', { headers: { 'Cf-Access-Jwt-Assertion': jwt } })
 
 describe('Cloudflare Access verification', () => {
+  it('permits development bypass only on exact loopback hosts', async () => {
+    for (const host of ['localhost', '127.0.0.1', '[::1]']) {
+      expect(await verifyAccess(new Request(`http://${host}/api/me`), { STUDY_DEV_NO_AUTH: '1' }))
+        .toEqual({ status: 'ok', email: 'dev@localhost' })
+    }
+    for (const host of ['study.timothystl.org', 'ministry-study.example.workers.dev', 'localhost.evil.test', '127.0.0.1.evil.test']) {
+      expect(await verifyAccess(new Request(`https://${host}/api/me`), { ...env, STUDY_DEV_NO_AUTH: '1' }))
+        .toEqual({ status: 'unconfigured' })
+    }
+  })
   it('accepts a correctly signed token for this application', async () => {
     const { jwt, jwk } = await token(good)
     expect(await verifyAccess(ask(jwt), env, async () => [jwk], 1_900_000_000_000)).toEqual({

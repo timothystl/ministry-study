@@ -22,13 +22,22 @@ const decode = (part: string) =>
   Uint8Array.from(atob(part.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0))
 const json = (part: string) => JSON.parse(new TextDecoder().decode(decode(part)))
 
+export function localDevelopmentBypass(request: Request, env: AccessEnv): boolean {
+  return env.STUDY_DEV_NO_AUTH === '1' &&
+    ['localhost', '127.0.0.1', '[::1]'].includes(new URL(request.url).hostname)
+}
+
 export async function verifyAccess(
   request: Request,
   env: AccessEnv,
   keys: KeyFetcher = fetchKeys,
   now = Date.now(),
 ): Promise<AccessResult> {
-  if (env.STUDY_DEV_NO_AUTH === '1') return { status: 'ok', email: 'dev@localhost' }
+  if (env.STUDY_DEV_NO_AUTH === '1') {
+    return localDevelopmentBypass(request, env)
+      ? { status: 'ok', email: 'dev@localhost' }
+      : { status: 'unconfigured' }
+  }
   const team = env.STUDY_ACCESS_TEAM_DOMAIN?.replace(/^https?:\/\//, '').replace(/\/$/, '')
   const aud = env.STUDY_ACCESS_AUD
   if (!team || !aud) return { status: 'unconfigured' }

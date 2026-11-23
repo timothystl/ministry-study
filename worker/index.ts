@@ -10,7 +10,7 @@ import {
 } from './bibleSources'
 import { ESV_COPYRIGHT, fetchEsvChapter, validEsvReference } from './esv'
 import { findPrayers, seriesPages, type Series } from './lcms'
-import { verifyAccess, type AccessEnv } from './access'
+import { localDevelopmentBypass, verifyAccess, type AccessEnv } from './access'
 import {
   checkUpload,
   deleteAttachment,
@@ -66,11 +66,12 @@ export async function handleApi(
   verify: typeof verifyAccess = verifyAccess,
 ): Promise<Response> {
   const { pathname } = new URL(request.url)
+  const development = localDevelopmentBypass(request, env)
   const access = await verify(request, env)
   if (access.status === 'unconfigured')
     return reply({ error: 'Sign-in protection is not set up for the shared library.' }, 503)
   if (access.status !== 'ok') return reply({ error: 'Please sign in.' }, 401)
-  if (!env.STUDY_ADMIN_EMAIL && env.STUDY_DEV_NO_AUTH !== '1')
+  if (!env.STUDY_ADMIN_EMAIL && !development)
     return reply({ error: 'The administrator address (STUDY_ADMIN_EMAIL) is not set.' }, 503)
   if (!env.DB) return reply({ error: 'The shared database is not connected.' }, 503)
   try {
@@ -78,7 +79,7 @@ export async function handleApi(
       env.DB,
       access.email,
       env.STUDY_ADMIN_EMAIL ?? '',
-      env.STUDY_DEV_NO_AUTH === '1' && access.email === 'dev@localhost',
+      development && access.email === 'dev@localhost',
     )
     if (!resolved.ok)
       return reply(

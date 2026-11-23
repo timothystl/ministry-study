@@ -74,8 +74,13 @@ describe('people and permissions over the API', () => {
 
   it('local development without sign-in acts as the pastor', async () => {
     const env = { DB: fakeD1(), STUDY_DEV_NO_AUTH: '1' }
-    const response = await handleApi(new Request('https://study.test/api/me'), env as never)
+    const response = await handleApi(new Request('http://localhost/api/me'), env as never)
     expect(await response.json()).toMatchObject({ role: 'admin', email: 'dev@localhost' })
+  })
+  it('refuses a production-host development bypass before touching its database', async () => {
+    const env = { STUDY_DEV_NO_AUTH: '1', get DB() { throw Error('must not read production data') } }
+    const response = await handleApi(new Request('https://study.timothystl.org/api/me'), env as never)
+    expect(response.status).toBe(503)
   })
   it('refuses everyone until the administrator address is set', async () => {
     const env = { DB: fakeD1() }
