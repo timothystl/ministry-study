@@ -22,7 +22,8 @@
   // and STUDY_ADMIN_EMAIL (the pastor's sign-in address; everyone else is added on the People page).
   // Workers Logs: a short record of requests and errors, for diagnosing problems. It is kept here so a
   // publish from this file cannot switch it back off. Never write catalog, sermon or note content to logs.
-  "observability": {
+"observability": {
     "enabled": true,
+    "redact_query_string": true,
   },
 }

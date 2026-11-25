@@ -52,7 +52,7 @@ describe('shared library storage', () => {
 
 describe('shared library API', () => {
   const call = (env: object, path: string, init?: RequestInit) =>
-    handleApi(new Request(`https://study.test${path}`, init), env as never)
+    handleApi(new Request(`http://localhost${path}`, init), env as never)
   it('refuses everything until sign-in protection is configured', async () => {
     const response = await call({ DB: fakeD1() }, '/api/library')
     expect(response.status).toBe(503)

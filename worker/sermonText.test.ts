@@ -96,7 +96,7 @@ describe('sermon text storage', () => {
 describe('sermon text API', () => {
   const env = () => ({ DB: fakeD1(), STUDY_DEV_NO_AUTH: '1' })
   const call = (e: object, path: string, init?: RequestInit) =>
-    handleApi(new Request(`https://study.test${path}`, init), e as never)
+    handleApi(new Request(`http://localhost${path}`, init), e as never)
   const json = (body: unknown, method = 'PUT') => ({
     method,
     headers: { 'Content-Type': 'application/json' },
